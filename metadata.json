@@ -1,0 +1,7 @@
+{
+  "name": "ShoroRepair",
+  "description": "A professional offline-first management system for repair shops (Phones, Electronics, Appliances) with IndexedDB persistence, inventory tracking, and PDF billing.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
