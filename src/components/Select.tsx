@@ -1,16 +1,18 @@
 import React from 'react';
+import { ChevronDown } from 'lucide-react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
     label?: string;
     error?: string;
     leftIcon?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({
+const Select: React.FC<SelectProps> = ({
     label,
     error,
     leftIcon,
     className = '',
+    children,
     ...props
 }) => {
     return (
@@ -22,22 +24,30 @@ const Input: React.FC<InputProps> = ({
             )}
             <div className="relative group">
                 {leftIcon && (
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] transition-all">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] transition-all pointer-events-none">
                         {leftIcon}
                     </div>
                 )}
-                <input
+
+                <select
                     className={`
                         w-full bg-[#f1f3f4] dark:bg-[#1a1c1e] border-2 border-transparent 
                         px-4 py-3 text-sm focus:outline-none focus:bg-white dark:focus:bg-[#1a1c1e]
                         focus:border-[#1a73e8] dark:focus:border-[#8ab4f8] rounded-2xl
-                        transition-all duration-200 placeholder:text-[#5f6368] dark:text-white
+                        transition-all duration-200 text-[#202124] dark:text-white appearance-none
                         ${leftIcon ? 'pl-11' : ''}
                         ${error ? 'border-[#ea4335] focus:border-[#ea4335]' : ''}
+                        pr-10 cursor-pointer
                         ${className}
                     `}
                     {...props}
-                />
+                >
+                    {children}
+                </select>
+
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] pointer-events-none">
+                    <ChevronDown size={16} />
+                </div>
             </div>
             {error && (
                 <p className="text-[11px] font-medium text-[#ea4335] mt-1 ml-4 overflow-hidden animate-in">
@@ -48,4 +58,4 @@ const Input: React.FC<InputProps> = ({
     );
 };
 
-export default Input;
+export default Select;

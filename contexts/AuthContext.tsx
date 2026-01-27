@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '../db';
 import { AppUser } from '../types';
 import { auth } from '../src/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { syncManager } from '../src/utils/SyncManager';
-import { googleProvider } from '../src/firebase';
+import { googleProvider, createGoogleProvider } from '../src/firebase';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -54,10 +54,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsLoading(false);
         };
 
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log("AuthProvider: Firebase State", firebaseUser ? `Connected: ${firebaseUser.email}` : "Disconnected");
-            await restoreSession(firebaseUser);
-        });
+        let unsubscribe = () => { };
+
+        try {
+            // Check if auth is a real Firebase Auth instance (has 'app' property) or similar
+            // If it's our mock { currentUser: null }, onAuthStateChanged might throw or fail
+            if (auth && (auth as any).app) {
+                unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                    console.log("AuthProvider: Firebase State", firebaseUser ? `Connected: ${firebaseUser.email}` : "Disconnected");
+                    await restoreSession(firebaseUser);
+                });
+            } else {
+                console.warn("AuthProvider: Running in Offline Mode (Firebase Auth not available)");
+                restoreSession(null); // Just restore local session
+            }
+        } catch (e) {
+            console.warn("AuthProvider: Failed to subscribe to auth state", e);
+            restoreSession(null);
+        }
 
         // --- DYNAMIC INACTIVITY TIMEOUT ---
         let timeoutId: any;
@@ -107,6 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // If local auth fails, try Firebase (for cloud users)
             console.log("AuthContext: Attempting Firebase Sign In...");
+            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
             const userCredential = await signInWithEmailAndPassword(auth, usernameOrEmail, pass);
             const firebaseUser = userCredential.user;
 
@@ -142,6 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loginWithGoogle = React.useCallback(async (): Promise<boolean> => {
         try {
             console.log("AuthContext: Attempting Google Sign In...");
+            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
             const result = await signInWithPopup(auth, googleProvider);
             const firebaseUser = result.user;
             const email = firebaseUser.email || '';
@@ -187,8 +203,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const linkGoogleDrive = async (): Promise<string | null> => {
         try {
-            const { createGoogleProvider } = await import('../src/firebase');
             const provider = createGoogleProvider(['https://www.googleapis.com/auth/drive.file']);
+            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
             const result = await signInWithPopup(auth, provider);
             const credential = GoogleAuthProvider.credentialFromResult(result);
             const token = credential?.accessToken || null;
@@ -225,7 +241,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = React.useCallback(async () => {
-        await signOut(auth);
+        try {
+            if (auth && (auth as any).app) {
+                await signOut(auth);
+            }
+        } catch (e) {
+            console.warn("Logout error (likely offline):", e);
+        }
         setUser(null);
         setGoogleAccessToken(null);
         localStorage.removeItem('shoro_user_id');

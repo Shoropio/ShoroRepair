@@ -26,17 +26,20 @@
 @layer base {
   body {
     font-family: var(--font-family-sans);
-    background-color: #ffffff;
+    background: radial-gradient(circle at top left, #f8f9fa, #ffffff);
     color: #3c4043;
-    /* Google gray 800 */
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
 
   .dark body {
-    background-color: #1a1c1e;
-    /* Material Dark Background */
+    background: radial-gradient(circle at top left, #1f2124, #1a1c1e);
     color: #e2e2e6;
+  }
+
+  ::selection {
+    background-color: #1a73e8;
+    color: white;
   }
 
   h1,

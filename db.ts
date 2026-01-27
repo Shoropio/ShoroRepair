@@ -72,12 +72,18 @@ export const db = new RepairDB();
 
 export async function initializeData() {
   /* 
-   * Default users are no longer created automatically.
-   * The Initial Setup Wizard will handle the creation of the first Admin user.
+   * Create Default Admin User if none exists.
    */
   const adminExists = await db.users.where('role').equals('Admin').count();
   if (adminExists === 0) {
-    console.log("System: No admin found. Waiting for Initial Setup.");
+    console.log("System: Creating default Admin user.");
+    await db.users.add({
+      username: 'admin',
+      fullName: 'Administrador Local',
+      role: 'Admin',
+      active: true,
+      password: '123' // Default password
+    });
   }
 
   const settingsCount = await db.settings.count();

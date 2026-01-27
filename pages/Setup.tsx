@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User, Lock, Mail, Check, ArrowRight, Building } from 'lucide-react';
+import { Shield, User, Lock, Mail, Check, ArrowRight, Building, Cloud } from 'lucide-react'; // Added Cloud icon
 import { Card, Input, Button } from '../src/components';
 import { db } from '../db';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { syncManager } from '../src/utils/SyncManager';
 
 const Setup: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { login, linkGoogleDrive, googleAccessToken } = useAuth();
+    const { login, linkGoogleDrive, googleAccessToken, loginWithGoogle } = useAuth();
 
     const [step, setStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
@@ -106,6 +107,38 @@ const Setup: React.FC = () => {
         }
     };
 
+    const handleRestore = async () => {
+        setIsLoading(true);
+        try {
+            const success = await loginWithGoogle();
+            if (success) {
+                toast.info("Iniciando restauración de datos...");
+
+                // Force a full sync since we are restoring
+                localStorage.removeItem('lastSync_users'); // Ensure we pull fresh
+                localStorage.removeItem('lastSync_settings');
+
+                await syncManager.sync();
+
+                // Check if we actually restored a valid company
+                const settings = await db.settings.toArray();
+                if (settings.length > 0) {
+                    toast.success("¡Datos restaurados correctamente!");
+                    navigate('/');
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    toast.warning("Sesión iniciada, pero no se encontraron datos de respaldo.");
+                    setStep(2); // Move to admin creation if no data found
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Error al restaurar copia de seguridad");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const finishSetup = async () => {
         try {
             // Marcar el setup como completado
@@ -118,7 +151,7 @@ const Setup: React.FC = () => {
 
             toast.success("¡Configuración completada!");
             navigate('/');
-            setTimeout(() => window.location.reload(), 100); // Small delay to ensure DB update completes
+            setTimeout(() => window.location.reload(), 1500); // Allow DB updates to complete
         } catch (error) {
             console.error('Error finishing setup:', error);
             navigate('/');
@@ -175,14 +208,32 @@ const Setup: React.FC = () => {
                                 placeholder="Ej: Reparaciones Express"
                             />
 
-                            <Button
-                                variant="primary"
-                                className="w-full h-12 mt-4"
-                                onClick={() => setStep(2)}
-                                rightIcon={<ArrowRight size={18} />}
-                            >
-                                Continuar
-                            </Button>
+                            <div className="space-y-3 pt-4">
+                                <Button
+                                    variant="primary"
+                                    className="w-full h-12"
+                                    onClick={() => setStep(2)}
+                                    rightIcon={<ArrowRight size={18} />}
+                                >
+                                    Continuar configuración nueva
+                                </Button>
+
+                                <div className="relative flex items-center py-2">
+                                    <div className="flex-grow border-t border-[#dadce0]"></div>
+                                    <span className="flex-shrink-0 mx-4 text-gray-400 text-xs text-center font-medium font-sans">¿YA TIENES CUENTA?</span>
+                                    <div className="flex-grow border-t border-[#dadce0]"></div>
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    className="w-full h-12 bg-white dark:bg-[#2d2f31] border-[#dadce0] dark:border-[#5f6368] hover:bg-[#f1f3f4]"
+                                    onClick={handleRestore}
+                                    isLoading={isLoading}
+                                    leftIcon={<Cloud size={18} className="text-[#1a73e8]" />}
+                                >
+                                    Restaurar copia de seguridad
+                                </Button>
+                            </div>
                         </div>
                     )}
 

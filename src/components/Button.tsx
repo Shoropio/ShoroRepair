@@ -19,7 +19,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium tracking-tight transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] rounded-none cursor-pointer";
+  const baseStyles = "inline-flex items-center justify-center font-medium tracking-tight transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] rounded-full cursor-pointer";
 
   const variants = {
     primary: "bg-[#1a73e8] text-white hover:bg-[#1557b0] shadow-sm",
@@ -43,7 +43,7 @@ const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading && (
-        <div className="mr-2 w-4 h-4 border-2 border-current border-t-transparent rounded-none animate-spin" />
+        <div className="mr-2 w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
       )}
       {!isLoading && leftIcon && <span className="mr-2 opacity-90">{leftIcon}</span>}
       <span className="truncate">{children}</span>

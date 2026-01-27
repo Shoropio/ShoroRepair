@@ -47,6 +47,7 @@ import Input from '../src/components/Input';
 import Badge from '../src/components/Badge';
 import Card from '../src/components/Card';
 import Modal from '../src/components/Modal';
+import Select from '../src/components/Select';
 import { uploadImage, compressImage, uploadFile } from '../src/utils/storageUtils';
 import { generateBarcode } from '../src/utils/barcodeUtils';
 import { usePermissions } from '../hooks/usePermissions';
@@ -105,19 +106,9 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
     setIsDrawing(false);
     const data = canvasRef.current?.toDataURL('image/png');
     if (data) {
-      toast.promise(
-        (async () => {
-          const path = `temp/signatures/${Date.now()}.png`;
-          const url = await uploadImage(data, path);
-          onSave(url);
-          return url;
-        })(),
-        {
-          loading: 'Subiendo firma...',
-          success: 'Firma vinculada',
-          error: 'Error al subir firma'
-        }
-      );
+      // Silent update - Base64 operations are fast enough to not need a toast for every stroke
+      // We just pass the base64 string directly
+      onSave(data);
     }
   };
 
@@ -296,10 +287,20 @@ const Orders: React.FC = () => {
 
   const handleDeleteOrder = async (order: ServiceOrder) => {
     if (!order.id) return;
-    if (confirm(`¿Estás seguro de eliminar permanentemente la orden ${order.orderNumber}? Esta acción no se puede deshacer.`)) {
+    if (confirm(`¿Estás seguro de eliminar permanentemente la orden ${order.orderNumber}? Esta acción no se puede deshacer y devolverá los repuestos al inventario.`)) {
       try {
+        // Return parts to inventory
+        if (order.parts && order.parts.length > 0) {
+          for (const part of order.parts) {
+            const invPart = await db.inventory.get(part.partId);
+            if (invPart) {
+              await db.inventory.update(part.partId, { quantity: invPart.quantity + part.quantity });
+            }
+          }
+        }
+
         await db.orders.delete(order.id);
-        toast.success("Orden eliminada correctamente");
+        toast.success("Orden eliminada y repuestos devueltos");
       } catch (err) {
         toast.error("Error al eliminar la orden");
       }
@@ -428,6 +429,43 @@ const Orders: React.FC = () => {
       }
 
       const oldOrder = await db.orders.get(order.id!);
+
+      // --- INVENTORY RECONCILIATION START ---
+      const partDiff = new Map<number, number>(); // partId -> quantity change (positive = consumed more, negative = returned)
+
+      // 1. "Return" old parts (temporarily in logic)
+      if (oldOrder && oldOrder.parts) {
+        oldOrder.parts.forEach(p => {
+          const current = partDiff.get(p.partId) || 0;
+          partDiff.set(p.partId, current - p.quantity);
+        });
+      }
+
+      // 2. "Consume" new parts
+      if (order.parts) {
+        order.parts.forEach(p => {
+          const current = partDiff.get(p.partId) || 0;
+          partDiff.set(p.partId, current + p.quantity);
+        });
+      }
+
+      // 3. Apply changes to inventory
+      for (const [partId, change] of partDiff.entries()) {
+        if (change === 0) continue;
+        const part = await db.inventory.get(partId);
+        if (part) {
+          // If change is positive, we are using more, so inventory decreases (- change)
+          // If change is negative, we are returning, so inventory increases (- (-change) = + change)
+          const newQuantity = part.quantity - change;
+
+          if (newQuantity < 0) {
+            throw new Error(`Inventario insuficiente para el repuesto: ${part.name}`);
+          }
+          await db.inventory.update(partId, { quantity: newQuantity });
+        }
+      }
+      // --- INVENTORY RECONCILIATION END ---
+
       let logs = order.logs || [];
 
       if (oldOrder && oldOrder.status !== order.status) {
@@ -464,11 +502,9 @@ const Orders: React.FC = () => {
       setShowDetailModal(null);
       toast.success("Trabajo actualizado localmente", { id: toastId });
 
-      toast.success("Trabajo actualizado localmente", { id: toastId });
-
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating order", err);
-      toast.error("Error al actualizar la orden", { id: toastId });
+      toast.error(err.message || "Error al actualizar la orden", { id: toastId });
     }
   };
 
@@ -478,8 +514,8 @@ const Orders: React.FC = () => {
       alert("No hay existencias de este repuesto.");
       return;
     }
+    // Don't deduct from DB here, wait for save
     const newPart = { partId, name: invPart.name, quantity: 1, price: invPart.price };
-    await db.inventory.update(partId, { quantity: invPart.quantity - 1 });
 
     // Immediate update in UI
     const updatedOrder = { ...order, parts: [...order.parts, newPart] };
@@ -488,7 +524,8 @@ const Orders: React.FC = () => {
     const tax = subtotal * (updatedOrder.taxRate / 100);
     updatedOrder.total = subtotal + tax;
     setShowDetailModal(updatedOrder);
-    toast.success("Repuesto añadido a la orden");
+    // Removed direct inventory update from here
+    toast.info("Repuesto añadido (Guardar para confirmar)");
   };
 
   const generateInvoice = async (order: ServiceOrder, action: 'download' | 'print' = 'download') => {
@@ -897,17 +934,15 @@ const Orders: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-2 text-xs font-bold text-[#1a73e8] uppercase tracking-wide">
-                    <User size={14} /> <span>Técnico Responsable</span>
-                  </div>
-                  <select
-                    className="w-full px-4 py-3 bg-[#f1f3f4] dark:bg-neutral-800 dark:text-white border-none rounded-none outline-none focus:bg-white focus:ring-2 focus:ring-[#1a73e8]/20 transition-all text-sm font-medium"
+                  <Select
+                    label="Técnico Responsable"
                     value={showDetailModal.technicianId || ''}
                     onChange={e => setShowDetailModal({ ...showDetailModal, technicianId: parseInt(e.target.value) || undefined })}
+                    leftIcon={<User size={14} />}
                   >
                     <option value="">Sin Asignar</option>
                     {technicians?.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="space-y-4">
@@ -1064,27 +1099,25 @@ const Orders: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left">{t('orders.fields.client')}</label>
-                  <select
+                  <Select
+                    label={t('orders.fields.client')}
                     required
-                    className="bg-[#f1f3f4] dark:bg-neutral-800 px-4 py-3 rounded-none text-sm font-medium outline-none border-none focus:bg-white transition-all appearance-none"
                     onChange={e => setFormData({ ...formData, clientId: parseInt(e.target.value) })}
                   >
                     <option value="">{t('orders.fields.select_client')}</option>
                     {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left">{t('orders.fields.device_type')}</label>
-                  <select
+                  <Select
+                    label={t('orders.fields.device_type')}
                     required
-                    className="bg-[#f1f3f4] dark:bg-neutral-800 px-4 py-3 rounded-none text-sm font-medium outline-none border-none focus:bg-white transition-all appearance-none"
                     value={formData.deviceType}
                     onChange={e => setFormData({ ...formData, deviceType: e.target.value as DeviceType })}
                   >
                     {Object.values(DeviceType).map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
@@ -1096,14 +1129,13 @@ const Orders: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input label={t('orders.fields.serial')} placeholder="Opcional" value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
                 <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left">Prioridad</label>
-                  <select
-                    className="bg-[#f1f3f4] dark:bg-neutral-800 px-4 py-3 rounded-none text-sm font-medium outline-none border-none focus:bg-white transition-all appearance-none"
+                  <Select
+                    label="Prioridad"
                     value={formData.priority}
                     onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })}
                   >
                     {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  </Select>
                 </div>
               </div>
 

@@ -48,7 +48,6 @@ import SyncStatusIndicator from './src/components/SyncStatusIndicator';
 import { useTranslation } from 'react-i18next';
 import i18n from './src/i18n';
 import { db } from './db';
-import { CloudSetupWizard } from './src/components';
 
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
@@ -143,10 +142,10 @@ const AppContent: React.FC = () => {
         to={to}
         onClick={() => setSidebarOpen(false)}
         className={`
-          flex items-center gap-4 px-4 py-2.5 rounded-none transition-all duration-200 group
+          flex items-center gap-4 px-4 py-2.5 rounded-full transition-all duration-200 group
           ${isActive
-            ? 'bg-[#e8f0fe] dark:bg-[#1a73e8]/20 text-[#1a73e8] dark:text-[#8ab4f8] font-semibold'
-            : 'text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31]'
+            ? 'bg-[#e8f0fe] dark:bg-[#1a73e8]/20 text-[#1a73e8] dark:text-[#8ab4f8] font-bold shadow-sm'
+            : 'text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31] font-medium'
           }
         `}
       >
@@ -156,13 +155,13 @@ const AppContent: React.FC = () => {
     );
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#1a1c1e] overflow-hidden">
+    <div className="flex h-screen w-full bg-white dark:bg-[#1a1c1e] overflow-hidden">
 
       {/* Google Style Sidebar */}
       <aside className={`
@@ -173,44 +172,48 @@ const AppContent: React.FC = () => {
       `}>
         <div className="flex flex-col h-full">
           {/* Logo Section */}
-          <div className="h-16 flex items-center px-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-none bg-[#1a73e8] flex items-center justify-center text-white">
-                <Wrench size={18} strokeWidth={2.5} />
+          <div className="h-20 flex items-center px-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1a73e8] to-[#1557b0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <Wrench size={20} strokeWidth={2.5} />
               </div>
-              <h1 className="text-xl font-semibold text-[#202124] dark:text-white tracking-tight">Shoro<span className="text-[#1a73e8]">Repair</span></h1>
+              <div>
+                <h1 className="text-xl font-bold text-[#202124] dark:text-white tracking-tight leading-none">Shoro<span className="text-[#1a73e8]">Repair</span></h1>
+                <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-medium tracking-widest uppercase mt-0.5">Management System</p>
+              </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto scrollbar-hide">
+          <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto scrollbar-hide">
             <NavItem to="/" label={t('nav.dashboard')} icon={LayoutDashboard} />
             <NavItem to="/orders" label={t('nav.orders')} icon={ClipboardList} />
             <NavItem to="/invoices" label={t('nav.invoices')} icon={FileText} roles={['Admin', 'Receptionist']} />
-            <div className="my-2 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-4" />
+            <div className="my-4 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-2" />
+            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">Operaciones</p>
             <NavItem to="/clients" label={t('nav.clients')} icon={Users} />
             <NavItem to="/inventory" label={t('nav.inventory')} icon={Package} />
             <NavItem to="/expenses" label={t('nav.expenses')} icon={CreditCard} roles={['Admin']} />
-            <div className="my-2 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-4" />
+            <div className="my-4 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-2" />
+            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">Administración</p>
             <NavItem to="/reports" label={t('nav.reports')} icon={BarChart3} roles={['Admin']} />
             <NavItem to="/activity" label={t('nav.activity')} icon={Activity} roles={['Admin']} />
-            <div className="my-2 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-4" />
             <NavItem to="/users" label={t('nav.users')} icon={Users} roles={['Admin']} />
             <NavItem to="/roles" label={t('nav.roles')} icon={Shield} roles={['Admin']} />
             <NavItem to="/settings" label={t('nav.settings')} icon={SettingsIcon} roles={['Admin']} />
           </nav>
 
           {/* Footer Navigation (User) */}
-          <div className="p-4 border-t border-[#f1f3f4] dark:border-[#3c4043]">
-            <div className="flex items-center gap-3 px-2">
-              <div className="w-8 h-8 rounded-none bg-[#1a73e8] flex items-center justify-center text-white font-semibold text-xs">
+          <div className="p-4 mx-4 mb-4 rounded-2xl bg-[#f8f9fa] dark:bg-[#2d2f31]">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#1a73e8] flex items-center justify-center text-white font-semibold text-xs shadow-md">
                 {user?.fullName.charAt(0)}
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium text-[#202124] dark:text-white truncate">{user?.fullName}</p>
-                <p className="text-[11px] text-[#5f6368] dark:text-[#9aa0a6] uppercase font-bold">{user?.role}</p>
+                <p className="text-sm font-semibold text-[#202124] dark:text-white truncate">{user?.fullName}</p>
+                <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] uppercase font-bold tracking-wide">{user?.role}</p>
               </div>
-              <button onClick={handleLogout} className="p-2 text-[#5f6368] hover:bg-[#f1f3f4] rounded-none transition-colors">
+              <button onClick={handleLogout} className="p-2 text-[#5f6368] hover:bg-white dark:hover:bg-white/10 hover:text-red-500 rounded-full transition-all shadow-sm hover:shadow">
                 <LogOut size={16} />
               </button>
             </div>
@@ -307,7 +310,6 @@ const AppContent: React.FC = () => {
             </Routes>
           </div>
         </div>
-        <CloudSetupWizard />
       </main>
     </div>
   );

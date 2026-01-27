@@ -1,53 +1,49 @@
-import { ref, uploadBytes, getDownloadURL, deleteObject, listAll } from 'firebase/storage';
-export { getDownloadURL };
-import { storage, auth } from '../firebase';
+// Storage utils: Base64 Mode (Local Storage)
+// Images are converted to Base64 strings and stored directly in the database.
 
 /**
- * Uploads an image to Firebase Storage and returns the download URL
- * @param file The file or data URL to upload
- * @param path The path in storage (e.g., 'orders/OS-123456/photo1.jpg')
+ * "Uploads" an image by converting it to a Base64 string.
+ * This effectively stores the image data within the database record itself.
+ * @param file The file, blob, or existing base64 string
+ * @param path Unused in Base64 mode, kept for compatibility
  */
-export const uploadImage = async (file: File | Blob | string, path: string): Promise<string> => {
-    if (!auth.currentUser) throw new Error("Debes estar autenticado para subir imágenes.");
-
-    let blob: Blob;
-
+export const uploadImage = async (file: File | Blob | string, path: string = ''): Promise<string> => {
+    // If it's already a Base64 string, just return it
     if (typeof file === 'string' && file.startsWith('data:')) {
-        // Convert Base64 to Blob
-        const response = await fetch(file);
-        blob = await response.blob();
-    } else if (file instanceof File || file instanceof Blob) {
-        blob = file;
-    } else {
-        throw new Error("Formato de archivo no válido.");
+        return file;
     }
 
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, blob);
-    return await getDownloadURL(snapshot.ref);
+    // Helper to Convert Blob/File to Base64
+    const toBase64 = (b: Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(b);
+        });
+    };
+
+    if (file instanceof Blob || (file as any) instanceof File) {
+        return await toBase64(file as Blob);
+    }
+
+    throw new Error("Formato de archivo no válido para conversión Base64.");
 };
 
 /**
- * Uploads a generic file to Firebase Storage
+ * Uploads a generic file (converted to Base64)
  */
 export const uploadFile = async (data: Blob | File, path: string): Promise<string> => {
-    if (!auth.currentUser) throw new Error("Debes estar autenticado para subir archivos.");
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, data);
-    return await getDownloadURL(snapshot.ref);
+    return uploadImage(data, path);
 };
 
 /**
- * Deletes an image from Firebase Storage using its URL
- * @param url The full download URL of the image
+ * Deletes an image (No-op in Base64 mode as data is inside the record)
  */
-export const deleteImage = async (url: string) => {
-    try {
-        const storageRef = ref(storage, url);
-        await deleteObject(storageRef);
-    } catch (error) {
-        console.error("Error deleting image from storage:", error);
-    }
+export const deleteImage = async (path: string) => {
+    // No action needed for Base64 strings stored in DB fields
+    // They are deleted when the parent record array is updated
+    return;
 };
 
 /**
@@ -88,14 +84,13 @@ export const compressImage = (file: File, maxDim = 1200, quality = 0.7): Promise
         reader.onerror = reject;
     });
 };
+
 /**
- * Lists all files in a specific storage directory
+ * Lists files (Stub for compatibility)
  */
 export const listFiles = async (path: string) => {
-    if (!auth.currentUser) return [];
-    const storageRef = ref(storage, path);
-    const result = await listAll(storageRef);
-    return result.items;
+    console.warn("listFiles is not implemented for generic HTTP server.");
+    return [];
 };
 
 /**
@@ -105,4 +100,13 @@ export const getFileByUrl = async (url: string) => {
     const response = await fetch(url);
     if (!response.ok) throw new Error("Error al descargar archivo");
     return await response.json();
+};
+
+/**
+ * Compatibility stub for Firebase getDownloadURL
+ */
+export const getDownloadURL = async (item: any): Promise<string> => {
+    // If item is string, return it. If object, return item.url or similar
+    if (typeof item === 'string') return item;
+    return item.url || item.path || '';
 };

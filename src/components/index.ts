@@ -12,4 +12,4 @@ export {
 } from './Skeleton';
 export { default as TableSkeleton } from './TableSkeleton';
 export { default as Modal } from './Modal';
-export { default as CloudSetupWizard } from './CloudSetupWizard';
+export { default as Select } from './Select';

@@ -27,7 +27,7 @@ import { db } from '../db';
 import { CompanySettings, AppUser } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import { Button, Input, Card, Modal, Badge } from '../src/components';
+import { Button, Input, Card, Modal, Badge, Select } from '../src/components';
 import {
     getEstimatedBackupSize,
     BackupData,
@@ -253,14 +253,13 @@ const Settings: React.FC = () => {
                         <div className="space-y-6">
                             <div className="flex flex-col space-y-1.5">
                                 <label className="text-xs font-semibold text-[#5f6368] ml-4">{t('settings.select_language')}</label>
-                                <select
-                                    className="bg-[#f1f3f4] dark:bg-neutral-800 px-4 py-3 rounded-none text-sm font-medium outline-none"
+                                <Select
                                     value={company.language || 'es'}
                                     onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}
                                 >
                                     <option value="es">Español (Costa Rica)</option>
                                     <option value="en">English (Global)</option>
-                                </select>
+                                </Select>
                             </div>
                             <Button variant="primary" className="w-full" onClick={saveCompanySettings}>{t('common.save')}</Button>
                         </div>

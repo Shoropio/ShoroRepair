@@ -112,7 +112,7 @@ const Dashboard: React.FC = () => {
           }
         >
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={stats.statusGroups}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f3f4" />
                 <XAxis
@@ -179,8 +179,8 @@ const Dashboard: React.FC = () => {
           <h3 className="text-lg font-semibold text-[#202124] dark:text-white">{t('dashboard.productivity_tip')}</h3>
           <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6]">{t('dashboard.inventory_reminder')}</p>
         </div>
-        <Link to="/inventory">
-          <Button variant="outline" size="sm">{t('dashboard.go_to_inventory')}</Button>
+        <Link to="/inventory" className="mt-6 block">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto">{t('dashboard.go_to_inventory')}</Button>
         </Link>
       </Card>
     </div>

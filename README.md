@@ -49,7 +49,7 @@ ShoroRepair es una solución integral todo-en-uno diseñada para laboratorios t�
 Clona el repositorio e instala las dependencias:
 
 ```bash
-git clone https://github.com/shoropio/shororepair.git
+git clone https://github.com/Shoropio/ShoroRepair.git
 cd shororepair
 npm install
 ```
