@@ -1,0 +1,330 @@
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { db } from '../offline/db';
+import { AppUser } from '../types';
+import { auth, googleProvider, createGoogleProvider } from '../firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { syncManager } from '../offline/sync';
+import { toast } from 'sonner';
+
+interface AuthContextType {
+    user: AppUser | null;
+    login: (email: string, pass: string) => Promise<boolean>;
+    loginWithGoogle: () => Promise<boolean>;
+    logout: () => void;
+    isLoading: boolean;
+    updateUser: (updatedUser: AppUser) => void;
+    linkGoogleDrive: () => Promise<string | null>;
+    unlinkGoogleDrive: () => Promise<void>;
+    googleAccessToken: string | null;
+}
+
+console.log("AuthContext.tsx file loaded");
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [user, setUser] = useState<AppUser | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(localStorage.getItem('google_drive_token'));
+
+    useEffect(() => {
+        console.log("AuthProvider: Initializing...");
+
+        const restoreSession = async (firebaseUser?: any) => {
+            const storedUserId = localStorage.getItem('shoro_user_id');
+            if (storedUserId) {
+                try {
+                    const foundUser = await db.users.get(parseInt(storedUserId));
+                    if (foundUser) {
+                        console.log("AuthProvider: Restored session for", foundUser.fullName);
+                        setUser(foundUser);
+                        if (firebaseUser) syncManager.startSync();
+                    }
+                } catch (err) {
+                    console.error("AuthProvider: Error restoring session", err);
+                }
+            } else if (firebaseUser) {
+                // If no local storage but Firebase exists, we might need to find/create user
+                // (Already handled in login logic, but useful for persistence between different Firebase states)
+                syncManager.startSync();
+            } else {
+                setUser(null);
+                syncManager.stopSync();
+            }
+            setIsLoading(false);
+        };
+
+        let unsubscribe = () => { };
+
+        try {
+            // Check if auth is a real Firebase Auth instance (has 'app' property) or similar
+            // If it's our mock { currentUser: null }, onAuthStateChanged might throw or fail
+            if (auth && (auth as any).app) {
+                unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                    console.log("AuthProvider: Firebase State", firebaseUser ? `Connected: ${firebaseUser.email}` : "Disconnected");
+                    await restoreSession(firebaseUser);
+                });
+            } else {
+                console.warn("AuthProvider: Running in Offline Mode (Firebase Auth not available)");
+                restoreSession(null); // Just restore local session
+            }
+        } catch (e) {
+            console.warn("AuthProvider: Failed to subscribe to auth state", e);
+            restoreSession(null);
+        }
+
+        // --- DYNAMIC INACTIVITY TIMEOUT ---
+        let timeoutId: any;
+
+        const resetTimer = () => {
+            if (timeoutId) clearTimeout(timeoutId);
+
+            const storedTimeout = localStorage.getItem('system_inactivity_timeout');
+            const timeoutMinutes = storedTimeout ? parseInt(storedTimeout) : 5;
+            const INACTIVITY_LIMIT = timeoutMinutes * 60 * 1000;
+
+            timeoutId = setTimeout(() => {
+                if (localStorage.getItem('shoro_user_id')) {
+                    console.log(`AuthProvider: Inactivity timeout reached (${timeoutMinutes} min). Logging out...`);
+                    logout();
+                }
+            }, INACTIVITY_LIMIT);
+        };
+
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+        events.forEach(name => document.addEventListener(name, resetTimer));
+        resetTimer(); // Start initial timer
+
+        return () => {
+            unsubscribe();
+            if (timeoutId) clearTimeout(timeoutId);
+            events.forEach(name => document.removeEventListener(name, resetTimer));
+        };
+    }, []);
+
+    const login = React.useCallback(async (usernameOrEmail: string, pass: string): Promise<boolean> => {
+        try {
+            // First, try LOCAL authentication
+            console.log("AuthContext: Attempting local authentication...");
+
+            // Search by username OR email
+            let localUser = await db.users
+                .where('username')
+                .equals(usernameOrEmail)
+                .first();
+
+            if (!localUser) {
+                // Try finding by email alias if username match failed
+                localUser = await db.users.filter(u => u.email === usernameOrEmail).first();
+            }
+
+            if (localUser && localUser.password === pass && localUser.active) {
+                console.log("AuthContext: Local authentication successful");
+
+                // If this is the default admin, ensure role is Admin
+                if (localUser.username === 'admin') {
+                    if (localUser.role !== 'Admin') {
+                        await db.users.update(localUser.id!, { role: 'Admin' });
+                        localUser.role = 'Admin';
+                    }
+                }
+
+                setUser(localUser);
+                localStorage.setItem('shoro_user_id', localUser.id!.toString());
+                return true;
+            }
+
+            // If local auth fails, try Firebase (for cloud users ONLY if not 'admin')
+            // ... (Firebase Auth logic continues below)
+            console.log("AuthContext: Attempting Firebase Sign In...");
+            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
+            const userCredential = await signInWithEmailAndPassword(auth, usernameOrEmail, pass);
+            const firebaseUser = userCredential.user;
+
+            let foundUser = await db.users
+                .where('username')
+                .equals(usernameOrEmail)
+                .first();
+
+            if (!foundUser) {
+                const newUserId = await db.users.add({
+                    username: usernameOrEmail,
+                    fullName: usernameOrEmail.split('@')[0],
+                    email: usernameOrEmail, // Ensure email field is populated
+                    role: 'Technician',
+                    active: true,
+                    syncId: firebaseUser.uid
+                });
+                foundUser = await db.users.get(newUserId);
+            }
+
+            if (foundUser && foundUser.active) {
+                setUser(foundUser);
+                localStorage.setItem('shoro_user_id', foundUser.id!.toString());
+                syncManager.startSync();
+                return true;
+            }
+            return false;
+        } catch (e: any) {
+            console.error("AuthContext: Login error", e.code, e.message);
+            return false;
+        }
+    }, []);
+
+    const loginWithGoogle = React.useCallback(async (): Promise<boolean> => {
+        try {
+            console.log("AuthContext: Attempting Google Sign In...");
+
+            // Check for internet/firebase before popup (handled by firebase lib but good to wrap)
+            const result = await signInWithPopup(auth, googleProvider);
+            const firebaseUser = result.user;
+            const email = firebaseUser.email || '';
+
+            // 1. Try finding by Sync ID (Existing Cloud Link)
+            let foundUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
+
+            // 2. If not found by ID, try finding by Email (Link Local Account)
+            if (!foundUser && email) {
+                foundUser = await db.users.where('username').equals(email).first();
+
+                if (foundUser) {
+                    console.log("AuthContext: Linking existing local user to Google Account");
+                    await db.users.update(foundUser.id!, {
+                        syncId: firebaseUser.uid,
+                        // If linking to a local admin account, ensure name is updated from Google but permissions kept
+                        fullName: firebaseUser.displayName || foundUser.fullName
+                    });
+                    foundUser = await db.users.get(foundUser.id!);
+                }
+            }
+
+            // 3. Special Case: If this is the FIRST Google Login and NO users exist (fresh install wiped), or just create new
+            // However, db.ts creates default 'admin'. So if I log in with Google 'myname@gmail.com', it won't match 'admin'.
+            // The user asked: "if user links the account, edit with data obtained... to have sufficient permissions for admin".
+            // Implementation: If the user logs in with Google and they are the ONLY user or the matching user has Admin role, fine.
+            // If it's a new user, they get Technician by default.
+            // To link 'admin' (local) to Google, the user must go to Settings -> Connect Google Drive (which calls linkGoogleDrive).
+            // BUT, if they try to login directly with Google relying on email match, 'admin' != 'davis@...'.
+
+            if (!foundUser) {
+                // If NO users exist at all (unlikely due to db.ts), make this one Admin
+                const count = await db.users.count();
+                const role = count === 0 ? 'Admin' : 'Technician';
+
+                const newUserId = await db.users.add({
+                    username: email,
+                    fullName: firebaseUser.displayName || email.split('@')[0],
+                    role: role,
+                    active: true,
+                    syncId: firebaseUser.uid
+                });
+                foundUser = await db.users.get(newUserId);
+            }
+
+            if (foundUser && foundUser.active) {
+                setUser(foundUser);
+                localStorage.setItem('shoro_user_id', foundUser.id!.toString());
+                return true;
+            }
+            return false;
+        } catch (e: any) {
+            console.error("AuthContext: Google login error", e.code, e.message);
+            // Handle popup closed by user or network error
+            toast.error("Error de inicio de sesión con Google: " + e.message);
+            return false;
+        }
+    }, []);
+
+    const linkGoogleDrive = async (): Promise<string | null> => {
+        try {
+            const provider = createGoogleProvider(['https://www.googleapis.com/auth/drive.file']);
+            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
+            const result = await signInWithPopup(auth, provider);
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const token = credential?.accessToken || null;
+            const firebaseUser = result.user;
+
+            // Update user email to match Google account for sync consistency
+            // This is critical for converting the local "admin" user to a real Google Cloud user
+            if (user && firebaseUser.email) {
+                // Check if ANOTHER user already has this google account linked
+                const conflictUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
+                if (conflictUser && conflictUser.id !== user.id) {
+                    toast.error("Esta cuenta de Google ya está vinculada a otro usuario.");
+                    await signOut(auth); // Sign out of the conflicting google account immediately
+                    return null;
+                }
+
+                console.log("AuthContext: Link Google Account to current user");
+
+                const updatedUser = { ...user };
+                updatedUser.syncId = firebaseUser.uid;
+                updatedUser.fullName = firebaseUser.displayName || user.fullName; // Adopt Google Name if available
+
+                // CRITICAL: If the user is 'admin' (local default), KEEP 'admin' as username so local login persists.
+                // Otherwise (for normal users), update username to email.
+                if (user.username !== 'admin') {
+                    updatedUser.username = firebaseUser.email;
+                }
+
+                // Always update the 'email' field to allow alternate login
+                updatedUser.email = firebaseUser.email;
+
+                await db.users.update(user.id!, updatedUser);
+                setUser(updatedUser);
+                toast.success(`Cuenta vinculada exitosamente: ${firebaseUser.email}`);
+            }
+
+            if (token) {
+                setGoogleAccessToken(token);
+                localStorage.setItem('google_drive_token', token);
+            }
+            return token;
+        } catch (error) {
+            console.error("Error linking Google Drive", error);
+            return null;
+        }
+    };
+
+    const unlinkGoogleDrive = async () => {
+        setGoogleAccessToken(null);
+        localStorage.removeItem('google_drive_token');
+        toast.info("Cuenta de Google Desvinculada");
+    };
+
+    const logout = React.useCallback(async () => {
+        try {
+            if (auth && (auth as any).app) {
+                await signOut(auth);
+            }
+        } catch (e) {
+            console.warn("Logout error (likely offline):", e);
+        }
+        setUser(null);
+        setGoogleAccessToken(null);
+        localStorage.removeItem('shoro_user_id');
+        localStorage.removeItem('google_drive_token');
+    }, []);
+
+    const updateUser = React.useCallback((updatedUser: AppUser) => {
+        setUser(updatedUser);
+    }, []);
+
+    const value = React.useMemo(() => ({
+        user, login, loginWithGoogle, logout, isLoading, updateUser, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken
+    }), [user, login, loginWithGoogle, logout, isLoading, updateUser, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken]);
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
+};
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

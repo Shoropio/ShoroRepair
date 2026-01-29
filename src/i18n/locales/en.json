@@ -1,0 +1,388 @@
+{
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "actions": "Actions",
+        "loading": "Loading...",
+        "search": "Search...",
+        "all": "All",
+        "none": "None",
+        "add": "Add",
+        "new": "New",
+        "view": "View",
+        "close": "Close",
+        "confirm": "Confirm",
+        "name": "Name",
+        "description": "Description",
+        "date": "Date",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "yes": "Yes",
+        "no": "No",
+        "total": "Total",
+        "subtotal": "Subtotal",
+        "tax": "Tax",
+        "price": "Price",
+        "quantity": "Quantity",
+        "download": "Download",
+        "print": "Print",
+        "update": "Update",
+        "create": "Create",
+        "filter": "Filter",
+        "export": "Export",
+        "import": "Import",
+        "back": "Back",
+        "next": "Next",
+        "previous": "Previous",
+        "finish": "Finish"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "orders": "Orders",
+        "clients": "Clients",
+        "inventory": "Inventory",
+        "expenses": "Expenses",
+        "users": "Users",
+        "settings": "Settings",
+        "reports": "Reports",
+        "roles": "Roles",
+        "activity": "Activity",
+        "invoices": "Invoicing"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Overview of your business performance",
+        "welcome": "Welcome",
+        "stats": {
+            "active_orders": "Active orders",
+            "pending": "Pending",
+            "delivered_today": "For delivery",
+            "revenue_month": "Revenue",
+            "pending_payments": "Pending payments"
+        },
+        "workshop_status": "Workshop status",
+        "recent_entries": "Recent entries",
+        "view_all": "View all",
+        "new_order": "New order",
+        "productivity_tip": "Keep your flow productive",
+        "inventory_reminder": "Remember to update parts inventory after completing each repair to maintain accurate data.",
+        "go_to_inventory": "Go to inventory"
+    },
+    "orders": {
+        "title": "Service center",
+        "subtitle": "Comprehensive management of repairs and warranties",
+        "new": "New reception",
+        "new_subtitle": "Equipment intake to laboratory",
+        "formalize": "Formalize intake",
+        "update_record": "Update record",
+        "delete_order": "Delete order",
+        "workbench": "Workbench",
+        "table": {
+            "service_client": "Service / client",
+            "device": "Device",
+            "status": "Status",
+            "actions": "Actions",
+            "order_number": "Order number",
+            "client": "Client",
+            "technician": "Technician"
+        },
+        "fields": {
+            "client": "Client",
+            "select_client": "Select client",
+            "device_type": "Device type",
+            "brand": "Brand",
+            "model": "Model",
+            "serial": "Serial / IMEI",
+            "issue": "Issue description",
+            "issue_placeholder": "Detail the problem reported by the client...",
+            "accessories": "Included accessories",
+            "accessories_placeholder": "Ex: Charger, case, headphones...",
+            "photos": "Photographic evidence",
+            "add_photos": "Add photos",
+            "no_photos": "No photos registered",
+            "status": "Status",
+            "assigned_tech": "Assigned technician",
+            "select_tech": "Select technician",
+            "diagnosis": "Technical diagnosis",
+            "diagnosis_placeholder": "Write detailed diagnosis...",
+            "parts": "Parts used",
+            "add_part": "Add part",
+            "select_part": "Select part",
+            "no_parts": "No parts added",
+            "labor_cost": "Labor cost",
+            "parts_cost": "Parts cost",
+            "final_total": "Final total"
+        },
+        "status": {
+            "received": "Received",
+            "diagnostic": "Diagnostic",
+            "in_repair": "In repair",
+            "ready": "Ready",
+            "delivered": "Delivered",
+            "cancelled": "Cancelled"
+        },
+        "notify_whatsapp": "Notify via WhatsApp",
+        "empty": "No orders registered",
+        "empty_subtitle": "Start by registering your first service order"
+    },
+    "clients": {
+        "title": "Client directory",
+        "subtitle": "Contact database and history",
+        "new": "New client",
+        "edit": "Edit client",
+        "save": "Save client",
+        "fields": {
+            "name": "Full name",
+            "phone": "Phone",
+            "email": "Email",
+            "address": "Address",
+            "notes": "Additional notes"
+        },
+        "table": {
+            "name": "Name",
+            "contact": "Contact",
+            "orders": "Orders",
+            "actions": "Actions"
+        },
+        "delete_confirm": "Delete this client?",
+        "empty": "No clients registered",
+        "empty_subtitle": "Add your first client to get started"
+    },
+    "inventory": {
+        "title": "Inventory control",
+        "subtitle": "Parts and stock management",
+        "new": "Add part",
+        "edit": "Edit part",
+        "save": "Save part",
+        "fields": {
+            "name": "Part name",
+            "sku": "SKU / Code",
+            "quantity": "Quantity in stock",
+            "price": "Unit price",
+            "min_stock": "Minimum stock",
+            "category": "Category"
+        },
+        "table": {
+            "part": "Part",
+            "stock": "Stock",
+            "price": "Price",
+            "actions": "Actions"
+        },
+        "low_stock": "Low stock",
+        "in_stock": "Available",
+        "out_of_stock": "Out of stock",
+        "delete_confirm": "Delete this part?",
+        "empty": "No parts in inventory",
+        "empty_subtitle": "Add your first part to get started"
+    },
+    "expenses": {
+        "title": "Expense log",
+        "subtitle": "Operational expense control",
+        "new": "New expense",
+        "edit": "Edit expense",
+        "save": "Save expense",
+        "fields": {
+            "description": "Expense description",
+            "category": "Category",
+            "amount": "Amount",
+            "date": "Date",
+            "payment_method": "Payment method",
+            "notes": "Additional notes"
+        },
+        "categories": {
+            "rent": "Rent",
+            "utilities": "Utilities",
+            "supplies": "Supplies",
+            "salaries": "Salaries",
+            "marketing": "Marketing",
+            "maintenance": "Maintenance",
+            "other": "Other"
+        },
+        "payment_methods": {
+            "cash": "Cash",
+            "card": "Card",
+            "transfer": "Transfer",
+            "check": "Check"
+        },
+        "table": {
+            "description": "Description",
+            "category": "Category",
+            "amount": "Amount",
+            "date": "Date",
+            "actions": "Actions"
+        },
+        "delete_confirm": "Delete this expense?",
+        "empty": "No expenses registered",
+        "empty_subtitle": "Register your first expense to get started"
+    },
+    "users": {
+        "title": "Staff management",
+        "subtitle": "Access control and workshop profiles",
+        "new": "New member",
+        "edit": "Edit profile",
+        "save": "Save user",
+        "view_permissions": "View permissions",
+        "fields": {
+            "full_name": "Full name",
+            "username": "Username",
+            "password": "Password",
+            "new_password": "New password (Optional)",
+            "role": "Assigned role",
+            "status": "Status"
+        },
+        "roles": {
+            "admin": "Administrator",
+            "technician": "Technician",
+            "receptionist": "Receptionist"
+        },
+        "status": {
+            "active": "Enabled",
+            "inactive": "Suspended",
+            "enabled": "Active",
+            "disabled": "Inactive"
+        },
+        "table": {
+            "member": "Member",
+            "role": "Role",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "delete_confirm": "Delete",
+        "empty": "No users registered"
+    },
+    "settings": {
+        "title": "System configuration",
+        "subtitle": "Identity, security and backup management",
+        "my_account": "My account",
+        "save_profile": "Save profile",
+        "company": "Corporate identity",
+        "save_company": "Save company",
+        "language": "Language and localization",
+        "select_language": "Select language",
+        "cloud": "Cloud infrastructure",
+        "sync_cloud": "Sync cloud config",
+        "database": "Database",
+        "backup": "Backup data",
+        "restore": "Restore backup",
+        "danger_zone": "Danger zone",
+        "factory_reset": "Factory reset",
+        "factory_reset_desc": "Deletes all local data (clients, orders, parts) and logs out.",
+        "delete_all": "Delete all",
+        "clear_sync": "Clear sync cache",
+        "clear_sync_desc": "Forces a complete Firebase rescan on next startup.",
+        "clear_cache": "Clear sync",
+        "firebase_guide": "Quick setup guide",
+        "firebase_steps": {
+            "step1": "Create a project in",
+            "step2": "Enable",
+            "step3": "Create a",
+            "step4": "Copy the values to the fields above and save changes."
+        },
+        "restart_required": "These changes require restarting the application for Firebase to initialize with the new ecosystem.",
+        "fields": {
+            "full_name": "Full name",
+            "password": "Password",
+            "business_name": "Business name",
+            "legal_name": "Legal name",
+            "tax_id": "Tax ID / EIN",
+            "address": "Fiscal address",
+            "phone": "Phone",
+            "email": "Email",
+            "invoice_prefix": "Invoice prefix",
+            "tax_rate": "Tax rate (%)",
+            "next_invoice": "Next invoice number",
+            "inactivity_timeout": "Inactivity timeout (minutes)"
+        }
+    },
+    "activity": {
+        "title": "Activity log",
+        "subtitle": "Last 100 system actions",
+        "filters": {
+            "all": "All",
+            "orders": "Orders",
+            "clients": "Clients",
+            "users": "Users",
+            "inventory": "Inventory",
+            "expenses": "Expenses"
+        },
+        "empty": "No activity recorded",
+        "empty_subtitle": "System actions will appear here"
+    },
+    "roles": {
+        "title": "Roles and permissions",
+        "subtitle": "Profile-based access configuration",
+        "admin": "Administrator",
+        "technician": "Technician",
+        "receptionist": "Receptionist",
+        "permissions": {
+            "manage_orders": "Manage orders",
+            "manage_clients": "Manage clients",
+            "manage_inventory": "Manage inventory",
+            "manage_users": "Manage users",
+            "view_reports": "View reports",
+            "manage_expenses": "Manage expenses",
+            "manage_settings": "Manage settings"
+        },
+        "save": "Save role configuration",
+        "reset": "Restore defaults"
+    },
+    "reports": {
+        "title": "Reports center",
+        "subtitle": "Business analysis and metrics",
+        "period": "Period",
+        "generate": "Generate report",
+        "export_pdf": "Export PDF",
+        "export_excel": "Export Excel"
+    },
+    "invoices": {
+        "title": "Invoice management",
+        "subtitle": "Electronic invoice issuance and control",
+        "new": "New invoice",
+        "view": "View invoice",
+        "send": "Send invoice"
+    },
+    "login": {
+        "title": "Sign in",
+        "subtitle": "Use your ShoroRepair account to continue",
+        "username": "Username",
+        "username_placeholder": "Enter your username...",
+        "password": "Password",
+        "password_placeholder": "••••••••",
+        "next": "Next",
+        "google_signin": "Sign in with Google",
+        "error": "Incorrect credentials or inactive user",
+        "fill_fields": "Please fill in all fields",
+        "footer": "© 2026 ShoroRepair Systems • Privacy and Terms • © 2026 Shoropio Corporation"
+    },
+    "notifications": {
+        "enabled": "Notifications enabled",
+        "blocked": "Notifications are blocked in your browser",
+        "already_active": "Notifications are already active"
+    },
+    "messages": {
+        "success": "Operation successful",
+        "error": "An error occurred",
+        "saved": "Saved successfully",
+        "deleted": "Deleted successfully",
+        "updated": "Updated successfully",
+        "created": "Created successfully",
+        "confirm_delete": "Are you sure you want to delete this item?",
+        "no_data": "No data available",
+        "loading": "Loading..."
+    },
+    "ai": {
+        "title": "AI Diagnostic Tool",
+        "subtitle": "Artificial intelligence assisted analysis",
+        "source": "Data source",
+        "link_order": "Link to order",
+        "custom_description": "Custom description",
+        "analyze": "Analyze with Gemini",
+        "result_title": "AI Diagnostic Report",
+        "save_to_order": "Save to order",
+        "copy": "Copy",
+        "disclaimer": "Results are suggestions. Please verify physically."
+    }
+}
