@@ -262,6 +262,9 @@
         "unit_price": "Precio Unitario",
         "update_component": "Actualizar Componente",
         "register_part": "Registrar Pieza",
+        "label_tag": "ETIQUETA DE REPUESTO",
+        "print_all_tags": "Imprimir Todo Etiquetas",
+        "print_all_qrs": "Imprimir Todo QRs",
         "fields": {
             "name": "Nombre del repuesto",
             "part_name": "Nombre de la Pieza / Repuesto",

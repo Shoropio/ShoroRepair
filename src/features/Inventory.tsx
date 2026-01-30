@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { handlePrint } from '../utils/print/printUtils';
+import { generateQRCode } from '../utils/barcode/qrUtils';
 import { jsPDF } from 'jspdf';
 import { Button, Input, Card, Modal, Badge, TableSkeleton } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
@@ -126,28 +127,72 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const generateTag = async (part: Part, action: 'print' | 'download') => {
+  const generateTag = async (part: Part, action: 'print' | 'download', mode: 'tag' | 'qr' = 'tag') => {
+    const toastId = toast.loading(t('messages.loading'));
     try {
       const doc = new jsPDF({ unit: 'mm', format: [50, 30] });
-      doc.setFontSize(8);
-      doc.text(t('inventory.label_tag'), 5, 5);
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.text(part.name.toUpperCase(), 5, 12);
-      doc.setFontSize(7);
-      doc.text(`SKU: ${part.sku}`, 5, 18);
-      doc.text(`${t('inventory.price')}: ${formatCurrency(part.price)}`, 5, 23);
-      doc.text(`${t('common.date')}: ${formatDate(Date.now())}`, 5, 27);
+
+      if (mode === 'tag') {
+        doc.setFontSize(8);
+        doc.text(t('inventory.label_tag'), 5, 5);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.text(part.name.toUpperCase(), 5, 12);
+        doc.setFontSize(7);
+        doc.text(`SKU: ${part.sku}`, 5, 18);
+        doc.text(`${t('inventory.price')}: ${formatCurrency(part.price)}`, 5, 23);
+        doc.text(`${t('common.date')}: ${formatDate(Date.now())}`, 5, 27);
+      } else {
+        const qrData = await generateQRCode(part.sku || part.name);
+        doc.addImage(qrData, 'PNG', 10, 2, 30, 30);
+        doc.setFontSize(6);
+        doc.text(part.sku || '', 25, 28, { align: 'center' });
+      }
 
       if (action === 'download') {
-        doc.save(`QR_${part.sku}.pdf`);
-        toast.success(t('messages.document_generated'));
+        doc.save(`${mode.toUpperCase()}_${part.sku}.pdf`);
+        toast.success(t('messages.document_generated'), { id: toastId });
       } else {
-        await handlePrint(doc, `QR_${part.sku}.pdf`, { autoPrint: true });
-        toast.success(t('messages.printing_queue'));
+        await handlePrint(doc, `${mode.toUpperCase()}_${part.sku}.pdf`, { autoPrint: true });
+        toast.success(t('messages.printing_queue'), { id: toastId });
       }
     } catch (e) {
-      toast.error(t('messages.printing_failed'));
+      toast.error(t('messages.printing_failed'), { id: toastId });
+    }
+  };
+
+  const generateAll = async (mode: 'tag' | 'qr') => {
+    if (!parts || parts.length === 0) return;
+    const toastId = toast.loading(t('messages.loading'));
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: [50, 30] });
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i > 0) doc.addPage([50, 30]);
+
+        if (mode === 'tag') {
+          doc.setFontSize(8);
+          doc.text(t('inventory.label_tag'), 5, 5);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text(part.name.toUpperCase(), 5, 12);
+          doc.setFontSize(7);
+          doc.text(`SKU: ${part.sku}`, 5, 18);
+          doc.text(`${t('inventory.price')}: ${formatCurrency(part.price)}`, 5, 23);
+          doc.text(`${t('common.date')}: ${formatDate(Date.now())}`, 5, 27);
+        } else {
+          const qrData = await generateQRCode(part.sku || part.name);
+          doc.addImage(qrData, 'PNG', 10, 2, 30, 30);
+          doc.setFontSize(6);
+          doc.text(part.sku || '', 25, 28, { align: 'center' });
+        }
+      }
+
+      await handlePrint(doc, `ALL_${mode.toUpperCase()}_INVENTORY.pdf`, { autoPrint: true });
+      toast.success(t('messages.printing_queue'), { id: toastId });
+    } catch (e) {
+      toast.error(t('messages.printing_failed'), { id: toastId });
     }
   };
 
@@ -182,16 +227,34 @@ const Inventory: React.FC = () => {
               <p className="text-xl font-bold text-emerald-600">{formatCurrency(stats.value)}</p>
             </div>
           </div>
-          {hasPermission('canManageInventory') && (
+          <div className="flex gap-2 relative z-10">
             <Button
-              variant="primary"
-              className="rounded-none px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]"
-              leftIcon={<Plus size={18} />}
-              onClick={() => setShowAddModal(true)}
+              variant="outline"
+              className="rounded-none border-gray-200 text-gray-500 px-4 py-2.5 font-bold uppercase tracking-widest text-[9px]"
+              leftIcon={<Tag size={16} />}
+              onClick={() => generateAll('tag')}
             >
-              {t('inventory.new')}
+              {t('inventory.print_all_tags')}
             </Button>
-          )}
+            <Button
+              variant="outline"
+              className="rounded-none border-gray-200 text-gray-500 px-4 py-2.5 font-bold uppercase tracking-widest text-[9px]"
+              leftIcon={<QrCode size={16} />}
+              onClick={() => generateAll('qr')}
+            >
+              {t('inventory.print_all_qrs')}
+            </Button>
+            {hasPermission('canManageInventory') && (
+              <Button
+                variant="primary"
+                className="rounded-none px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]"
+                leftIcon={<Plus size={18} />}
+                onClick={() => setShowAddModal(true)}
+              >
+                {t('inventory.new')}
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -259,7 +322,8 @@ const Inventory: React.FC = () => {
 
               <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex gap-2">
                 <button onClick={() => openEdit(part)} className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/30 text-[#1a73e8] rounded-none text-[10px] font-bold uppercase hover:bg-blue-100 transition-colors">{t('common.edit')}</button>
-                <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 dark:bg-white/5 text-gray-600 rounded-none hover:bg-gray-100 transition-colors"><Tag size={14} /></button>
+                <button onClick={() => generateTag(part, 'print', 'tag')} className="p-2 bg-gray-50 dark:bg-white/5 text-gray-600 rounded-none hover:bg-gray-100 transition-colors" title="Etiqueta"><Tag size={14} /></button>
+                <button onClick={() => generateTag(part, 'print', 'qr')} className="p-2 bg-[#f8f9fa] dark:bg-white/5 text-purple-600 rounded-none hover:bg-purple-50 transition-colors" title="QR Code"><QrCode size={14} /></button>
                 {hasPermission('canManageInventory') && (
                   <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-none transition-colors"><Trash2 size={14} /></button>
                 )}
@@ -292,7 +356,8 @@ const Inventory: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEdit(part)} className="p-2 bg-blue-50 text-blue-600 rounded-none"><Edit2 size={14} /></button>
-                        <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 text-gray-600 rounded-none"><Tag size={14} /></button>
+                        <button onClick={() => generateTag(part, 'print', 'tag')} className="p-2 bg-gray-50 text-gray-600 rounded-none" title="Etiqueta"><Tag size={14} /></button>
+                        <button onClick={() => generateTag(part, 'print', 'qr')} className="p-2 bg-purple-50 text-purple-600 rounded-none" title="QR Code"><QrCode size={14} /></button>
                         <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-none"><Trash2 size={14} /></button>
                       </div>
                     </td>

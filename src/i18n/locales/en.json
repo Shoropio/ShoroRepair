@@ -262,6 +262,9 @@
         "unit_price": "Unit Price",
         "update_component": "Update Component",
         "register_part": "Register Part",
+        "label_tag": "SPARE PART LABEL",
+        "print_all_tags": "Print All Tags",
+        "print_all_qrs": "Print All QRs",
         "fields": {
             "name": "Part name",
             "part_name": "Part / Spare Name",
