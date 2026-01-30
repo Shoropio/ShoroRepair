@@ -155,6 +155,7 @@
             "status": "Status",
             "actions": "Actions",
             "order_number": "Order number",
+            "date": "Date",
             "client": "Client",
             "technician": "Technician",
             "component": "Component",
@@ -472,7 +473,8 @@
         "logo_updated": "Logo updated in cloud",
         "logo_error": "Error processing logo",
         "global_sync": "Global configuration synchronized",
-        "profile_updated": "Operator profile updated"
+        "profile_updated": "Operator profile updated",
+        "advertencia": "Warning"
     },
     "activity": {
         "title": "Activity Log",

@@ -16,7 +16,7 @@ const Input: React.FC<InputProps> = ({
     return (
         <div className="flex flex-col space-y-1.5 w-full">
             {label && (
-                <label className="text-xs font-semibold text-[#5f6368] dark:text-[#9aa0a6] ml-4">
+                <label className="text-xs font-semibold text-[#5f6368] dark:text-[#9aa0a6]">
                     {label}
                 </label>
             )}
@@ -40,7 +40,7 @@ const Input: React.FC<InputProps> = ({
                 />
             </div>
             {error && (
-                <p className="text-[11px] font-medium text-[#ea4335] mt-1 ml-4 overflow-hidden animate-in">
+                <p className="text-[11px] font-medium text-[#ea4335] mt-1 overflow-hidden animate-in">
                     {error}
                 </p>
             )}

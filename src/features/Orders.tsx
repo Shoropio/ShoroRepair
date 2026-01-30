@@ -544,6 +544,7 @@ const Orders: React.FC = () => {
                 <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
                   <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.date')}</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
                   <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
                 </tr>
@@ -568,14 +569,14 @@ const Orders: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2">
-                            <Smartphone size={14} className="text-[#1a73e8]" />
-                            <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
-                          </div>
-                          <div className="flex items-center gap-2 text-[9px] text-[#5f6368] font-bold uppercase tracking-wider">
-                            <Calendar size={12} /> {formatDate(order.createdAt)}
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Smartphone size={14} className="text-[#1a73e8]" />
+                          <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold uppercase tracking-wider">
+                          <Calendar size={12} className="text-[#1a73e8]" /> {formatDate(order.createdAt)}
                         </div>
                       </td>
                       <td className="px-6 py-4">

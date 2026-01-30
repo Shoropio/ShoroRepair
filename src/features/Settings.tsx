@@ -211,14 +211,14 @@ const Settings: React.FC = () => {
 									<option value="en">{t('settings.lang_en')}</option>
 								</Select>
 								<div className="space-y-2">
-									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">{t('settings.brand_color')}</label>
+									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{t('settings.brand_color')}</label>
 									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-none h-10">
 										<div className="w-6 h-6 rounded-none shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
 										<input type="text" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="flex-1 bg-transparent border-none text-[10px] font-black uppercase tracking-tighter text-gray-700 outline-none" />
 									</div>
 								</div>
 							</div>
-							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
+							<div className="pt-8 border-t border-gray-100 dark:border-white/5 flex justify-end">
 								<Button type="submit" variant="primary" className="rounded-none px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.save_changes')}</Button>
 							</div>
 						</Card>
@@ -228,18 +228,33 @@ const Settings: React.FC = () => {
 								<Info className="text-blue-500" size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.about')}</h3>
 							</div>
-							<div className="space-y-4">
-								<div className="flex items-center gap-3">
-									<Smartphone size={16} className="text-gray-400" />
-									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('settings.app_version')}: <span className="font-bold text-[#1a73e8]">v1.0.0</span></p>
+							<div className="space-y-6">
+								<div className="flex items-center gap-4">
+									<div className="w-8 h-8 rounded-none bg-blue-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+										<Smartphone size={16} className="text-[#1a73e8]" />
+									</div>
+									<div className="flex-1 flex justify-between items-center pr-2">
+										<p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{t('settings.app_version')}</p>
+										<span className="font-black text-[#1a73e8] text-xs">v1.0.0</span>
+									</div>
 								</div>
-								<div className="flex items-center gap-3">
-									<Cpu size={16} className="text-gray-400" />
-									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('settings.db_engine')}: <span className="font-bold text-[#1a73e8]">Dexie.js</span></p>
+								<div className="flex items-center gap-4">
+									<div className="w-8 h-8 rounded-none bg-blue-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+										<Cpu size={16} className="text-[#1a73e8]" />
+									</div>
+									<div className="flex-1 flex justify-between items-center pr-2">
+										<p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{t('settings.db_engine')}</p>
+										<span className="font-black text-[#1a73e8] text-xs">Dexie.js</span>
+									</div>
 								</div>
-								<div className="flex items-center gap-3">
-									<Globe size={16} className="text-gray-400" />
-									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('common.date')}: <span className="font-bold text-[#1a73e8]">{company.language === 'es' ? t('settings.lang_es') : t('settings.lang_en')}</span></p>
+								<div className="flex items-center gap-4">
+									<div className="w-8 h-8 rounded-none bg-blue-50 dark:bg-white/5 flex items-center justify-center shrink-0">
+										<Globe size={16} className="text-[#1a73e8]" />
+									</div>
+									<div className="flex-1 flex justify-between items-center pr-2">
+										<p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">{t('common.date')}</p>
+										<span className="font-black text-[#1a73e8] text-xs">{company.language === 'es' ? t('settings.lang_es') : t('settings.lang_en')}</span>
+									</div>
 								</div>
 							</div>
 						</Card>
