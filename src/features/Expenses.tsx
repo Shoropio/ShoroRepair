@@ -43,6 +43,29 @@ const Expenses: React.FC = () => {
         date: Date.now()
     });
 
+    const getCategoryLabel = (cat: string) => {
+        switch (cat) {
+            case 'Alquiler': return t('expenses.categories.rent');
+            case 'Servicios Públicos': return t('expenses.categories.utilities');
+            case 'Suministros Taller': return t('expenses.categories.supplies');
+            case 'Salarios': return t('expenses.categories.salaries');
+            case 'Marketing': return t('expenses.categories.marketing');
+            case 'Mantenimiento': return t('expenses.categories.maintenance');
+            case 'Otros': return t('expenses.categories.other');
+            default: return cat;
+        }
+    };
+
+    const getPaymentMethodLabel = (pm: string) => {
+        switch (pm) {
+            case 'Efectivo': return t('expenses.payment_methods.cash');
+            case 'Tarjeta': return t('expenses.payment_methods.card');
+            case 'Transferencia': return t('expenses.payment_methods.transfer');
+            case 'Cheque': return t('expenses.payment_methods.check');
+            default: return pm;
+        }
+    };
+
     const expenses = useLiveQuery(async () => {
         const items = await db.expenses.where('deleted').equals(0).reverse().sortBy('date');
         if (!search) return items;
@@ -66,7 +89,7 @@ const Expenses: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.description || !formData.amount) {
-            toast.error("Complete los datos requeridos");
+            toast.error(t('common.required_fields'));
             return;
         }
 
@@ -81,17 +104,17 @@ const Expenses: React.FC = () => {
 
         setShowModal(false);
         setFormData({ description: '', amount: 0, category: 'Operativo', paymentMethod: 'Efectivo', date: Date.now() });
-        toast.success("Gasto registrado");
+        toast.success(t('messages.saved'));
     };
 
     const deleteExpense = async (id: number) => {
-        if (confirm("¿Estás seguro de eliminar este registro de gasto?")) {
+        if (confirm(t('expenses.delete_confirm'))) {
             await db.expenses.update(id, { deleted: 1, synced: 0 });
-            toast.success("Registro eliminado");
+            toast.success(t('messages.deleted'));
         }
     };
 
-    if (!expenses) return <div className="p-10 animate-pulse text-center text-xs font-black text-gray-400 uppercase tracking-widest">Cargando Libro de Caja...</div>;
+    if (!expenses) return <div className="p-10 animate-pulse text-center text-xs font-black text-gray-400 uppercase tracking-widest">{t('messages.loading')}</div>;
 
     if (!hasPermission('canManageExpenses')) return <Navigate to="/" replace />;
 
@@ -102,21 +125,21 @@ const Expenses: React.FC = () => {
                 <div className="relative z-10">
                     <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <Wallet className="text-[#ea4335]" size={32} />
-                        Libro de Egresos
+                        {t('expenses.title')}
                     </h1>
                     <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-                        Control exhaustivo de gastos operativos, suministros y mantenimiento del taller.
+                        {t('expenses.subtitle')}
                     </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-8 relative z-10">
                     <div className="hidden sm:flex gap-6 border-r border-gray-100 pr-8">
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Mes</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('common.total')}</p>
                             <p className="text-2xl font-black text-red-600">{formatCurrency(stats.total).split(',')[0]}</p>
                         </div>
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Registros</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('activity.records')}</p>
                             <p className="text-2xl font-black text-gray-800 dark:text-white">{stats.count}</p>
                         </div>
                     </div>
@@ -126,7 +149,7 @@ const Expenses: React.FC = () => {
                         leftIcon={<Plus size={20} />}
                         onClick={() => setShowModal(true)}
                     >
-                        Registrar Egreso
+                        {t('expenses.new')}
                     </Button>
                 </div>
                 <div className="absolute -right-10 -top-10 w-48 h-48 bg-red-50 dark:bg-red-900/10 rounded-full blur-3xl opacity-50"></div>
@@ -138,7 +161,7 @@ const Expenses: React.FC = () => {
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#ea4335] transition-colors" size={20} />
                     <input
                         type="text"
-                        placeholder="Buscar por descripción o categoría de gasto..."
+                        placeholder={t('expenses.search_placeholder') || "Search..."}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-red-500/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
@@ -149,13 +172,13 @@ const Expenses: React.FC = () => {
                         onClick={() => { setViewMode('grid'); localStorage.setItem('expenses_view_mode', 'grid'); }}
                         className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
                     >
-                        <LayoutGrid size={16} /> Cuadrícula
+                        <LayoutGrid size={16} /> {t('common.grid')}
                     </button>
                     <button
                         onClick={() => { setViewMode('list'); localStorage.setItem('expenses_view_mode', 'list'); }}
                         className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
                     >
-                        <List size={16} /> Listado
+                        <List size={16} /> {t('common.list')}
                     </button>
                 </div>
             </div>
@@ -166,8 +189,8 @@ const Expenses: React.FC = () => {
                     <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-3xl flex items-center justify-center text-red-200 mb-6 shadow-sm">
                         <Receipt size={40} />
                     </div>
-                    <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">Sin Egresos</h3>
-                    <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">No se han registrado salidas de dinero recientemente.</p>
+                    <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">{t('expenses.empty')}</h3>
+                    <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">{t('expenses.empty_subtitle')}</p>
                 </div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -183,14 +206,14 @@ const Expenses: React.FC = () => {
                             <div className="space-y-1 mb-8">
                                 <h3 className="font-black text-xl text-[#202124] dark:text-white tracking-tight truncate uppercase leading-none">{e.description}</h3>
                                 <div className="flex items-center gap-2">
-                                    <Badge variant="slate" size="xs" className="px-3 py-1 font-black opacity-60 uppercase">{e.category}</Badge>
-                                    <Badge variant="brand" size="xs" className="px-3 py-1 font-black uppercase bg-gray-100 text-gray-500">{e.paymentMethod}</Badge>
+                                    <Badge variant="slate" size="xs" className="px-3 py-1 font-black opacity-60 uppercase">{getCategoryLabel(e.category)}</Badge>
+                                    <Badge variant="brand" size="xs" className="px-3 py-1 font-black uppercase bg-gray-100 text-gray-500">{getPaymentMethodLabel(e.paymentMethod)}</Badge>
                                 </div>
                             </div>
 
                             <div className="flex items-center justify-between p-6 bg-red-50/30 rounded-[2rem] border border-dashed border-red-100">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">Monto Egreso</span>
+                                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">{t('expenses.fields.amount')}</span>
                                     <span className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(e.amount).split(',')[0]}</span>
                                 </div>
                                 <div className="text-right">
@@ -208,11 +231,11 @@ const Expenses: React.FC = () => {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
-                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Fecha</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Descripción del Gasto</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Categoría</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Importe</th>
-                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">Acción</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('common.date')}</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('expenses.table.description')}</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('expenses.table.category')}</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('expenses.table.amount')}</th>
+                                    <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">{t('common.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
@@ -227,7 +250,7 @@ const Expenses: React.FC = () => {
                                             <p className="text-sm font-black text-[#202124] dark:text-white uppercase tracking-tight">{e.description}</p>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <Badge variant="slate" size="xs" className="px-3 font-black uppercase">{e.category}</Badge>
+                                            <Badge variant="slate" size="xs" className="px-3 font-black uppercase">{getCategoryLabel(e.category)}</Badge>
                                         </td>
                                         <td className="px-8 py-6">
                                             <span className="text-base font-black text-red-600">{formatCurrency(e.amount)}</span>
@@ -247,22 +270,23 @@ const Expenses: React.FC = () => {
             <Modal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
-                title="Registro de Gasto"
-                subtitle="Gestión de Egresos ShoroRepair Business"
+                title={t('expenses.new')}
+                subtitle={t('expenses.subtitle')}
                 size="2xl"
-                footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={() => setShowModal(false)}>Cancelar</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]" onClick={handleSubmit}>Guardar Egreso</Button></div>}
+                footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]" onClick={handleSubmit}>{t('expenses.save')}</Button></div>}
             >
                 <form onSubmit={handleSubmit} className="space-y-8 py-6">
-                    <Input label="Descripción del Gasto" placeholder="Ej: Pago de alquiler de local, Compra de herramientas..." value={formData.description} onChange={v => setFormData({ ...formData, description: v.target.value })} required />
+                    <Input label={t('expenses.fields.description')} placeholder={t('expenses.fields.description') + "..."} value={formData.description} onChange={v => setFormData({ ...formData, description: v.target.value })} required />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input label="Monto del Egreso" type="number" step="0.01" placeholder="0.00" value={formData.amount?.toString()} onChange={v => setFormData({ ...formData, amount: parseFloat(v.target.value) })} required />
-                        <Select label="Categoría de Gasto" value={formData.category} onChange={v => setFormData({ ...formData, category: v.target.value })}>
-                            <option>Alquiler</option>
-                            <option>Servicios Públicos</option>
-                            <option>Suministros Taller</option>
-                            <option>Marketing</option>
-                            <option>Mantenimiento</option>
-                            <option>Otros</option>
+                        <Input label={t('expenses.fields.amount')} type="number" step="0.01" placeholder="0.00" value={formData.amount?.toString()} onChange={v => setFormData({ ...formData, amount: parseFloat(v.target.value) })} required />
+                        <Select label={t('expenses.fields.category')} value={formData.category} onChange={v => setFormData({ ...formData, category: v.target.value })}>
+                            <option value="Alquiler">{t('expenses.categories.rent')}</option>
+                            <option value="Servicios Públicos">{t('expenses.categories.utilities')}</option>
+                            <option value="Suministros Taller">{t('expenses.categories.supplies')}</option>
+                            <option value="Salarios">{t('expenses.categories.salaries')}</option>
+                            <option value="Marketing">{t('expenses.categories.marketing')}</option>
+                            <option value="Mantenimiento">{t('expenses.categories.maintenance')}</option>
+                            <option value="Otros">{t('expenses.categories.other')}</option>
                         </Select>
                     </div>
                 </form>

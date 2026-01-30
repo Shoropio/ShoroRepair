@@ -35,11 +35,11 @@ import {
   Edit2,
   LayoutGrid,
   List,
+  MoreVertical,
   Clock,
   ExternalLink,
   CheckCircle2,
   AlertCircle,
-  MoreVertical,
   Calendar,
   DollarSign
 } from 'lucide-react';
@@ -92,7 +92,7 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
 
   const draw = (e: any) => {
     if (!isDrawing) return;
-    e.preventDefault(); // Prevent scrolling while signing
+    e.preventDefault();
     const { x, y } = getPos(e);
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
@@ -100,16 +100,18 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
     ctx.stroke();
   };
 
-  const stopDrawing = async () => {
-    if (!isDrawing) return;
+  const stopDrawing = () => {
     setIsDrawing(false);
-    const data = canvasRef.current?.toDataURL('image/png');
-    if (data) {
-      onSave(data);
-    }
   };
 
-  const clear = () => {
+  const handleSave = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    onSave(canvas.toDataURL());
+    toast.success(t('orders.signature_captured'));
+  };
+
+  const handleClear = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -118,13 +120,13 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
   };
 
   return (
-    <div className="space-y-3">
-      <div className="border-2 border-dashed border-[#dadce0] dark:border-[#3c4043] bg-white dark:bg-[#1a1c1e] rounded-2xl overflow-hidden shadow-inner">
+    <div className="space-y-4">
+      <div className="relative border-2 border-dashed border-[#dadce0] dark:border-white/10 rounded-2xl bg-white dark:bg-[#1a1c1e] overflow-hidden group">
         <canvas
           ref={canvasRef}
-          width={500}
+          width={600}
           height={200}
-          className="w-full h-[150px] cursor-crosshair touch-none"
+          className="w-full h-[200px] cursor-crosshair touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -133,8 +135,15 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
           onTouchMove={draw}
           onTouchEnd={stopDrawing}
         />
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button variant="outline" size="sm" className="rounded-xl px-4 py-2 font-bold uppercase text-[10px]" onClick={handleClear}>{t('common.clear')}</Button>
+          <Button variant="primary" size="sm" className="rounded-xl px-4 py-2 font-bold uppercase text-[10px]" onClick={handleSave}>{t('common.save')}</Button>
+        </div>
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 pointer-events-none opacity-40">
+          <AlertCircle size={14} />
+          <p className="text-[10px] font-bold uppercase">{t('orders.client_sign_accept')}</p>
+        </div>
       </div>
-      <button type="button" onClick={clear} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline px-4">Limpiar firma</button>
     </div>
   );
 };
@@ -149,9 +158,43 @@ const Orders: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case OrderStatus.RECEIVED: return t('orders.status.received');
+      case OrderStatus.DIAGNOSTIC: return t('orders.status.diagnostic');
+      case OrderStatus.IN_REPAIR: return t('orders.status.in_repair');
+      case OrderStatus.READY: return t('orders.status.ready');
+      case OrderStatus.DELIVERED: return t('orders.status.delivered');
+      case OrderStatus.CANCELLED: return t('orders.status.cancelled');
+      default: return status;
+    }
+  };
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case Priority.LOW: return t('common.low');
+      case Priority.MEDIUM: return t('common.medium');
+      case Priority.HIGH: return t('common.high');
+      case Priority.URGENT: return t('common.critical');
+      default: return priority;
+    }
+  };
+
+  const getDeviceTypeLabel = (type: string) => {
+    switch (type) {
+      case DeviceType.PHONE: return t('orders.fields.device_type_phone') || 'Phone';
+      case DeviceType.COMPUTER: return t('orders.fields.device_type_computer') || 'Computer';
+      case DeviceType.APPLIANCE: return t('orders.fields.device_type_appliance') || 'Appliance';
+      case DeviceType.ELECTRONICS: return t('orders.fields.device_type_electronics') || 'Electronics';
+      case DeviceType.OTHER: return t('orders.fields.device_type_other') || 'Other';
+      default: return type;
+    }
+  };
+
   const orders = useLiveQuery(async () => {
     const collection = db.orders.orderBy('createdAt').reverse();
-    const filteredCollection = collection.filter(order => {
+    const result = await collection.toArray();
+    return result.filter(order => {
       if (order.deleted === 1) return false;
       if (filterStatus !== 'all' && order.status !== filterStatus) return false;
       if (!debouncedSearch) return true;
@@ -162,7 +205,6 @@ const Orders: React.FC = () => {
         (order.model && order.model.toLowerCase().includes(q))
       );
     });
-    return filteredCollection.limit(50).toArray();
   }, [filterStatus, debouncedSearch]);
 
   const clients = useLiveQuery(() => db.clients.toArray());
@@ -200,16 +242,16 @@ const Orders: React.FC = () => {
             return uploadedUrls;
           })(),
           {
-            loading: 'Subiendo imágenes...',
+            loading: t('orders.uploading_images'),
             success: (urls) => {
               if (isNewOrder) {
                 setFormData(prev => ({ ...prev, photos: [...(prev.photos || []), ...urls] }));
               } else if (showDetailModal) {
                 setShowDetailModal({ ...showDetailModal, photos: [...(showDetailModal.photos || []), ...urls] });
               }
-              return 'Imágenes listas';
+              return t('orders.images_ready');
             },
-            error: 'Error al procesar imágenes'
+            error: t('orders.images_error')
           }
         );
       } catch (err) {
@@ -229,11 +271,11 @@ const Orders: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.clientId || !formData.brand || !formData.model) {
-      toast.error("Complete los campos obligatorios");
+      toast.error(t('common.required_fields'));
       return;
     }
 
-    const toastId = toast.loading('Registrando ingreso técnico...');
+    const toastId = toast.loading(t('orders.registering_intake'));
 
     try {
       const settings = (await db.settings.toArray())[0];
@@ -249,7 +291,7 @@ const Orders: React.FC = () => {
         logs: [{
           timestamp: Date.now(),
           status: OrderStatus.RECEIVED,
-          note: 'Orden recibida en laboratorio'
+          note: t('orders.received_in_lab')
         }],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -274,16 +316,16 @@ const Orders: React.FC = () => {
         issueDescription: ''
       });
 
-      toast.success("Orden registrada con éxito", { id: toastId });
+      toast.success(t('orders.os_recorded'), { id: toastId });
     } catch (err) {
       console.error("Error creating order", err);
-      toast.error("Error al registrar la orden", { id: toastId });
+      toast.error(t('messages.error'), { id: toastId });
     }
   };
 
   const handleDeleteOrder = async (order: ServiceOrder) => {
     if (!order.id) return;
-    if (confirm(`¿Estás seguro de eliminar permanentemente la orden ${order.orderNumber}?`)) {
+    if (confirm(`${t('messages.confirm_delete')} ${order.orderNumber}?`)) {
       try {
         if (order.parts && order.parts.length > 0) {
           for (const part of order.parts) {
@@ -294,10 +336,10 @@ const Orders: React.FC = () => {
           }
         }
         await db.orders.update(order.id, { deleted: 1, synced: 0 });
-        toast.success("Orden eliminada del sistema");
+        toast.success(t('messages.deleted'));
         setShowDetailModal(null);
       } catch (err) {
-        toast.error("Error al eliminar la orden");
+        toast.error(t('messages.error'));
       }
     }
   };
@@ -305,12 +347,11 @@ const Orders: React.FC = () => {
   const notifyWhatsApp = async (order: ServiceOrder) => {
     const client = await db.clients.get(order.clientId);
     if (!client || !client.phone) {
-      toast.error("El cliente no tiene teléfono registrado.");
+      toast.error(t('orders.no_phone_registered'));
       return;
     }
 
-    const message = `*ShoroRepair - Actualización de Servicio*\n\nHola ${client.name}, te informamos que tu equipo *${order.brand} ${order.model}* (Orden ${order.orderNumber}) ha cambiado al estado: *${order.status.toUpperCase()}*.
-\n${order.status === OrderStatus.READY ? `Total a pagar: ₡${order.total.toFixed(2)}\nYa puedes pasar a retirarlo.` : 'Te avisaremos cuando esté listo.'}\n\n¡Gracias por tu confianza!`;
+    const message = `${t('orders.whatsapp_header')}\n\n${t('orders.whatsapp_body', { name: client.name, brand: order.brand, model: order.model, number: order.orderNumber, status: order.status.toUpperCase() })}\n\n${order.status === OrderStatus.READY ? t('orders.whatsapp_ready', { total: order.total.toFixed(2) }) : t('orders.whatsapp_not_ready')}\n\n${t('dashboard.welcome')}`;
 
     const newLog: MessageLog = {
       timestamp: Date.now(),
@@ -329,11 +370,11 @@ const Orders: React.FC = () => {
 
     const cleanPhone = client.phone.replace(/\D/g, '');
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
-    toast.info("Redirigiendo a WhatsApp...");
+    toast.info(t('orders.redirecting_whatsapp'));
   };
 
   const updateOrder = async (order: ServiceOrder) => {
-    const toastId = toast.loading('Actualizando expediente técnico...');
+    const toastId = toast.loading(t('orders.syncing_record'));
     try {
       let invoiceNumber = order.invoiceNumber;
       if ((order.status === OrderStatus.READY || order.status === OrderStatus.DELIVERED) && !invoiceNumber) {
@@ -366,7 +407,7 @@ const Orders: React.FC = () => {
         const part = await db.inventory.get(partId);
         if (part) {
           const newQuantity = part.quantity - change;
-          if (newQuantity < 0) throw new Error(`Stock insuficiente para: ${part.name}`);
+          if (newQuantity < 0) throw new Error(`${t('orders.insufficient_stock_for', { name: part.name })}`);
           await db.inventory.update(partId, { quantity: newQuantity });
         }
       }
@@ -377,7 +418,7 @@ const Orders: React.FC = () => {
           timestamp: Date.now(),
           status: order.status,
           technicianId: order.technicianId,
-          note: `Expediente actualizado a estado: ${order.status}`
+          note: t('orders.log_status_updated', { status: order.status })
         });
       }
 
@@ -403,17 +444,17 @@ const Orders: React.FC = () => {
 
       await db.orders.update(order.id!, updatedLocal);
       setShowDetailModal(null);
-      toast.success("Expediente técnico sincronizado", { id: toastId });
+      toast.success(t('orders.os_sync_success'), { id: toastId });
     } catch (err: any) {
       console.error("Error updating order", err);
-      toast.error(err.message || "Error al actualizar", { id: toastId });
+      toast.error(err.message || t('messages.error'), { id: toastId });
     }
   };
 
   const addPartToOrder = async (order: ServiceOrder, partId: number) => {
     const invPart = await db.inventory.get(partId);
     if (!invPart || invPart.quantity <= 0) {
-      toast.error("Sin stock disponible");
+      toast.error(t('orders.out_of_stock'));
       return;
     }
     const newPart = { partId, name: invPart.name, quantity: 1, price: invPart.price };
@@ -425,7 +466,7 @@ const Orders: React.FC = () => {
     updatedOrder.total = subtotal + tax;
 
     setShowDetailModal(updatedOrder);
-    toast.info("Repuesto vinculado al expediente");
+    toast.info(t('orders.linked_part'));
   };
 
   if (!orders || !clients || !technicians || !inventory) {
@@ -433,25 +474,25 @@ const Orders: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-in pb-20">
+    <div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
       {/* Header section with Stats or controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
         <div>
-          <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
-            <Wrench className="text-[#1a73e8]" size={28} />
+          <h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+            <Wrench className="text-[#1a73e8]" size={24} />
             {t('orders.title')}
           </h1>
-          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">
-            {orders.length} órdenes registradas • <span className="text-emerald-600 font-bold">{orders.filter(o => o.status === OrderStatus.READY).length} listos</span>
+          <p className="text-xs lg:text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-1 font-medium">
+            {t('orders.tracked_count', { count: orders.length })} • <span className="text-emerald-600 font-bold">{t('orders.ready_count', { count: orders.filter(o => o.status === OrderStatus.READY).length })}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-2xl">
-            <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-[#5f6368]'}`}><List size={18} /></button>
-            <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-[#5f6368]'}`}><LayoutGrid size={18} /></button>
+          <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-xl">
+            <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><List size={16} /></button>
+            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><LayoutGrid size={16} /></button>
           </div>
           {hasPermission('canEditOrders') && (
-            <Button variant="primary" className="rounded-2xl px-6 py-4 shadow-lg shadow-blue-500/20 font-bold" leftIcon={<Plus size={18} />} onClick={() => setShowModal(true)}>
+            <Button variant="primary" className="rounded-xl px-4 lg:px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowModal(true)} leftIcon={<Plus size={18} />}>
               {t('orders.new')}
             </Button>
           )}
@@ -461,13 +502,13 @@ const Orders: React.FC = () => {
       {/* Controls Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white dark:bg-[#1a1c1e] p-4 rounded-3xl border border-[#f1f3f4] dark:border-white/5 shadow-sm">
         <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={18} />
           <input
             type="text"
-            placeholder="Buscar por #Orden, Marca, Modelo o Cliente..."
+            placeholder={t('orders.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-6 py-3.5 bg-[#f1f3f4] dark:bg-white/5 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-6 py-3 bg-[#f1f3f4] dark:bg-white/5 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
@@ -475,12 +516,12 @@ const Orders: React.FC = () => {
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
+              className={`px-4 lg:px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
                 ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
                 : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30'
                 }`}
             >
-              {s === 'all' ? t('common.all') : s}
+              {s === 'all' ? t('common.all') : getStatusLabel(s)}
             </button>
           ))}
         </div>
@@ -488,23 +529,23 @@ const Orders: React.FC = () => {
 
       {/* Orders Table/Grid */}
       {orders.length === 0 ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-[3rem] border-2 border-dashed border-[#dadce0] dark:border-white/10">
-          <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-3xl flex items-center justify-center text-blue-200 mb-6 drop-shadow-sm">
-            <Wrench size={48} />
+        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-[#dadce0] dark:border-white/10">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-2xl flex items-center justify-center text-blue-200 mb-6 drop-shadow-sm">
+            <Wrench size={40} />
           </div>
-          <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">Sin movimientos registrados</h3>
-          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">Utiliza el botón de nueva recepción para empezar.</p>
+          <h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tighter">{t('orders.empty_movements')}</h3>
+          <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">{t('orders.empty_movements_subtitle')}</p>
         </div>
       ) : viewMode === 'list' ? (
-        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/5">
+        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/5">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
-                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
-                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
-                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
-                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
@@ -512,51 +553,51 @@ const Orders: React.FC = () => {
                   const client = clients?.find(c => c.id === order.clientId);
                   return (
                     <tr key={order.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="shrink-0 w-12 h-12 bg-[#1a73e8] text-white rounded-2xl flex items-center justify-center font-black text-xs shadow-lg shadow-blue-500/10 group-hover:scale-105 transition-transform">
+                          <div className="shrink-0 w-10 h-10 bg-[#1a73e8] text-white rounded-xl flex items-center justify-center font-black text-[10px] shadow-lg shadow-blue-500/10 transition-transform">
                             #{order.orderNumber.slice(-4)}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-black text-[#202124] dark:text-white uppercase tracking-tight truncate">{order.orderNumber}</p>
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <User size={12} className="text-[#1a73e8]" />
-                              <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-bold truncate max-w-[140px]">{client?.name || 'S/N'}</p>
+                            <p className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate">{order.orderNumber}</p>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <User size={10} className="text-[#1a73e8]" />
+                              <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold truncate max-w-[140px] uppercase tracking-tight">{client?.name || t('common.none')}</p>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-1">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-2">
                             <Smartphone size={14} className="text-[#1a73e8]" />
                             <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-[#5f6368] font-bold uppercase tracking-wider">
+                          <div className="flex items-center gap-2 text-[9px] text-[#5f6368] font-bold uppercase tracking-wider">
                             <Calendar size={12} /> {formatDate(order.createdAt)}
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-2">
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1.5">
                           <Badge
                             variant={order.status === OrderStatus.READY ? 'success' : (order.status === OrderStatus.IN_REPAIR || order.status === OrderStatus.DIAGNOSTIC) ? 'warning' : 'brand'}
                             size="xs"
-                            className="w-fit"
+                            className="w-fit scale-90 origin-left"
                           >
-                            {order.status}
+                            {getStatusLabel(order.status)}
                           </Badge>
                           {order.priority === Priority.HIGH && (
-                            <span className="flex items-center gap-1 text-[9px] font-black text-red-500 uppercase animate-pulse"><Zap size={10} fill="currentColor" /> Prioridad Crítica</span>
+                            <span className="flex items-center gap-1 text-[9px] font-black text-red-500 uppercase animate-pulse"><Zap size={10} fill="currentColor" /> {t('orders.priority_critical')}</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-1.5 opacity-20 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setShowDetailModal(order)} className="p-2.5 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 transition-colors" title="Gestionar Expediente"><Edit2 size={16} /></button>
-                          <button onClick={() => generateInvoice(order, 'print')} className="p-2.5 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-xl hover:bg-gray-100 transition-colors"><Printer size={16} /></button>
-                          <button onClick={() => generateEntryTicket(order)} className="p-2.5 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-xl hover:bg-gray-100 transition-colors" title="Ticket de Ingreso"><FileText size={16} /></button>
-                          <button onClick={() => notifyWhatsApp(order)} className="p-2.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-xl hover:bg-emerald-100 transition-colors"><MessageSquare size={16} /></button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setShowDetailModal(order)} className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 transition-colors" title={t('orders.manage_file')}><Edit2 size={14} /></button>
+                          <button onClick={() => generateInvoice(order, 'print')} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-lg hover:bg-gray-100 transition-colors"><Printer size={14} /></button>
+                          <button onClick={() => generateEntryTicket(order)} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-lg hover:bg-gray-100 transition-colors" title={t('orders.entry_ticket')}><FileText size={14} /></button>
+                          <button onClick={() => notifyWhatsApp(order)} className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-lg hover:bg-emerald-100 transition-colors"><MessageSquare size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -571,34 +612,34 @@ const Orders: React.FC = () => {
           {orders.map(order => {
             const client = clients?.find(c => c.id === order.clientId);
             return (
-              <Card key={order.id} className="p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] group border-[#f1f3f4] dark:border-white/5">
-                <div className="flex items-center justify-between mb-6">
+              <Card key={order.id} className="p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-3xl group border border-[#f1f3f4] dark:border-white/5">
+                <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black text-xs">
                       {order.brand.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm tracking-tight">#{order.orderNumber}</h4>
-                      <p className="text-[10px] text-[#5f6368] font-bold uppercase">{client?.name || 'Cliente'}</p>
+                      <h4 className="font-bold text-sm tracking-tight text-[#202124] dark:text-white uppercase">#{order.orderNumber.slice(-6)}</h4>
+                      <p className="text-[10px] text-[#5f6368] font-black uppercase tracking-tight">{client?.name || t('orders.fields.client')}</p>
                     </div>
                   </div>
-                  <Badge variant={order.status === OrderStatus.READY ? 'success' : 'brand'} size="xs">{order.status.split(' ')[0]}</Badge>
+                  <Badge variant={order.status === OrderStatus.READY ? 'success' : 'brand'} size="xs" className="scale-90">{getStatusLabel(order.status)}</Badge>
                 </div>
 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2">
-                    < स्मार्टफोन size={16} className="text-[#1a73e8]" />
-                    <p className="text-sm font-black text-[#202124] dark:text-white truncate">{order.brand} {order.model}</p>
+                    <Smartphone size={14} className="text-[#1a73e8]" />
+                    <p className="text-sm font-bold text-[#202124] dark:text-white truncate uppercase tracking-tight">{order.brand} {order.model}</p>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] font-bold text-[#5f6368]">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">
                     <div className="flex items-center gap-1.5"><Clock size={12} /> {formatDate(order.createdAt)}</div>
-                    <div className="flex items-center gap-1.5 text-emerald-600"><DollarSign size={12} /> {formatCurrency(order.total)}</div>
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-black tracking-tighter"><DollarSign size={12} /> {formatCurrency(order.total)}</div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
-                  <Button variant="tonal" size="sm" className="rounded-xl font-bold uppercase text-[9px]" onClick={() => setShowDetailModal(order)}>Workbench</Button>
-                  <Button variant="ghost" size="sm" className="rounded-xl font-bold uppercase text-[9px]" onClick={() => notifyWhatsApp(order)}>Notificar</Button>
+                <div className="flex gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
+                  <Button variant="outline" size="sm" className="flex-1 rounded-xl text-[10px] font-bold uppercase py-2" onClick={() => setShowDetailModal(order)}>{t('orders.manage_file')}</Button>
+                  <Button variant="outline" size="sm" className="rounded-xl p-2" onClick={() => notifyWhatsApp(order)}><MessageSquare size={14} /></Button>
                 </div>
               </Card>
             );
@@ -606,307 +647,180 @@ const Orders: React.FC = () => {
         </div>
       )}
 
-      {/* Workbench Modal (Order Detail) */}
-      <Modal
-        isOpen={!!showDetailModal}
-        onClose={() => setShowDetailModal(null)}
-        title={showDetailModal ? `Workcenter #${showDetailModal.orderNumber}` : 'Workcenter'}
-        subtitle="Laboratorio de Reparación ShoroRepair"
-        size="5xl"
-        allowFullscreen={true}
-      >
-        {showDetailModal && (
-          <div className="flex flex-col h-full space-y-8 animate-in pb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              {/* Technical Workspace */}
-              <div className="lg:col-span-8 space-y-10">
-                {/* Workflow Progress */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                      <Activity size={16} /> <span>Flujo del Dispositivo</span>
-                    </div>
-                    <Badge variant="brand" size="xs">Estado: {showDetailModal.status}</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                    {Object.values(OrderStatus).map(s => (
-                      <button
-                        key={s}
-                        onClick={() => setShowDetailModal({ ...showDetailModal, status: s })}
-                        className={`px-3 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-wider border-2 transition-all ${showDetailModal.status === s
-                          ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
-                          : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30 flex flex-col items-center gap-1.5'
-                          }`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Technical Log */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                      <FileText size={16} /> <span>Bitácora de Laboratorio</span>
-                    </div>
-                    <Select
-                      className="w-48 h-10 text-[10px] font-bold"
-                      value={showDetailModal.technicianId || ''}
-                      onChange={e => setShowDetailModal({ ...showDetailModal, technicianId: parseInt(e.target.value) || undefined })}
-                    >
-                      <option value="">Técnico Responsable</option>
-                      {technicians?.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
-                    </Select>
-                  </div>
-                  <div className="relative group">
-                    <textarea
-                      className="w-full p-8 bg-[#f8f9fa] dark:bg-white/5 dark:text-white border-2 border-transparent focus:border-[#1a73e8]/30 rounded-[2rem] focus:bg-white outline-none transition-all text-sm font-medium min-h-[180px] leading-relaxed shadow-inner"
-                      placeholder="Ingresa diagnósticos, mediciones y pasos de reparación..."
-                      value={showDetailModal.technicalDiagnosis || ''}
-                      onChange={e => setShowDetailModal({ ...showDetailModal, technicalDiagnosis: e.target.value })}
-                    />
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <Badge variant="slate" size="xs" className="opacity-50 group-focus-within:opacity-100">Autosave Active</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Parts & Components */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                      <Package size={16} /> <span>Gestión de Repuestos</span>
-                    </div>
-                    <Select
-                      className="w-64 h-10 text-[10px] font-bold"
-                      onChange={(e) => {
-                        const id = parseInt(e.target.value);
-                        if (id) addPartToOrder(showDetailModal, id);
-                        e.target.value = "";
-                      }}
-                    >
-                      <option value="">+ Vincular Repuesto</option>
-                      {inventory?.map(i => <option key={i.id} value={i.id}>{i.name} (₡{i.price})</option>)}
-                    </Select>
-                  </div>
-
-                  {(showDetailModal.parts || []).length === 0 ? (
-                    <div className="p-10 border-2 border-dashed border-[#f1f3f4] dark:border-white/5 rounded-[2rem] text-center">
-                      <p className="text-xs font-bold text-gray-400 uppercase">Sin repuestos instalados</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {showDetailModal.parts.map((p, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 border border-[#f1f3f4] dark:border-white/10 rounded-2xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">{p.quantity}x</div>
-                            <span className="text-sm font-bold text-[#3c4043] dark:text-white">{p.name}</span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm font-black text-[#1a73e8]">{formatCurrency(p.price * p.quantity)}</span>
-                            <button
-                              onClick={() => {
-                                const newParts = showDetailModal.parts?.filter((_, i) => i !== idx);
-                                setShowDetailModal({ ...showDetailModal, parts: newParts || [] });
-                              }}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Sidebar */}
-              <div className="lg:col-span-4 space-y-6">
-                <Card variant="tonal" className="p-8 bg-[#1a73e8] text-white rounded-[2.5rem] shadow-2xl shadow-blue-500/30 overflow-hidden relative">
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
-                  <h3 className="font-black text-blue-100 text-[10px] uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <DollarSign size={14} /> Liquidación Económica
-                  </h3>
-                  <div className="space-y-6 relative z-10">
-                    <div className="flex justify-between items-center group">
-                      <span className="text-blue-100 text-sm font-bold flex items-center gap-2">Mano de Obra <Edit2 size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" /></span>
-                      <input
-                        type="number"
-                        className="w-28 text-right bg-white/10 hover:bg-white/20 transition-all border-none rounded-xl p-2 text-md font-black text-white outline-none"
-                        value={showDetailModal.laborCost}
-                        onChange={e => {
-                          const val = parseFloat(e.target.value) || 0;
-                          const pts = (showDetailModal.parts || []).reduce((a, p) => a + (p.price * p.quantity), 0);
-                          const sub = val + pts;
-                          setShowDetailModal({ ...showDetailModal, laborCost: val, total: sub * (1 + (showDetailModal.taxRate || 15) / 100) });
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-blue-100 text-sm font-bold">Repuestos</span>
-                      <span className="font-black text-md">{formatCurrency((showDetailModal.parts || []).reduce((a, p) => a + (p.price * p.quantity), 0))}</span>
-                    </div>
-                    <div className="pt-6 border-t border-white/20 space-y-1">
-                      <div className="flex justify-between items-center text-xs font-black text-blue-200 uppercase tracking-widest">
-                        <span>Importe Total</span>
-                        <span>INC. IVA</span>
-                      </div>
-                      <h2 className="text-5xl font-black tracking-tighter drop-shadow-lg">{formatCurrency(showDetailModal.total).split(',')[0]}</h2>
-                    </div>
-                  </div>
-                </Card>
-
-                <div className="space-y-3">
-                  <Button variant="primary" className="w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-500/10" leftIcon={<Save size={20} />} onClick={() => updateOrder(showDetailModal)}>Sincronizar Expediente</Button>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button variant="outline" className="rounded-2xl py-4 h-auto flex flex-col items-center gap-2 font-bold text-[10px] uppercase border-[#f1f3f4] dark:border-white/10" onClick={() => generateInvoice(showDetailModal, 'print')}>
-                      <Printer size={20} className="text-[#1a73e8]" />
-                      <span>Factura</span>
-                    </Button>
-                    <Button variant="outline" className="rounded-2xl py-4 h-auto flex flex-col items-center gap-2 font-bold text-[10px] uppercase border-[#f1f3f4] dark:border-white/10" onClick={() => generateEntryTicket(showDetailModal)}>
-                      <FileText size={20} className="text-[#1a73e8]" />
-                      <span>Ticket</span>
-                    </Button>
-                  </div>
-
-                  <button
-                    onClick={() => notifyWhatsApp(showDetailModal)}
-                    className="w-full py-4 bg-[#25d366] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#128c7e] transition-all shadow-lg shadow-emerald-500/10"
-                  >
-                    <MessageSquare size={18} /> Enviar Actualización WA
-                  </button>
-
-                  <Button variant="ghost" className="w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl mt-4 font-bold uppercase text-[9px] tracking-widest" onClick={() => handleDeleteOrder(showDetailModal)}>Eliminar Registro Permanentemente</Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       {/* New Order Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={t('orders.new')}
-        subtitle="Registro de Ingreso a Laboratorio ShoroRepair"
-        size="5xl"
-        allowFullscreen={true}
-        footer={<div className="flex gap-3 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSubmit}>{t('orders.formalize')}</Button></div>}
+        size="2xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-12 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            {/* Column 1: Equipment & Client */}
-            <div className="lg:col-span-12 xl:col-span-7 space-y-10">
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                  <Smartphone size={18} /> <span>Anatomía del Equipo</span>
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            <Select
+              label={t('orders.table.service_client')}
+              value={formData.clientId?.toString() || ''}
+              onChange={e => setFormData({ ...formData, clientId: parseInt(e.target.value) })}
+              required
+            >
+              <option value="">{t('orders.fields.select_client')}</option>
+              {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <Input label={t('orders.fields.brand')} value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} required />
+              <Input label={t('orders.fields.model')} value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} required />
+            </div>
+            <Input label={t('orders.fields.serial')} value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
+            <Select label={t('common.priority')} value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })}>
+              <option value={Priority.LOW}>{t('common.low')}</option>
+              <option value={Priority.MEDIUM}>{t('common.medium')}</option>
+              <option value={Priority.HIGH}>{t('common.high')}</option>
+            </Select>
+          </div>
+          <Input label={t('orders.fields.issue')} value={formData.issueDescription} onChange={e => setFormData({ ...formData, issueDescription: e.target.value })} required />
+          <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex justify-end gap-3">
+            <Button variant="ghost" className="rounded-xl px-6 py-2.5 font-bold uppercase text-[10px]" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.save')}</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Detail / Workbench Modal */}
+      <Modal
+        isOpen={!!showDetailModal}
+        onClose={() => setShowDetailModal(null)}
+        title={showDetailModal ? t('orders.workbench_title', { number: showDetailModal.orderNumber }) : ''}
+        size="4xl"
+      >
+        {showDetailModal && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-200px)] overflow-hidden">
+            {/* Sidebar info */}
+            <div className="lg:col-span-4 bg-[#f8f9fa] dark:bg-[#1a1c1e] p-6 lg:p-8 border-r border-[#f1f3f4] dark:border-white/5 overflow-y-auto space-y-6">
+              <div className="space-y-4">
+                <div className="p-5 bg-white dark:bg-[#202124] rounded-2xl shadow-sm border border-[#f1f3f4] dark:border-white/5">
+                  <div className="flex items-center gap-3 text-[#1a73e8] mb-3">
+                    <Smartphone size={20} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.device_info')}</h4>
+                  </div>
+                  <p className="text-sm font-black text-[#202124] dark:text-white uppercase truncate">{showDetailModal.brand} {showDetailModal.model}</p>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">SN/IMEI: {showDetailModal.serialNumber || t('common.none')}</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Select
-                    label={t('orders.fields.client')}
-                    required
-                    onChange={e => setFormData({ ...formData, clientId: parseInt(e.target.value) })}
-                  >
-                    <option value="">{t('orders.fields.select_client')}</option>
-                    {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </Select>
-                  <Select
-                    label={t('orders.fields.device_type')}
-                    required
-                    value={formData.deviceType}
-                    onChange={e => setFormData({ ...formData, deviceType: e.target.value as DeviceType })}
-                  >
-                    {Object.values(DeviceType).map(t => <option key={t} value={t}>{t}</option>)}
-                  </Select>
+                <div className="p-5 bg-white dark:bg-[#202124] rounded-2xl shadow-sm border border-[#f1f3f4] dark:border-white/5">
+                  <div className="flex items-center gap-3 text-amber-600 mb-3">
+                    <AlertCircle size={20} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.failure_report')}</h4>
+                  </div>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 italic line-clamp-3">"{showDetailModal.issueDescription}"</p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Input label={t('orders.fields.brand')} required placeholder="Apple, Samsung..." value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
-                  <Input label={t('orders.fields.model')} required placeholder="iPhone 15 Pro..." value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} />
-                  <Select
-                    label="Prioridad"
-                    value={formData.priority}
-                    onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })}
-                  >
-                    {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
-                  </Select>
-                </div>
-                <Input label={t('orders.fields.serial')} placeholder="IMEI o S/N..." value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                  <AlertCircle size={18} /> <span>Falla Reportada</span>
+              {/* Photos */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-black text-[10px] uppercase tracking-widest text-[#5f6368]">{t('orders.photo_record')}</h4>
+                  <label className="cursor-pointer p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                    <Camera size={14} />
+                    <input type="file" className="hidden" multiple accept="image/*" onChange={(e) => handleFileChange(e, false)} />
+                  </label>
                 </div>
-                <textarea
-                  required
-                  className="w-full p-8 bg-[#f8f9fa] dark:bg-white/5 dark:text-white border-2 border-transparent focus:border-[#1a73e8]/30 rounded-[2rem] focus:bg-white outline-none transition-all text-sm font-medium min-h-[160px] leading-relaxed shadow-inner"
-                  placeholder="Describe el problema técnico reportado por el cliente..."
-                  value={formData.issueDescription}
-                  onChange={e => setFormData({ ...formData, issueDescription: e.target.value })}
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {showDetailModal.photos?.map((url, i) => (
+                    <div key={i} className="relative group aspect-square rounded-xl overflow-hidden shadow-md">
+                      <img src={url} alt="Evidencia" className="w-full h-full object-cover" />
+                      <button onClick={() => removePhoto(i, false)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Column 2: Evidence & Legal */}
-            <div className="lg:col-span-12 xl:col-span-5 space-y-10">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                    <Camera size={18} /> <span>Evidencia Visual</span>
-                  </div>
-                  <Badge variant="slate" size="xs">Opcional</Badge>
-                </div>
-                <div className="p-6 bg-[#f8f9fa] dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-[#dadce0] dark:border-white/10 group hover:border-[#1a73e8]/30 transition-colors">
-                  <div className="flex flex-wrap gap-4 min-h-[100px] items-center justify-center">
-                    {formData.photos?.map((p, i) => (
-                      <div key={i} className="relative group/photo w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white">
-                        <img src={p} alt="Evidencia" className="w-full h-full object-cover" />
-                        <button type="button" onClick={() => removePhoto(i, true)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
-                          <Trash2 size={24} />
-                        </button>
-                      </div>
+            {/* Main workshop flow */}
+            <div className="lg:col-span-8 p-6 lg:p-10 overflow-y-auto space-y-8 bg-white dark:bg-[#1a1c1e]">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-[#f1f3f4] dark:border-white/5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('orders.repair_status')}</label>
+                  <div className="flex flex-wrap gap-2">
+                    {[OrderStatus.RECEIVED, OrderStatus.DIAGNOSTIC, OrderStatus.IN_REPAIR, OrderStatus.READY, OrderStatus.DELIVERED].map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setShowDetailModal({ ...showDetailModal, status: s })}
+                        className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border-2 ${showDetailModal.status === s ? 'bg-[#1a73e8] text-white border-transparent' : 'text-gray-400 border-gray-100 hover:border-blue-200'}`}
+                      >
+                        {getStatusLabel(s)}
+                      </button>
                     ))}
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById('new-order-photos')?.click()}
-                      className="w-24 h-24 rounded-2xl bg-white dark:bg-white/5 border-2 border-[#dadce0] dark:border-white/10 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-all flex flex-col items-center justify-center text-[#5f6368] shadow-sm active:scale-95"
-                    >
-                      <Plus size={32} strokeWidth={1} />
-                      <span className="text-[9px] font-black uppercase mt-1 tracking-widest">Subir</span>
-                    </button>
-                    <input id="new-order-photos" type="file" multiple className="hidden" accept="image/*" onChange={e => handleFileChange(e, true)} />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
-                    <ShieldCheck size={18} /> <span>Autorización Legal</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-indigo-600">
+                    <User size={18} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.responsible_tech')}</h4>
                   </div>
-                  <Badge variant="brand" size="xs">Certificado</Badge>
+                  <Select value={showDetailModal.technicianId?.toString() || ''} onChange={e => setShowDetailModal({ ...showDetailModal, technicianId: parseInt(e.target.value) })}>
+                    <option value="">{t('orders.link_technician')}</option>
+                    {technicians?.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                  </Select>
                 </div>
-                <div className="bg-[#f8f9fa] dark:bg-[#111] p-1 rounded-[2rem] border border-[#dadce0] dark:border-white/5 shadow-inner">
-                  <SignaturePad
-                    onSave={(url) => setFormData(prev => ({ ...prev, customerSignature: url }))}
-                    onClear={() => setFormData(prev => ({ ...prev, customerSignature: '' }))}
-                  />
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-emerald-600">
+                    <Package size={18} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.parts_supplies')}</h4>
+                  </div>
+                  <Select value="" onChange={e => addPartToOrder(showDetailModal, parseInt(e.target.value))}>
+                    <option value="">{t('orders.add_component')}</option>
+                    {inventory?.filter(p => !showDetailModal.parts?.some(op => op.partId === p.id)).map(p => <option key={p.id} value={p.id}>{p.name} (₡{p.price})</option>)}
+                  </Select>
                 </div>
-                <div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-2xl border border-amber-100 dark:border-amber-900/20">
-                  <p className="text-[10px] text-amber-700 dark:text-amber-500/80 font-bold leading-relaxed">
-                    Al estampar su firma aquí, el cliente confirma la veracidad de los datos suministrados y acepta las políticas de diagnóstico técnico, pérdida de garantía original del fabricante y tiempos estipulados de retiro para el ShoroRepair Center.
-                  </p>
+              </div>
+
+              {showDetailModal.parts && showDetailModal.parts.length > 0 && (
+                <div className="bg-[#f8f9fa] dark:bg-white/5 rounded-2xl p-6 border border-[#f1f3f4] dark:border-white/5">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-[#5f6368] font-black uppercase tracking-widest">
+                        <th className="pb-4 text-left">{t('orders.table.component')}</th>
+                        <th className="pb-4 text-center">{t('orders.table.quantity')}</th>
+                        <th className="pb-4 text-right">{t('orders.table.amount')}</th>
+                        <th className="pb-4"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#dadce0] dark:divide-white/5">
+                      {showDetailModal.parts.map((p, i) => (
+                        <tr key={i}>
+                          <td className="py-3 font-bold uppercase">{p.name}</td>
+                          <td className="py-3 text-center">{p.quantity}</td>
+                          <td className="py-3 text-right font-black">₡{p.price}</td>
+                          <td className="py-3 text-right">
+                            <button onClick={() => {
+                              const newParts = [...showDetailModal.parts!];
+                              newParts.splice(i, 1);
+                              setShowDetailModal({ ...showDetailModal, parts: newParts });
+                            }} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><X size={14} /></button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="pt-8 border-t border-[#f1f3f4] dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-20">
+                <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl">
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{t('orders.estimated_total')}</p>
+                  <p className="text-2xl font-black text-blue-800 dark:text-blue-100">{formatCurrency(showDetailModal.total || 0)}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="ghost" className="rounded-xl px-10 py-3 font-black uppercase text-[10px]" onClick={() => setShowDetailModal(null)}>{t('common.discard')}</Button>
+                  <Button variant="danger" className="rounded-xl px-4 lg:px-6 py-3 font-black uppercase text-[10px]" onClick={() => handleDeleteOrder(showDetailModal)}>{t('common.delete')}</Button>
+                  <Button variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[10px]" onClick={() => updateOrder(showDetailModal)}>{t('orders.update_os')}</Button>
                 </div>
               </div>
             </div>
           </div>
-        </form>
+        )}
       </Modal>
     </div>
   );

@@ -48,12 +48,12 @@ const Setup: React.FC = () => {
 
 	const handleCreateAdmin = async () => {
 		if (!formData.fullName || !formData.username || !formData.password) {
-			toast.error("Complete el perfil operacional");
+			toast.error(t('setup.fill_profile'));
 			return;
 		}
 
 		if (formData.password !== formData.confirmPassword) {
-			toast.error("Las firmas de seguridad no coinciden");
+			toast.error(t('setup.pass_mismatch'));
 			return;
 		}
 
@@ -94,7 +94,7 @@ const Setup: React.FC = () => {
 			await login(formData.username, formData.password);
 			setStep(3);
 		} catch (error) {
-			toast.error("Fallo estructural en el despliegue");
+			toast.error(t('setup.deploy_failed'));
 		} finally {
 			setIsLoading(false);
 		}
@@ -108,10 +108,10 @@ const Setup: React.FC = () => {
 				if (settings.length > 0 && settings[0].id) {
 					await db.settings.update(settings[0].id, { cloudSetupCompleted: true });
 				}
-				toast.success("Enlace Cloud Establecido");
+				toast.success(t('setup.cloud_linked'));
 			}
 		} catch (e) {
-			toast.error("Error de comunicación Google API");
+			toast.error(t('setup.google_api_error'));
 		}
 	};
 
@@ -120,23 +120,23 @@ const Setup: React.FC = () => {
 		try {
 			const success = await loginWithGoogle();
 			if (success) {
-				toast.info("Descargando respaldo de arquitectura...");
+				toast.info(t('setup.downloading_backup'));
 				localStorage.removeItem('lastSync_users');
 				localStorage.removeItem('lastSync_settings');
 				await syncManager.sync();
 
 				const settings = await db.settings.toArray();
 				if (settings.length > 0) {
-					toast.success("Infraestructura restaurada al 100%");
+					toast.success(t('setup.restore_success'));
 					navigate('/');
 					setTimeout(() => window.location.reload(), 500);
 				} else {
-					toast.warning("Sesión iniciada. Cloud vacío.");
+					toast.warning(t('setup.empty_cloud'));
 					setStep(2);
 				}
 			}
 		} catch (error) {
-			toast.error("Fallo de restauración");
+			toast.error(t('setup.restore_failed'));
 		} finally {
 			setIsLoading(false);
 		}
@@ -148,7 +148,7 @@ const Setup: React.FC = () => {
 			if (settings.length > 0 && settings[0].id) {
 				await db.settings.update(settings[0].id, { cloudSetupCompleted: true });
 			}
-			toast.success("Sistema listo para operar");
+			toast.success(t('setup.system_ready'));
 			navigate('/');
 			setTimeout(() => window.location.reload(), 1500);
 		} catch (error) {
@@ -171,10 +171,10 @@ const Setup: React.FC = () => {
 					</div>
 					<div>
 						<h1 className="text-4xl font-black text-[#202124] dark:text-white tracking-tighter uppercase">
-							{step === 1 ? "Iniciando Protocolo" : step === 2 ? "Perfil de Mando" : "Ledger Digital"}
+							{step === 1 ? t('setup.title_step1') : step === 2 ? t('setup.title_step2') : t('setup.title_step3')}
 						</h1>
 						<p className="text-sm font-bold text-[#5f6368] dark:text-[#9aa0a6] mt-3 uppercase tracking-widest opacity-60">
-							{step === 1 ? "Arquitectura ShoroRepair v8.0" : step === 2 ? "Define al administrador central" : "Protección de datos en la nube"}
+							{step === 1 ? t('setup.subtitle_step1') : step === 2 ? t('setup.subtitle_step2') : t('setup.subtitle_step3')}
 						</p>
 					</div>
 				</div>
@@ -197,26 +197,26 @@ const Setup: React.FC = () => {
 							<div className="p-8 bg-blue-50/50 dark:bg-blue-900/5 rounded-[2.5rem] border border-blue-100 flex gap-4 items-center">
 								<Sparkles className="text-blue-500 shrink-0" size={24} />
 								<p className="text-xs font-bold text-blue-700 uppercase tracking-widest leading-relaxed">
-									Software de gestión técnica de alto rendimiento. Diseñado para control total de reparaciones y stock.
+									{t('setup.welcome_desc')}
 								</p>
 							</div>
 
 							<Input
-								label="Identidad del Negocio"
+								label={t('setup.business_identity')}
 								name="businessName"
 								value={formData.businessName}
 								onChange={handleChange}
 								leftIcon={<Building size={20} />}
-								placeholder="Nombre comercial de su taller..."
+								placeholder={t('setup.business_placeholder')}
 								className="h-16 rounded-2xl"
 							/>
 
 							<div className="space-y-4 pt-4">
-								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={() => setStep(2)} rightIcon={<ArrowRight size={20} />}>Desplegar Nueva Estación</Button>
+								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={() => setStep(2)} rightIcon={<ArrowRight size={20} />}>{t('setup.deploy_station')}</Button>
 
 								<div className="relative flex items-center py-6">
 									<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
-									<span className="flex-shrink-0 mx-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">Backup Protocol</span>
+									<span className="flex-shrink-0 mx-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">{t('setup.backup_protocol')}</span>
 									<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
 								</div>
 
@@ -227,7 +227,7 @@ const Setup: React.FC = () => {
 									isLoading={isLoading}
 									leftIcon={<Database size={20} className="text-blue-500" />}
 								>
-									Restablecer Archivo Nube
+									{t('setup.restore_cloud')}
 								</Button>
 							</div>
 						</div>
@@ -236,16 +236,16 @@ const Setup: React.FC = () => {
 					{step === 2 && (
 						<div className="space-y-8 animate-in slide-in-from-right-10 duration-700">
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								<Input label="Nombre del Operador" name="fullName" value={formData.fullName} onChange={handleChange} leftIcon={<User size={18} />} placeholder="Ej: Jorge Murillo" />
-								<Input label="ID de Acceso" name="username" value={formData.username} onChange={handleChange} leftIcon={<Globe size={18} />} placeholder="admin_repair" />
+								<Input label={t('setup.operator_name')} name="fullName" value={formData.fullName} onChange={handleChange} leftIcon={<User size={18} />} placeholder={t('orders.fields.name_placeholder')} />
+								<Input label={t('setup.access_id')} name="username" value={formData.username} onChange={handleChange} leftIcon={<Globe size={18} />} placeholder={t('orders.fields.username_placeholder')} />
 							</div>
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								<Input label="Contraseña Maestra" type="password" name="password" value={formData.password} onChange={handleChange} leftIcon={<Key size={18} />} />
-								<Input label="Validar Contraseña" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} leftIcon={<Check size={18} />} />
+								<Input label={t('setup.master_password')} type="password" name="password" value={formData.password} onChange={handleChange} leftIcon={<Key size={18} />} />
+								<Input label={t('setup.validate_password')} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} leftIcon={<Check size={18} />} />
 							</div>
 							<div className="pt-6">
-								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={handleCreateAdmin} isLoading={isLoading} rightIcon={<Zap size={20} />}>Inicializar Comandos</Button>
-								<button className="w-full mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-blue-500" onClick={() => setStep(1)}>Volver al Paso 01</button>
+								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={handleCreateAdmin} isLoading={isLoading} rightIcon={<Zap size={20} />}>{t('setup.init_commands')}</Button>
+								<button className="w-full mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-blue-500" onClick={() => setStep(1)}>{t('setup.back_step1')}</button>
 							</div>
 						</div>
 					)}
@@ -257,24 +257,24 @@ const Setup: React.FC = () => {
 									<Cloud size={40} />
 								</div>
 								<div className="space-y-2">
-									<h3 className="font-black text-2xl uppercase tracking-tight">Sincronización Cloud</h3>
-									<p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-relaxed max-w-sm">Vincula tu cuenta para respaldar datos técnicos, clientes y facturación de forma automática.</p>
+									<h3 className="font-black text-2xl uppercase tracking-tight">{t('setup.cloud_sync')}</h3>
+									<p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest leading-relaxed max-w-sm">{t('setup.cloud_desc')}</p>
 								</div>
 							</div>
 
 							<div className="flex flex-col items-center gap-6">
 								{googleAccessToken ? (
 									<div className="w-full bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-[2rem] border-2 border-emerald-100 flex items-center justify-center gap-4 text-emerald-600 font-black uppercase text-xs tracking-widest animate-pulse">
-										<ShieldCheck size={24} /> Conexión Activa y Segura
+										<ShieldCheck size={24} /> {t('setup.active_secure')}
 									</div>
 								) : (
-									<Button variant="outline" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] bg-white text-gray-800 shadow-xl shadow-black/5" onClick={handleCloudLink} leftIcon={<Globe size={18} />}>Vincular Cuenta Google Drive</Button>
+									<Button variant="outline" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] bg-white text-gray-800 shadow-xl shadow-black/5" onClick={handleCloudLink} leftIcon={<Globe size={18} />}>{t('setup.link_google')}</Button>
 								)}
 							</div>
 
 							<div className="pt-10 border-t border-gray-100 dark:border-white/5 flex gap-6">
-								<Button variant="ghost" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]" onClick={finishSetup}>Omitir Nube</Button>
-								<Button variant="primary" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" onClick={finishSetup} disabled={!googleAccessToken}>Completar Despliegue</Button>
+								<Button variant="ghost" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]" onClick={finishSetup}>{t('setup.skip_cloud')}</Button>
+								<Button variant="primary" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" onClick={finishSetup} disabled={!googleAccessToken}>{t('setup.complete_deploy')}</Button>
 							</div>
 						</div>
 					)}

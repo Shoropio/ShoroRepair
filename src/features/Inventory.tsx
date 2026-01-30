@@ -3,49 +3,41 @@ import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
 import { Part } from '../types';
-import { toast } from 'sonner';
 import {
-  Package,
-  Search,
   Plus,
-  Minus,
-  AlertTriangle,
+  Search,
+  Package,
   Trash2,
-  Save,
   Edit2,
-  Printer,
-  QrCode,
-  List,
-  LayoutGrid,
+  AlertCircle,
   Archive,
-  TrendingDown,
-  Activity,
-  Box,
-  Tag,
-  DollarSign,
-  MoreVertical
+  ArrowRight,
+  TrendingUp,
+  LayoutGrid,
+  List,
+  Printer,
+  Download,
+  QrCode,
+  Tag
 } from 'lucide-react';
-import { formatCurrency } from '../utils/format/formatUtils';
-import { useDebounce } from '../hooks/useDebounce';
-import { Button, Input, Card, Badge, Modal } from '../components';
-import { generateBarcode } from '../utils/barcode/barcodeUtils';
-import { generateQRCode } from '../utils/barcode/qrUtils';
-import { jsPDF } from 'jspdf';
+import { toast } from 'sonner';
+import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { handlePrint } from '../utils/print/printUtils';
+import { jsPDF } from 'jspdf';
+import { Button, Input, Card, Modal, Badge, TableSkeleton } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 
 const Inventory: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
+  const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
     return (localStorage.getItem('inventory_view_mode') as 'grid' | 'list') || 'grid';
   });
 
-  const [formData, setFormData] = useState<Partial<Part>>({
+  const [formData, setFormData] = useState({
     name: '',
     sku: '',
     quantity: 0,
@@ -53,47 +45,31 @@ const Inventory: React.FC = () => {
     minStock: 2
   });
 
-  const parts = useLiveQuery(async () => {
-    const collection = db.inventory.where('deleted').equals(0);
-    const filtered = collection.filter(p => {
-      if (!debouncedSearch) return true;
-      const q = debouncedSearch.toLowerCase();
-      return p.name.toLowerCase().includes(q) || (p.sku && p.sku.toLowerCase().includes(q));
-    });
-    return (await filtered.toArray()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [debouncedSearch]);
+  const parts = useLiveQuery(() =>
+    db.inventory
+      .filter(p => p.deleted === 0 && (p.name.toLowerCase().includes(search.toLowerCase()) || p.sku?.toLowerCase().includes(search.toLowerCase())))
+      .reverse()
+      .sortBy('updatedAt')
+    , [search]);
 
   const stats = useMemo(() => {
     if (!parts) return { total: 0, lowStock: 0, value: 0 };
     return {
-      total: parts.length,
+      total: parts.reduce((acc, p) => acc + p.quantity, 0),
       lowStock: parts.filter(p => p.quantity <= (p.minStock || 2)).length,
       value: parts.reduce((acc, p) => acc + (p.price * p.quantity), 0)
     };
   }, [parts]);
 
-  React.useEffect(() => {
-    if (showAddModal && !editingPart && !formData.sku) {
-      setFormData(prev => ({ ...prev, sku: `REP-${Date.now().toString().slice(-6)}` }));
-    }
-  }, [showAddModal, editingPart]);
-
-  const updateQuantity = async (id: number, delta: number) => {
-    const part = await db.inventory.get(id);
-    if (part) {
-      const newQty = Math.max(0, part.quantity + delta);
-      await db.inventory.update(id, { quantity: newQty, updatedAt: Date.now(), synced: 0 });
-      toast.success(`${part.name}: ${newQty} unidades`, { id: `stock-${id}` });
-    }
-  };
-
-  const handleSavePart = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || formData.price === undefined || formData.quantity === undefined) return;
-
-    const finalSku = formData.sku || `REP-${Date.now().toString().slice(-6)}`;
+    if (!formData.name || formData.quantity < 0 || formData.price < 0) {
+      toast.error(t('common.required_fields'));
+      return;
+    }
 
     try {
+      const finalSku = formData.sku || `SKU-${Date.now().toString().slice(-6)}`;
       if (editingPart) {
         await db.inventory.update(editingPart.id!, {
           name: formData.name,
@@ -104,7 +80,7 @@ const Inventory: React.FC = () => {
           updatedAt: Date.now(),
           synced: 0
         });
-        toast.success("Catálogo actualizado");
+        toast.success(t('messages.updated'));
       } else {
         await db.inventory.add({
           name: formData.name,
@@ -117,11 +93,11 @@ const Inventory: React.FC = () => {
           synced: 0,
           deleted: 0
         } as Part);
-        toast.success(`Ingresado con SKU: ${finalSku}`);
+        toast.success(`${t('messages.created')} (SKU: ${finalSku})`);
       }
       closeModal();
     } catch (error) {
-      toast.error("Error al procesar el repuesto");
+      toast.error(t('messages.error'));
     }
   };
 
@@ -138,260 +114,216 @@ const Inventory: React.FC = () => {
       sku: part.sku || '',
       quantity: part.quantity,
       price: part.price,
-      minStock: part.minStock
+      minStock: part.minStock || 2
     });
     setShowAddModal(true);
   };
 
   const deletePart = async (id: number) => {
-    if (confirm("¿Estás seguro de archivar este componente?")) {
+    if (confirm(t('inventory.delete_confirm'))) {
       await db.inventory.update(id, { deleted: 1, synced: 0 });
-      toast.success("Componente archivado");
+      toast.success(t('messages.deleted'));
     }
   };
 
-  const printQRLabel = async (part: Part, action: 'print' | 'download' = 'print') => {
-    if (!part.sku) return;
-    const doc = new jsPDF({ unit: 'mm', format: [50, 25] });
+  const generateTag = async (part: Part, action: 'print' | 'download') => {
     try {
-      const pageW = 50, pageH = 25, inset = 2;
-      doc.setLineWidth(0.3);
-      doc.setDrawColor(200);
-      doc.rect(inset, inset, pageW - inset * 2, pageH - inset * 2, 'S');
-
-      const qrSize = 16;
-      const qrData = await generateQRCode(part.sku, { width: 1000, margin: 1 });
-      doc.setFontSize(6);
-      doc.setFont('helvetica', 'bold');
-      doc.text(part.name.toUpperCase().substring(0, 35), pageW / 2, inset + 1.5, { align: 'center' });
-      doc.addImage(qrData, 'PNG', (pageW - qrSize) / 2, inset + 2.5, qrSize, qrSize);
+      const doc = new jsPDF({ unit: 'mm', format: [50, 30] });
+      doc.setFontSize(8);
+      doc.text(t('inventory.label_tag'), 5, 5);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(part.name.toUpperCase(), 5, 12);
       doc.setFontSize(7);
-      doc.text(`${part.sku} - ${formatCurrency(part.price)}`, pageW / 2, pageH - inset - 1, { align: 'center' });
+      doc.text(`SKU: ${part.sku}`, 5, 18);
+      doc.text(`${t('inventory.price')}: ${formatCurrency(part.price)}`, 5, 23);
+      doc.text(`${t('common.date')}: ${formatDate(Date.now())}`, 5, 27);
 
       if (action === 'download') {
         doc.save(`QR_${part.sku}.pdf`);
-        toast.success("Documento generado");
+        toast.success(t('messages.document_generated'));
       } else {
         await handlePrint(doc, `QR_${part.sku}.pdf`, { autoPrint: true });
-        toast.success("Enviando a cola de impresión...");
+        toast.success(t('messages.printing_queue'));
       }
     } catch (e) {
-      toast.error("Fallo técnico en impresión");
+      toast.error(t('messages.printing_failed'));
     }
   };
 
-  if (!parts) return (
-    <div className="space-y-8 animate-in p-8">
-      <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-[2rem] animate-pulse"></div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse"></div>)}
-      </div>
-    </div>
-  );
+  if (!parts) return <TableSkeleton columns={5} rows={8} title={t('inventory.title')} />;
 
   return (
-    <div className="space-y-8 animate-in pb-20">
+    <div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
       {/* High-Fidelity Header */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
-            <Archive className="text-[#1a73e8]" size={32} />
+          <h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+            <Archive className="text-[#1a73e8]" size={28} />
             {t('inventory.title')}
           </h1>
-          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-            Monitoreo de componentes, piezas y consumibles para el taller central ShoroRepair.
+          <p className="text-xs lg:text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-1 font-medium max-w-md">
+            {t('inventory.subtitle')}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6 relative z-10">
+        <div className="flex flex-wrap items-center gap-4 lg:gap-8 relative z-10">
           <div className="flex gap-4">
-            <div className="text-center px-6 border-r border-[#f1f3f4] dark:border-white/10">
-              <p className="text-[10px] font-black text-[#5f6368] uppercase tracking-widest mb-1">Stock</p>
-              <p className="text-2xl font-black text-[#1a73e8]">{stats.total}</p>
+            <div className="text-center px-4 lg:px-6 border-r border-[#f1f3f4] dark:border-white/10">
+              <p className="text-[9px] font-black text-[#5f6368] uppercase tracking-widest mb-1">{t('inventory.stock')}</p>
+              <p className="text-xl font-bold text-[#1a73e8]">{stats.total}</p>
             </div>
-            <div className="text-center px-6 border-r border-[#f1f3f4] dark:border-white/10">
-              <p className="text-[10px] font-black text-[#5f6368] uppercase tracking-widest mb-1">Crítico</p>
-              <p className="text-2xl font-black text-red-500">{stats.lowStock}</p>
+            <div className="text-center px-4 lg:px-6 border-r border-[#f1f3f4] dark:border-white/10">
+              <p className="text-[9px] font-black text-[#5f6368] uppercase tracking-widest mb-1">{t('inventory.critical')}</p>
+              <p className="text-xl font-bold text-red-500">{stats.lowStock}</p>
             </div>
-            <div className="text-center px-6">
-              <p className="text-[10px] font-black text-[#5f6368] uppercase tracking-widest mb-1">Valor</p>
-              <p className="text-2xl font-black text-emerald-600">{formatCurrency(stats.value).split(',')[0]}</p>
+            <div className="text-center px-4">
+              <p className="text-[9px] font-black text-[#5f6368] uppercase tracking-widest mb-1">{t('inventory.value')}</p>
+              <p className="text-xl font-bold text-emerald-600">{formatCurrency(stats.value)}</p>
             </div>
           </div>
           {hasPermission('canManageInventory') && (
             <Button
               variant="primary"
-              className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]"
-              leftIcon={<Plus size={20} />}
+              className="rounded-xl px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]"
+              leftIcon={<Plus size={18} />}
               onClick={() => setShowAddModal(true)}
             >
               {t('inventory.new')}
             </Button>
           )}
         </div>
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-50"></div>
       </header>
 
       {/* Browser & Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={20} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={18} />
           <input
             type="text"
-            placeholder="Buscar por nombre de componente o SKU..."
+            placeholder={t('inventory.search_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-6 py-3.5 bg-white dark:bg-[#1a1c1e] rounded-2xl outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
           />
         </div>
-        <div className="flex bg-white dark:bg-[#1a1c1e] p-2 rounded-[1.5rem] shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
+        <div className="flex bg-white dark:bg-[#1a1c1e] p-1.5 rounded-2xl shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
           <button
             onClick={() => { setViewMode('grid'); localStorage.setItem('inventory_view_mode', 'grid'); }}
-            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
           >
-            <LayoutGrid size={16} /> Grid
+            <LayoutGrid size={14} /> {t('common.grid')}
           </button>
           <button
             onClick={() => { setViewMode('list'); localStorage.setItem('inventory_view_mode', 'list'); }}
-            className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
           >
-            <List size={16} /> Lista
+            <List size={14} /> {t('common.list')}
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* Parts Display */}
       {parts.length === 0 ? (
-        <div className="py-32 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-[3rem] border-2 border-dashed border-[#dadce0] dark:border-white/10">
-          <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-3xl flex items-center justify-center text-blue-200 mb-6 shadow-sm">
-            <Box size={40} />
-          </div>
-          <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">Inventario Vacío</h3>
-          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">Registra piezas o repuestos para comenzar el control.</p>
+        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-[#dadce0] dark:border-white/10">
+          <Package className="w-16 h-16 text-gray-200 mb-6" />
+          <h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tight">{t('inventory.empty_catalog_title')}</h3>
+          <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2">{t('inventory.empty_catalog_subtitle')}</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {parts.map(part => {
-            const lowStock = part.quantity <= (part.minStock || 2);
-            return (
-              <Card key={part.id} className={`group p-8 rounded-[2.5rem] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 ${lowStock ? 'bg-red-50/10 border-red-100 animate-pulse-slow' : 'bg-white'}`}>
-                <div className="flex justify-between items-start mb-8">
-                  <div className={`p-4 rounded-2xl shadow-sm ${lowStock ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600 dark:bg-blue-900/20'}`}>
-                    <Tag size={24} />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEdit(part)} className="p-3 bg-white dark:bg-white/5 shadow-sm rounded-xl text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all"><Edit2 size={16} /></button>
-                    <button onClick={() => printQRLabel(part)} className="p-3 bg-white dark:bg-white/5 shadow-sm rounded-xl text-gray-500 hover:text-[#1a73e8] hover:bg-blue-50 transition-all"><QrCode size={16} /></button>
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {parts.map(part => (
+            <Card key={part.id} className="p-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-3xl group border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#202124]">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-2 rounded-xl ${part.quantity <= (part.minStock || 2) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                  <Package size={20} />
                 </div>
+                {part.quantity <= (part.minStock || 2) && <Badge variant="error" size="xs" className="animate-pulse">{t('inventory.critical_stock')}</Badge>}
+              </div>
 
-                <div className="space-y-2 mb-8">
-                  <h3 className="font-black text-xl text-[#202124] dark:text-white tracking-tight truncate uppercase">{part.name}</h3>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="slate" size="xs" className="px-3 border-none font-black opacity-60 uppercase">{part.sku}</Badge>
-                    {lowStock && <Badge variant="warning" size="xs" className="px-3 animate-bounce">Reabastecer</Badge>}
-                  </div>
-                </div>
+              <div className="space-y-1 mb-6">
+                <h3 className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate group-hover:text-[#1a73e8] transition-colors">{part.name}</h3>
+                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{part.sku}</p>
+              </div>
 
-                <div className="flex items-center justify-between mb-8 p-4 bg-gray-50 dark:bg-white/5 rounded-3xl border border-dashed border-gray-200 dark:border-white/10">
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Precio Unitario</p>
-                    <div className="text-2xl font-black text-emerald-600">{formatCurrency(part.price)}</div>
-                  </div>
-                  <div className="text-right space-y-2">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Disponibilidad</p>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => updateQuantity(part.id!, -1)} className="w-8 h-8 rounded-full bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-gray-500 hover:text-blue-600 active:scale-90 transition-all border border-gray-100"><Minus size={14} /></button>
-                      <span className={`text-xl font-black w-8 text-center ${lowStock ? 'text-red-600' : 'text-[#1a73e8]'}`}>{part.quantity}</span>
-                      <button onClick={() => updateQuantity(part.id!, 1)} className="w-8 h-8 rounded-full bg-white dark:bg-white/10 shadow-sm flex items-center justify-center text-gray-500 hover:text-blue-600 active:scale-90 transition-all border border-gray-100"><Plus size={14} /></button>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('inventory.in_stock')}</p>
+                  <p className={`text-lg font-black ${part.quantity <= (part.minStock || 2) ? 'text-red-600' : 'text-[#3c4043] dark:text-white'}`}>{part.quantity}</p>
                 </div>
+                <div>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{t('inventory.unit_price')}</p>
+                  <p className="text-lg font-black text-emerald-600">{formatCurrency(part.price)}</p>
+                </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" size="sm" className="rounded-xl font-black uppercase text-[9px] tracking-widest py-3 border-[#f1f3f4]" onClick={() => printQRLabel(part, 'print')}>Imprimir Etiqueta</Button>
-                  <Button variant="ghost" size="sm" className="rounded-xl font-black uppercase text-[9px] tracking-widest py-3 text-red-500 hover:bg-red-50" onClick={() => deletePart(part.id!)}>Archivar</Button>
-                </div>
-              </Card>
-            );
-          })}
+              <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex gap-2">
+                <button onClick={() => openEdit(part)} className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/30 text-[#1a73e8] rounded-xl text-[10px] font-bold uppercase hover:bg-blue-100 transition-colors">{t('common.edit')}</button>
+                <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 dark:bg-white/5 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"><Tag size={14} /></button>
+                {hasPermission('canManageInventory') && (
+                  <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"><Trash2 size={14} /></button>
+                )}
+              </div>
+            </Card>
+          ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5">
+        <Card className="rounded-3xl overflow-hidden border-[#f1f3f4] dark:border-white/5 shadow-2xl shadow-black/5 bg-white dark:bg-[#1a1c1e]">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
-                  <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('inventory.table.part')}</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('inventory.fields.sku')}</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('inventory.table.price')}</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('inventory.table.stock')}</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">{t('common.actions')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('inventory.table.component')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-center">{t('inventory.table.sku')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-center">{t('inventory.table.stock')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('inventory.table.price')}</th>
+                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
-                {parts.map(part => {
-                  const lowStock = part.quantity <= (part.minStock || 2);
-                  return (
-                    <tr key={part.id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center font-black ${lowStock ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-[#1a73e8] dark:bg-blue-900/20'} shadow-sm`}>
-                            <Box size={20} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-[#202124] dark:text-white uppercase tracking-tight">{part.name}</p>
-                            {lowStock && <Badge variant="warning" size="xs" className="mt-1">Reabastecer Pronto</Badge>}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <Badge variant="slate" size="xs" className="px-3 border-none opacity-60 font-black">{part.sku}</Badge>
-                      </td>
-                      <td className="px-8 py-6">
-                        <span className="text-sm font-black text-emerald-600">{formatCurrency(part.price)}</span>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 w-fit p-1 rounded-xl border border-gray-100 dark:border-white/10">
-                          <button onClick={() => updateQuantity(part.id!, -1)} className="p-1.5 hover:bg-white rounded-lg shadow-sm transition-all text-[#5f6368]"><Minus size={14} /></button>
-                          <span className={`text-sm font-black w-8 text-center ${lowStock ? 'text-red-500' : 'text-[#1a73e8]'}`}>{part.quantity}</span>
-                          <button onClick={() => updateQuantity(part.id!, 1)} className="p-1.5 hover:bg-white rounded-lg shadow-sm transition-all text-[#5f6368]"><Plus size={14} /></button>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(part)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all"><Edit2 size={16} /></button>
-                          <button onClick={() => printQRLabel(part)} className="p-2.5 bg-gray-50 text-gray-500 rounded-xl hover:bg-gray-100 transition-all"><QrCode size={16} /></button>
-                          <button onClick={() => deletePart(part.id!)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all"><Trash2 size={16} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {parts.map(part => (
+                  <tr key={part.id} className="hover:bg-blue-50/20 transition-colors group">
+                    <td className="px-6 py-4 font-bold uppercase text-xs">{part.name}</td>
+                    <td className="px-6 py-4 text-center font-black text-[10px] text-gray-500">{part.sku}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`font-black text-sm ${part.quantity <= (part.minStock || 2) ? 'text-red-600' : 'text-gray-800 dark:text-gray-200'}`}>{part.quantity}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-black text-xs text-emerald-600">{formatCurrency(part.price)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(part)} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Edit2 size={14} /></button>
+                        <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 text-gray-600 rounded-lg"><Tag size={14} /></button>
+                        <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
-      {/* MODALS */}
+      {/* Add/Edit Modal */}
       <Modal
         isOpen={showAddModal}
         onClose={closeModal}
-        title={editingPart ? "Editar Componente" : "Nuevo Componente"}
-        subtitle="Registro Maestro de Inventario ShoroRepair"
-        size="2xl"
-        footer={<div className="flex gap-3 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={closeModal}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSavePart}>{t('inventory.save')}</Button></div>}
+        title={editingPart ? t('inventory.update_component') : t('inventory.register_part')}
+        size="lg"
       >
-        <form onSubmit={handleSavePart} className="space-y-8 py-4">
-          <Input label="Nombre del Repuesto o Componente" placeholder="Ej: Pantalla iPhone 15 Pro Original" value={formData.name} onChange={v => setFormData({ ...formData, name: v.target.value })} required />
-          <div className="grid grid-cols-2 gap-6">
-            <Input label="Código Único (SKU)" placeholder="AUTO-GEN" value={formData.sku} onChange={v => setFormData({ ...formData, sku: v.target.value })} />
-            <Input label="Precio Unitario" type="number" placeholder="0.00" value={formData.price} onChange={v => setFormData({ ...formData, price: parseFloat(v.target.value) })} required />
+        <form onSubmit={handleSave} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            <div className="md:col-span-2">
+              <Input label={t('inventory.fields.part_name')} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required placeholder={t('inventory.fields.part_name_placeholder')} />
+            </div>
+            <Input label={t('inventory.fields.sku_optional')} value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} placeholder={t('inventory.fields.sku_placeholder')} />
+            <Input label={t('inventory.fields.min_stock_alert')} type="number" value={formData.minStock} onChange={e => setFormData({ ...formData, minStock: parseInt(e.target.value) })} />
+            <Input label={t('inventory.fields.initial_quantity')} type="number" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) })} required />
+            <Input label={t('inventory.fields.sale_price')} type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })} required />
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <Input label="Sotck Inicial" type="number" placeholder="0" value={formData.quantity} onChange={v => setFormData({ ...formData, quantity: parseInt(v.target.value) })} required />
-            <Input label="Alerta de Stock Mínimo" type="number" placeholder="2" value={formData.minStock} onChange={v => setFormData({ ...formData, minStock: parseInt(v.target.value) })} />
+          <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex justify-end gap-3">
+            <Button variant="ghost" className="rounded-xl px-6 py-2.5 font-bold uppercase text-[10px]" onClick={closeModal}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" className="rounded-xl px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.confirm_entry')}</Button>
           </div>
         </form>
       </Modal>

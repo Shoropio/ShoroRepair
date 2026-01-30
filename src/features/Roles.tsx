@@ -66,28 +66,28 @@ const Roles: React.FC = () => {
     const handleSave = () => {
         localStorage.setItem('custom_roles_config', JSON.stringify(config));
         setIsDirty(false);
-        toast.success("Protocolos de seguridad actualizados");
+        toast.success(t('roles.protocols_updated'));
         setTimeout(() => window.location.reload(), 800);
     };
 
     const handleReset = () => {
-        if (confirm("¿Establecer parámetros de fábrica para los permisos?")) {
+        if (confirm(t('roles.confirm_reset'))) {
             localStorage.removeItem('custom_roles_config');
             setConfig(ROLES_CONFIG);
             setIsDirty(false);
-            toast.success("Configuración restablecida");
+            toast.success(t('roles.config_reset'));
             setTimeout(() => window.location.reload(), 800);
         }
     };
 
     const permissionList: { key: keyof RolePermissions; label: string; icon: any; category: string }[] = [
-        { key: 'canViewReports', label: "Inteligencia de Negocio", icon: Eye, category: 'Data' },
-        { key: 'canManageInventory', label: "Gestión de Activos/Stock", icon: Package, category: 'Operaciones' },
-        { key: 'canManageUsers', label: "Control de Operadores", icon: UsersIcon, category: 'Seguridad' },
-        { key: 'canEditOrders', label: "Modificación de Servicios", icon: FileEdit, category: 'Taller' },
-        { key: 'canDeleteData', label: "Purga de Registros", icon: Trash2, category: 'Seguridad' },
-        { key: 'canManageExpenses', label: "Libro de Egresos", icon: DollarSign, category: 'Finanzas' },
-        { key: 'canManageClients', label: "Gestión de Cartera", icon: UserCheck, category: 'Operaciones' },
+        { key: 'canViewReports', label: t('roles.intel_biz'), icon: Eye, category: t('roles.categories.data') },
+        { key: 'canManageInventory', label: t('roles.asset_management'), icon: Package, category: t('roles.categories.operations') },
+        { key: 'canManageUsers', label: t('roles.operator_control'), icon: UsersIcon, category: t('roles.categories.security') },
+        { key: 'canEditOrders', label: t('roles.service_mod'), icon: FileEdit, category: t('roles.categories.workshop') },
+        { key: 'canDeleteData', label: t('roles.record_purge'), icon: Trash2, category: t('roles.categories.security') },
+        { key: 'canManageExpenses', label: t('roles.expense_book'), icon: DollarSign, category: t('roles.categories.finances') },
+        { key: 'canManageClients', label: t('roles.portfolio_management'), icon: UserCheck, category: t('roles.categories.operations') },
     ];
 
     const roles: UserRole[] = ['Admin', 'Technician', 'Receptionist'];
@@ -99,15 +99,15 @@ const Roles: React.FC = () => {
                 <div className="relative z-10">
                     <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <LockKeyhole className="text-[#1a73e8]" size={32} />
-                        Protocolos de Acceso
+                        {t('roles.access_protocols')}
                     </h1>
                     <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-                        Configuración granular de permisos y jerarquías de seguridad para el personal técnico.
+                        {t('roles.access_subtitle')}
                     </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 relative z-10">
-                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCcw size={18} />} onClick={handleReset}>Restablecer</Button>
+                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCcw size={18} />} onClick={handleReset}>{t('common.reset')}</Button>
                     <Button
                         variant="primary"
                         className={`rounded-2xl px-10 py-4 shadow-lg font-black uppercase tracking-widest text-[11px] transition-all ${isDirty ? 'shadow-blue-500/20' : 'opacity-50 cursor-not-allowed'}`}
@@ -115,7 +115,7 @@ const Roles: React.FC = () => {
                         leftIcon={<Save size={20} />}
                         onClick={handleSave}
                     >
-                        Sincronizar Permisos
+                        {t('roles.sync_permissions')}
                     </Button>
                 </div>
             </header>
@@ -124,7 +124,7 @@ const Roles: React.FC = () => {
             <div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-[2rem] border border-amber-100 dark:border-amber-900/20 flex gap-4 items-center">
                 <ShieldAlert className="text-amber-500 shrink-0" size={24} />
                 <p className="text-[11px] font-black uppercase tracking-widest text-amber-700 leading-tight">
-                    Advertencia: Los cambios en los protocolos de acceso afectan la integridad del sistema y las capacidades operativas de cada cuenta.
+                    {t('roles.warning_text')}
                 </p>
             </div>
 
@@ -138,7 +138,7 @@ const Roles: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="font-black text-xl text-[#202124] dark:text-white uppercase tracking-tight leading-none">{t(`users.roles.${role.toLowerCase()}`)}</h3>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">Nivel de Seguridad {role === 'Admin' ? '01' : role === 'Technician' ? '02' : '03'}</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-2">{t('roles.security_level')} {role === 'Admin' ? '01' : role === 'Technician' ? '02' : '03'}</p>
                             </div>
                         </div>
 
@@ -179,12 +179,12 @@ const Roles: React.FC = () => {
             </div>
 
             {/* Comparison Matrix - Simplified & High Fidelity */}
-            <Card className="p-10 rounded-[3.5rem] shadow-2xl shadow-black/10 border-[#f1f3f4] dark:border-white/5" header={<h3 className="text-lg font-black text-[#202124] dark:text-white uppercase tracking-[0.1em] mb-10 flex items-center gap-3"><Activity size={24} className="text-[#1a73e8]" /> Matriz de Privilegios</h3>}>
+            <Card className="p-10 rounded-[3.5rem] shadow-2xl shadow-black/10 border-[#f1f3f4] dark:border-white/5" header={<h3 className="text-lg font-black text-[#202124] dark:text-white uppercase tracking-[0.1em] mb-10 flex items-center gap-3"><Activity size={24} className="text-[#1a73e8]" /> {t('roles.privilege_matrix')}</h3>}>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-[#f8f9fa] dark:bg-white/[0.02]">
-                                <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest rounded-tl-[2rem]">Módulo del Sistema</th>
+                                <th className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest rounded-tl-[2rem]">{t('roles.system_module')}</th>
                                 {roles.map(r => (
                                     <th key={r} className="px-8 py-6 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">{t(`users.roles.${r.toLowerCase()}`)}</th>
                                 ))}

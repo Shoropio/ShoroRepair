@@ -28,15 +28,15 @@ const Card: React.FC<CardProps> = ({
             ${className}
         `}>
             {header && (
-                <div className="px-6 py-4 border-b border-[#f1f3f4] dark:border-white/5">
+                <div className="px-5 py-3.5 border-b border-[#f1f3f4] dark:border-white/5">
                     {header}
                 </div>
             )}
-            <div className="p-6">
+            <div className="p-5">
                 {children}
             </div>
             {footer && (
-                <div className="px-6 py-4 border-t border-[#f1f3f4] dark:border-white/5 bg-[#fafafa]/50 dark:bg-white/[0.02]">
+                <div className="px-5 py-3.5 border-t border-[#f1f3f4] dark:border-white/5 bg-[#fafafa]/50 dark:bg-white/[0.02]">
                     {footer}
                 </div>
             )}

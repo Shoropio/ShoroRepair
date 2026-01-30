@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { db } from '../offline/db';
-import { OrderStatus } from '../types';
+import { OrderStatus, PaymentStatus } from '../types';
 import {
   ClipboardCheck,
   Clock,
@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
 
     const pending = orders.filter(o => [OrderStatus.RECEIVED, OrderStatus.DIAGNOSTIC, OrderStatus.IN_REPAIR].includes(o.status)).length;
     const ready = orders.filter(o => o.status === OrderStatus.READY).length;
-    const revenue = orders.filter(o => o.paymentStatus === 'Pagado').reduce((acc, curr) => acc + curr.total, 0);
+    const revenue = orders.filter(o => o.paymentStatus === PaymentStatus.PAID).reduce((acc, curr) => acc + curr.total, 0);
 
     const statusGroups = [
       { name: t('orders.status.received'), count: orders.filter(o => o.status === OrderStatus.RECEIVED).length, color: '#1a73e8' },
@@ -75,17 +75,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in pb-12">
       {/* Premium Welcome Header */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#1a73e8] to-[#1557b0] p-8 md:p-12 text-white shadow-2xl shadow-blue-500/20">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a73e8] to-[#1557b0] p-6 md:p-10 text-white shadow-2xl shadow-blue-500/20">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl">
             <Badge variant="brand" className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">
               ShoroRepair OS v2.4
             </Badge>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               {t('dashboard.welcome')}, <span className="text-blue-100">{user?.fullName.split(' ')[0]}!</span>
             </h1>
-            <p className="text-blue-50/80 text-lg font-medium leading-relaxed">
-              Tienes <span className="text-white font-bold">{data.pending} reparaciones</span> activas esperando tu atención técnica hoy.
+            <p className="text-blue-50/80 text-base font-medium leading-relaxed">
+              {t('dashboard.active_repairs', { count: data.pending })}
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link to="/orders">
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
               </Link>
               <Link to="/ai-diagnostic">
                 <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl font-bold" leftIcon={<Sparkles size={20} />}>
-                  AI Assist
+                  {t('dashboard.ai_assist')}
                 </Button>
               </Link>
             </div>
@@ -109,11 +109,10 @@ const Dashboard: React.FC = () => {
         </div>
         {/* Decorative Elements */}
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[100px]"></div>
-        <div className="absolute top-10 right-1/4 w-32 h-32 bg-blue-300/20 rounded-full blur-[60px]"></div>
       </div>
 
       {/* Core Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card variant="tonal" className="p-6 transition-transform hover:scale-[1.02] duration-300">
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-blue-100 dark:bg-blue-900/20 text-blue-600 rounded-2xl">
@@ -167,9 +166,9 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Layout Main Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workshop Flow Chart */}
-        <Card className="lg:col-span-2 p-8 shadow-xl shadow-blue-500/5 rounded-[2rem] border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-8"><h3 className="text-lg font-bold text-[#202124] dark:text-white flex items-center gap-3"><Monitor className="text-[#1a73e8]" size={20} /> {t('dashboard.workshop_status')}</h3><Badge variant="brand" size="xs">Live Update</Badge></div>}>
+        <Card className="lg:col-span-2 p-6 shadow-xl shadow-blue-500/5 rounded-3xl border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-8"><h3 className="text-base font-bold text-[#202124] dark:text-white flex items-center gap-3"><Monitor className="text-[#1a73e8]" size={18} /> {t('dashboard.workshop_status')}</h3><Badge variant="brand" size="xs">{t('dashboard.live_update')}</Badge></div>}>
           <div className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.statusGroups} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
@@ -205,12 +204,12 @@ const Dashboard: React.FC = () => {
         </Card>
 
         {/* Recent Entries */}
-        <Card className="shadow-xl shadow-blue-500/5 rounded-[2rem] border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-6"><h3 className="text-lg font-bold text-[#202124] dark:text-white">{t('dashboard.recent_entries')}</h3><div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600"><Activity size={16} /></div></div>} footer={<Link to="/orders" className="text-xs font-bold text-[#1a73e8] hover:underline flex items-center gap-2 justify-center py-4">{t('dashboard.view_all')} <ArrowRight size={14} /></Link>}>
+        <Card className="shadow-xl shadow-blue-500/5 rounded-3xl border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-6"><h3 className="text-base font-bold text-[#202124] dark:text-white">{t('dashboard.recent_entries')}</h3><div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600"><Activity size={16} /></div></div>} footer={<Link to="/orders" className="text-xs font-bold text-[#1a73e8] hover:underline flex items-center gap-2 justify-center py-4">{t('dashboard.view_all')} <ArrowRight size={14} /></Link>}>
           <div className="space-y-4 px-2">
             {data.recentOrders.length === 0 ? (
               <div className="py-20 text-center">
                 <Package size={40} className="mx-auto text-gray-200 mb-4" />
-                <p className="text-sm font-medium text-gray-400">Sin ingresos recientes</p>
+                <p className="text-sm font-medium text-gray-400">{t('dashboard.no_recent_entries')}</p>
               </div>
             ) : data.recentOrders.map((order, idx) => (
               <div key={order.id} className="p-4 rounded-2xl bg-[#f8f9fa] dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group">
@@ -221,11 +220,16 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[#202124] dark:text-white truncate max-w-[120px]">{order.brand} {order.model}</p>
-                      <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold uppercase tracking-wide">{data.clients[idx]?.name || 'Cliente'}</p>
+                      <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold uppercase tracking-wide">{data.clients[idx]?.name || t('orders.fields.client')}</p>
                     </div>
                   </div>
                   <Badge variant={order.status === OrderStatus.READY ? 'success' : order.status === OrderStatus.RECEIVED ? 'brand' : 'warning'} size="xs" className="px-2">
-                    {order.status.split(' ')[0]}
+                    {order.status === OrderStatus.READY ? t('orders.status.ready') :
+                      order.status === OrderStatus.RECEIVED ? t('orders.status.received') :
+                        order.status === OrderStatus.DIAGNOSTIC ? t('orders.status.diagnostic') :
+                          order.status === OrderStatus.IN_REPAIR ? t('orders.status.in_repair') :
+                            order.status === OrderStatus.DELIVERED ? t('orders.status.delivered') :
+                              order.status}
                   </Badge>
                 </div>
               </div>
@@ -235,34 +239,34 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Notification/Tip Banner */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Card variant="tonal" className="p-8 relative overflow-hidden group">
-          <div className="relative z-10 flex items-start gap-6">
-            <div className="p-4 bg-white dark:bg-white/10 rounded-2xl shadow-lg">
-              <Activity size={32} className="text-[#1a73e8]" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card variant="tonal" className="p-6 relative overflow-hidden group">
+          <div className="relative z-10 flex items-start gap-5">
+            <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-lg">
+              <Activity size={24} className="text-[#1a73e8]" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-[#202124] dark:text-white">{t('dashboard.productivity_tip')}</h3>
-              <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] font-medium leading-relaxed">{t('dashboard.inventory_reminder')}</p>
-              <Link to="/inventory" className="inline-flex items-center gap-2 text-sm font-bold text-[#1a73e8] hover:gap-3 transition-all mt-4">
-                {t('dashboard.go_to_inventory')} <ArrowRight size={16} />
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-[#202124] dark:text-white">{t('dashboard.productivity_tip')}</h3>
+              <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-medium leading-relaxed">{t('dashboard.inventory_reminder')}</p>
+              <Link to="/inventory" className="inline-flex items-center gap-2 text-xs font-bold text-[#1a73e8] hover:gap-3 transition-all mt-3">
+                {t('dashboard.go_to_inventory')} <ArrowRight size={14} />
               </Link>
             </div>
           </div>
         </Card>
 
-        <Card variant="tonal" className="p-8 relative overflow-hidden bg-emerald-50 dark:bg-emerald-900/5">
-          <div className="flex items-start gap-6">
-            <div className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20">
-              <Users size={32} />
+        <Card variant="tonal" className="p-6 relative overflow-hidden bg-emerald-50 dark:bg-emerald-900/5">
+          <div className="flex items-start gap-5">
+            <div className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20">
+              <Users size={24} />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-[#202124] dark:text-white">Relación con Clientes</h3>
-              <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] font-medium leading-relaxed">
-                Tienes <span className="text-emerald-600 font-bold">{data.totalClients} clientes</span> registrados. El 80% de tus ingresos provienen de clientes recurrentes.
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-[#202124] dark:text-white">{t('dashboard.client_relation')}</h3>
+              <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-medium leading-relaxed">
+                {t('dashboard.registered_clients', { count: data.totalClients })}
               </p>
-              <Link to="/clients" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-600 hover:gap-3 transition-all mt-4">
-                Ver directorio <ArrowRight size={16} />
+              <Link to="/clients" className="inline-flex items-center gap-2 text-xs font-bold text-emerald-600 hover:gap-3 transition-all mt-3">
+                {t('dashboard.view_directory')} <ArrowRight size={14} />
               </Link>
             </div>
           </div>

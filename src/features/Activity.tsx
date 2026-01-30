@@ -67,7 +67,7 @@ const ActivityPage: React.FC = () => {
         return colors[entity] || 'slate';
     };
 
-    if (!activities) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">Leyendo Caja Negra...</div>;
+    if (!activities) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">{t('activity.reading_blackbox')}</div>;
 
     return (
         <div className="space-y-8 animate-in pb-20">
@@ -76,20 +76,20 @@ const ActivityPage: React.FC = () => {
                 <div className="relative z-10">
                     <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <Fingerprint className="text-[#1a73e8]" size={32} />
-                        Historial de Auditoría
+                        {t('activity.audit_history')}
                     </h1>
                     <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-                        Trazabilidad completa de operaciones técnicas, movimientos de caja y cambios estructurales.
+                        {t('activity.audit_subtitle')}
                     </p>
                 </div>
                 <div className="flex gap-4 relative z-10">
                     <div className="flex gap-8 border-r border-gray-100 pr-8">
                         <div className="text-center">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Registros</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('activity.records')}</p>
                             <p className="text-2xl font-black text-[#1a73e8]">{activities.length}</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>Frecuencia Real</Button>
+                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>{t('activity.real_frequency')}</Button>
                 </div>
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30"></div>
             </header>
@@ -97,12 +97,12 @@ const ActivityPage: React.FC = () => {
             {/* Filter Chips */}
             <div className="flex flex-wrap gap-3">
                 {[
-                    { id: 'all', label: 'Todo el Sistema', icon: History },
-                    { id: 'order', label: 'Taller Orders', icon: Cpu },
-                    { id: 'client', label: 'Cartera Clientes', icon: User },
-                    { id: 'user', label: 'Control Personal', icon: ShieldCheck },
-                    { id: 'inventory', label: 'Almacén Stock', icon: FileText },
-                    { id: 'expense', label: 'Libro Contable', icon: Trash2 }
+                    { id: 'all', label: t('activity.filters.all_system'), icon: History },
+                    { id: 'order', label: t('activity.filters.workshop_orders'), icon: Cpu },
+                    { id: 'client', label: t('activity.filters.client_portfolio'), icon: User },
+                    { id: 'user', label: t('activity.filters.staff_control'), icon: ShieldCheck },
+                    { id: 'inventory', label: t('activity.filters.stock_warehouse'), icon: FileText },
+                    { id: 'expense', label: t('activity.filters.accounting_book'), icon: Trash2 }
                 ].map(f => {
                     const Icon = f.icon;
                     return (
@@ -123,7 +123,7 @@ const ActivityPage: React.FC = () => {
                 {activities.length === 0 ? (
                     <div className="py-40 flex flex-col items-center justify-center">
                         <History size={64} className="text-gray-100 mb-6" />
-                        <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest">Memoria Despejada</h3>
+                        <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest">{t('activity.empty_title')}</h3>
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-50 dark:divide-white/5">
@@ -157,7 +157,7 @@ const ActivityPage: React.FC = () => {
                                             </div>
                                             <div className="flex items-center gap-2 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
                                                 <Clock size={12} />
-                                                {new Date(activity.timestamp).toLocaleString('es-CR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(activity.timestamp).toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                     </div>

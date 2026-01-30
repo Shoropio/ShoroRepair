@@ -87,9 +87,9 @@ const Settings: React.FC = () => {
 			const { uploadImage } = await import('../services/upload.service');
 			const url = await uploadImage(compressed, path);
 			setCompany({ ...company, logo: url });
-			toast.success("Logo actualizado en nube");
+			toast.success(t('settings.logo_updated'));
 		} catch (err) {
-			toast.error("Error al procesar logo");
+			toast.error(t('settings.logo_error'));
 		}
 	};
 
@@ -100,7 +100,7 @@ const Settings: React.FC = () => {
 		if (company.language) {
 			i18n.changeLanguage(company.language);
 		}
-		toast.success("Configuración global sincronizada");
+		toast.success(t('settings.global_sync'));
 	};
 
 	const updateMyProfile = async (e: React.FormEvent) => {
@@ -109,32 +109,32 @@ const Settings: React.FC = () => {
 		const updatedUser = { ...user, fullName: profile.fullName, password: profile.password };
 		await db.users.update(user.id!, { ...updatedUser, updatedAt: Date.now(), synced: 0 });
 		updateUser(updatedUser);
-		toast.success("Perfil de operador actualizado");
+		toast.success(t('settings.profile_updated'));
 	};
 
-	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Preferencias...</div>;
+	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">{t('settings.loading')}</div>;
 
 	const navItems = [
-		{ id: 'profile', label: 'Mi Perfil', icon: UserIcon },
-		{ id: 'company', label: 'Organización', icon: Shield, adminOnly: true },
-		{ id: 'cloud', label: 'Nube & AI', icon: Cloud, adminOnly: true },
-		{ id: 'advanced', label: 'Avanzado', icon: Database, adminOnly: true }
+		{ id: 'profile', label: t('settings.tabs.profile'), icon: UserIcon },
+		{ id: 'company', label: t('settings.tabs.organization'), icon: Shield, adminOnly: true },
+		{ id: 'cloud', label: t('settings.tabs.cloud_ai'), icon: Cloud, adminOnly: true },
+		{ id: 'advanced', label: t('settings.tabs.advanced'), icon: Database, adminOnly: true }
 	];
 
 	return (
-		<div className="space-y-10 animate-in pb-20">
+		<div className="space-y-6 lg:space-y-10 animate-in pb-12 lg:pb-20">
 			{/* Premium Settings Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
 				<div className="relative z-10">
-					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
-						<SettingsIcon className="text-[#1a73e8]" size={32} />
+					<h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+						<SettingsIcon className="text-[#1a73e8]" size={28} />
 						{t('settings.title')}
 					</h1>
-					<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-						Configura la identidad de tu negocio, claves de IA y parámetros del sistema.
+					<p className="text-xs lg:text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
+						{t('settings.subtitle_desc')}
 					</p>
 				</div>
-				<div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1.5 rounded-[1.8rem] relative z-10 border border-gray-200 dark:border-white/5 shadow-inner">
+				<div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-2xl relative z-10 border border-gray-200 dark:border-white/5 shadow-inner">
 					{navItems.map(item => {
 						if (item.adminOnly && user?.role !== 'Admin') return null;
 						const Icon = item.icon;
@@ -142,9 +142,9 @@ const Settings: React.FC = () => {
 							<button
 								key={item.id}
 								onClick={() => setActiveTab(item.id as any)}
-								className={`px-6 py-3 rounded-[1.3rem] text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+								className={`px-4 lg:px-6 py-2 rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
 							>
-								<Icon size={16} />
+								<Icon size={14} />
 								<span className="hidden sm:inline">{item.label}</span>
 							</button>
 						);
@@ -152,81 +152,126 @@ const Settings: React.FC = () => {
 				</div>
 			</header>
 
-			<div className="max-w-4xl mx-auto space-y-8">
+			<div className="max-w-5xl mx-auto space-y-6 lg:space-y-8">
 				{activeTab === 'profile' && (
-					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><UserIcon size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Identidad del Operador</h3><p className="text-xs text-gray-500 font-bold uppercase">Actualiza tus credenciales personales</p></div></div>}>
-						<form onSubmit={updateMyProfile} className="space-y-8">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								<Input label="Nombre Completo" value={profile.fullName} onChange={v => setProfile({ ...profile, fullName: v.target.value })} />
-								<Input label="Contraseña Actualizada" type="password" value={profile.password} onChange={v => setProfile({ ...profile, password: v.target.value })} leftIcon={<Lock size={16} />} />
+					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4">
+						<Card className="lg:col-span-1 p-6 rounded-3xl shadow-xl border-none">
+							<div className="flex flex-col items-center py-6">
+								<div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center text-blue-600 border-4 border-white dark:border-white/5 shadow-xl mb-6">
+									<UserIcon size={32} />
+								</div>
+								<h3 className="text-lg font-bold uppercase tracking-tight">{user?.fullName}</h3>
+								<Badge variant="brand" className="mt-2">{t(`users.roles.${user?.role.toLowerCase()}`)}</Badge>
 							</div>
-							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Actualizar mi perfil</Button>
+						</Card>
+
+						<Card className="lg:col-span-2 p-6 rounded-3xl shadow-xl border-none">
+							<div className="flex items-center gap-3 mb-6">
+								<Info className="text-blue-500" size={18} />
+								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.profile_credentials')}</h3>
 							</div>
-						</form>
-					</Card>
+							<form onSubmit={updateMyProfile} className="space-y-4">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+									<Input label={t('common.name')} value={profile.fullName} onChange={v => setProfile({ ...profile, fullName: v.target.value })} />
+									<Input label={t('users.fields.password')} type="password" value={profile.password} onChange={v => setProfile({ ...profile, password: v.target.value })} leftIcon={<Lock size={16} />} />
+								</div>
+								<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
+									<Button type="submit" variant="primary" className="rounded-xl px-6 lg:px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_profile')}</Button>
+								</div>
+							</form>
+						</Card>
+					</div>
 				)}
 
 				{activeTab === 'company' && company && (
-					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><Shield size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Estudio / Taller</h3><p className="text-xs text-gray-500 font-bold uppercase">Identidad corporativa y facturación</p></div></div>}>
-						<form onSubmit={saveCompanySettings} className="space-y-10">
-							<div className="flex flex-col md:flex-row items-center gap-10 p-8 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-white/10">
-								<div className="w-24 h-24 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] shadow-2xl border-4 border-white flex items-center justify-center overflow-hidden shrink-0">
-									{company.logo ? <img src={company.logo} alt="Logo" className="w-full h-full object-contain" /> : <ImageIcon size={40} className="text-gray-200" />}
+					<form onSubmit={saveCompanySettings} className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4">
+						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-3xl shadow-xl border-none space-y-8">
+							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
+								<Shield className="text-blue-500" size={18} />
+								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.corporate_info')}</h3>
+							</div>
+							<div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
+								<div className="w-16 h-16 lg:w-20 lg:h-20 bg-white dark:bg-[#1a1c1e] rounded-xl shadow-xl border-4 border-white flex items-center justify-center overflow-hidden shrink-0">
+									{company.logo ? <img src={company.logo} alt="Logo" className="w-full h-full object-contain" /> : <ImageIcon size={24} className="text-gray-200" />}
 								</div>
-								<div className="space-y-4 text-center md:text-left">
-									<h4 className="font-black text-sm uppercase tracking-widest text-gray-700 dark:text-gray-300">Logo de la Empresa</h4>
-									<p className="text-[11px] text-gray-500 font-medium">Se recomienda una imagen cuadrada de fondo blanco o transparente (PNG/JPG).</p>
-									<Button variant="outline" size="sm" className="rounded-xl font-black uppercase text-[10px]" onClick={() => document.getElementById('logo-upload')?.click()}>Elegir nueva imagen</Button>
+								<div className="space-y-2 text-center md:text-left">
+									<h4 className="font-bold text-xs uppercase tracking-widest text-gray-700 dark:text-gray-300">{t('settings.company_logo')}</h4>
+									<p className="text-[10px] text-gray-500 font-medium">{t('settings.logo_desc')}</p>
+									<Button variant="outline" size="sm" className="rounded-lg font-bold text-[10px] py-1.5 px-3" onClick={() => document.getElementById('logo-upload')?.click()}>{t('settings.choose_image')}</Button>
 									<input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
 								</div>
 							</div>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-								<Input label="Nombre Comercial" value={company.businessName} onChange={v => setCompany({ ...company, businessName: v.target.value })} />
-								<Input label="ID Tributaria / Cédula" value={company.taxId} onChange={v => setCompany({ ...company, taxId: v.target.value })} />
-								<Select label="Idioma del Sistema" value={company.language || 'es'} onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}>
-									<option value="es">Español (Latam)</option>
-									<option value="en">English (US)</option>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+								<Input label={t('settings.business_name')} value={company.businessName} onChange={v => setCompany({ ...company, businessName: v.target.value })} />
+								<Input label={t('settings.tax_identity')} value={company.taxId} onChange={v => setCompany({ ...company, taxId: v.target.value })} />
+								<Select label={t('settings.system_language')} value={company.language || 'es'} onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}>
+									<option value="es">{t('settings.lang_es')}</option>
+									<option value="en">{t('settings.lang_en')}</option>
 								</Select>
 								<div className="space-y-2">
-									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">Color de Marca</label>
-									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl h-12">
-										<div className="w-8 h-8 rounded-lg shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
-										<input type="text" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="flex-1 bg-transparent border-none text-xs font-black uppercase tracking-tighter text-gray-700 outline-none" />
+									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">{t('settings.brand_color')}</label>
+									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-xl h-10">
+										<div className="w-6 h-6 rounded-md shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
+										<input type="text" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="flex-1 bg-transparent border-none text-[10px] font-black uppercase tracking-tighter text-gray-700 outline-none" />
 									</div>
 								</div>
 							</div>
 							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Guardar Organización</Button>
+								<Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.save_changes')}</Button>
 							</div>
-						</form>
-					</Card>
+						</Card>
+
+						<Card className="lg:col-span-4 p-6 rounded-3xl shadow-xl border-none space-y-6">
+							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
+								<Info className="text-blue-500" size={18} />
+								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.about')}</h3>
+							</div>
+							<div className="space-y-4">
+								<div className="flex items-center gap-3">
+									<Smartphone size={16} className="text-gray-400" />
+									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('settings.app_version')}: <span className="font-bold text-[#1a73e8]">v1.0.0</span></p>
+								</div>
+								<div className="flex items-center gap-3">
+									<Cpu size={16} className="text-gray-400" />
+									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('settings.db_engine')}: <span className="font-bold text-[#1a73e8]">Dexie.js</span></p>
+								</div>
+								<div className="flex items-center gap-3">
+									<Globe size={16} className="text-gray-400" />
+									<p className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('common.date')}: <span className="font-bold text-[#1a73e8]">{company.language === 'es' ? t('settings.lang_es') : t('settings.lang_en')}</span></p>
+								</div>
+							</div>
+						</Card>
+					</form>
 				)}
 
 				{activeTab === 'cloud' && company && (
-					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Cloud size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Servicios Cloud & AI</h3><p className="text-xs text-gray-500 font-bold uppercase">Gemini AI y Sincronización Firebase</p></div></div>}>
-						<form onSubmit={saveCompanySettings} className="space-y-10">
-							<div className="p-8 bg-blue-50/50 dark:bg-blue-900/5 rounded-[2rem] border border-blue-100 dark:border-blue-900/20 space-y-4">
+					<form onSubmit={saveCompanySettings} className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4">
+						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-3xl shadow-xl border-none space-y-8">
+							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
+								<Cloud className="text-blue-500" size={18} />
+								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.cloud_ai_services')}</h3>
+							</div>
+							<div className="p-5 lg:p-6 bg-blue-50/50 dark:bg-blue-900/5 rounded-2xl border border-blue-100 dark:border-blue-900/20 space-y-4">
 								<div className="flex items-center gap-3 text-[#1a73e8]">
-									<Sparkles size={20} />
-									<h4 className="font-black text-sm uppercase tracking-widest">Inteligencia Artificial (Google Gemini)</h4>
+									<Sparkles size={18} />
+									<h4 className="font-bold text-xs uppercase tracking-widest">{t('settings.ai_title')}</h4>
 								</div>
-								<p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
-									Activa el asistente técnico de reparaciones ingresando tu API Key de Google AI Studio. Esto habilita diagnósticos automáticos y sugerencias de reparación.
+								<p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+									{t('settings.ai_desc')}
 								</p>
-								<Input label="Google Gemini API Key" type="password" value={company.geminiApiKey} onChange={e => setCompany({ ...company, geminiApiKey: e.target.value })} placeholder="Ingresa tu clave de AI Studio..." leftIcon={<Key size={16} />} />
-								<a href="https://aistudio.google.com/app/apikey" target="_blank" className="inline-flex items-center gap-2 text-[10px] font-black text-[#1a73e8] uppercase hover:underline">
-									Obtener mi API Key <ExternalLink size={12} />
+								<Input label="Google Gemini API Key" type="password" value={company.geminiApiKey} onChange={e => setCompany({ ...company, geminiApiKey: e.target.value })} placeholder={t('ai.write_symptoms')} leftIcon={<Key size={16} />} />
+								<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black text-[#1a73e8] uppercase hover:underline">
+									{t('settings.get_api_key')} <ExternalLink size={12} />
 								</a>
 							</div>
 
 							<div className="space-y-6">
 								<div className="flex items-center gap-3 text-gray-600">
-									<Database size={20} />
-									<h4 className="font-black text-sm uppercase tracking-widest">Infraestructura Firebase</h4>
+									<Database size={18} />
+									<h4 className="font-bold text-xs uppercase tracking-widest">{t('settings.firebase_infra')}</h4>
 								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 									<Input label="Project ID" value={company.firebaseProjectId} onChange={e => setCompany({ ...company, firebaseProjectId: e.target.value })} />
 									<Input label="App ID" value={company.firebaseAppId} onChange={e => setCompany({ ...company, firebaseAppId: e.target.value })} />
 									<Input label="API Key" type="password" value={company.firebaseApiKey} onChange={e => setCompany({ ...company, firebaseApiKey: e.target.value })} />
@@ -235,48 +280,58 @@ const Settings: React.FC = () => {
 							</div>
 
 							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Sincronizar Servicios</Button>
+								<Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_services')}</Button>
 							</div>
-						</form>
-					</Card>
+						</Card>
+
+						<Card className="lg:col-span-4 p-6 rounded-3xl shadow-xl border-none space-y-6">
+							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5 text-amber-600">
+								<AlertOctagon size={18} />
+								<h3 className="text-[10px] font-black uppercase tracking-widest">{t('settings.advertencia')}</h3>
+							</div>
+							<p className="text-[10px] font-bold text-amber-700/80 leading-relaxed uppercase">
+								{t('settings.firebase_warning')}
+							</p>
+						</Card>
+					</form>
 				)}
 
 				{activeTab === 'advanced' && (
-					<div className="space-y-8">
-						<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-red-50 text-red-600 rounded-2xl"><Zap size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Zona de Mantenimiento</h3><p className="text-xs text-gray-500 font-bold uppercase">Herramientas críticas del sistema</p></div></div>}>
-							<div className="space-y-6">
-								<div className="flex items-center justify-between p-6 bg-gray-50 dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-white/10">
+					<div className="space-y-6 lg:space-y-8 animate-in slide-in-from-bottom-4">
+						<Card className="p-6 lg:p-10 rounded-3xl shadow-xl border-none" header={<div className="flex items-center gap-4 mb-6 lg:mb-8"><div className="p-3 bg-red-50 text-red-600 rounded-2xl"><Zap size={24} /></div><div><h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tight">{t('settings.maint_zone')}</h3><p className="text-[10px] text-gray-500 font-bold uppercase">{t('settings.maint_subtitle')}</p></div></div>}>
+							<div className="space-y-4 lg:space-y-6">
+								<div className="flex items-center justify-between p-4 lg:p-6 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
 									<div className="space-y-1">
-										<p className="font-black text-sm uppercase text-gray-700 dark:text-white">Respaldo Manual del Sistema</p>
-										<p className="text-[11px] font-bold text-gray-500 uppercase tracking-tighter">Tamaño estimado: {backupSize}</p>
+										<p className="font-bold text-sm uppercase text-gray-700 dark:text-white">{t('settings.manual_backup')}</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{t('settings.estimated_size')}: {backupSize}</p>
 									</div>
-									<Button variant="outline" className="rounded-xl px-6 font-black uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>Exportar SQLITE/JSON</Button>
+									<Button variant="outline" className="rounded-xl px-4 lg:px-6 py-2 font-bold uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>{t('settings.export_sqlite')}</Button>
 								</div>
 
-								<div className="flex items-center justify-between p-6 bg-red-50/50 dark:bg-red-900/5 rounded-[2rem] border border-red-100 dark:border-red-900/20">
+								<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-2xl border border-red-100 dark:border-red-900/20">
 									<div className="space-y-1">
-										<p className="font-black text-sm uppercase text-red-600">Restablecimiento Maestro</p>
-										<p className="text-[11px] font-bold text-red-400 uppercase tracking-tighter">Esto eliminará absolutamente todo de forma local</p>
+										<p className="font-bold text-sm uppercase text-red-600">{t('settings.factory_reset_title')}</p>
+										<p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">{t('settings.factory_reset_subtitle')}</p>
 									</div>
-									<Button variant="outline" className="rounded-xl px-6 font-black uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
-										if (confirm("🚨 ATENCIÓN: Se borrarán TODOS los datos locales. ¿Deseas continuar?")) {
-											if (confirm("⚠️ ¿REALMENTE ESTÁS SEGURO? Esta acción es irreversible.")) {
+									<Button variant="outline" className="rounded-xl px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
+										if (window.confirm(t('settings.confirm_factory_1'))) {
+											if (window.confirm(t('settings.confirm_factory_2'))) {
 												await db.delete();
 												localStorage.clear();
 												window.location.href = '/';
 											}
 										}
-									}}>Factory Reset</Button>
+									}}>{t('settings.factory_reset')}</Button>
 								</div>
 							</div>
 						</Card>
 
-						<div className="p-8 bg-amber-50 dark:bg-amber-900/5 rounded-[2.5rem] border border-amber-100 dark:border-amber-900/20 flex gap-4">
-							<AlertTriangle size={24} className="text-amber-500 shrink-0" />
+						<div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-3xl border border-amber-100 dark:border-amber-900/20 flex gap-4">
+							<AlertTriangle size={20} className="text-amber-500 shrink-0" />
 							<div className="space-y-1">
-								<h4 className="font-black text-xs uppercase text-amber-700 tracking-widest">Aviso de Seguridad</h4>
-								<p className="text-[10px] font-medium text-amber-700/80 leading-relaxed uppercase">
-									Los cambios realizados en los servicios Cloud requieren el reinicio completo de la aplicación para que las nuevas claves de seguridad sean inyectadas en el entorno técnico.
+								<h4 className="font-bold text-[10px] uppercase text-amber-700 tracking-widest">{t('settings.cloud_security_protocol')}</h4>
+								<p className="text-[9px] lg:text-[10px] font-medium text-amber-700/80 leading-relaxed uppercase">
+									{t('settings.cloud_security_desc')}
 								</p>
 							</div>
 						</div>
@@ -287,27 +342,27 @@ const Settings: React.FC = () => {
 			<Modal
 				isOpen={showBackupModal}
 				onClose={() => setShowBackupModal(false)}
-				title="Consola de Restauración"
+				title={t('settings.restore_console')}
 				size="xl"
-				footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" onClick={() => setShowBackupModal(false)}>Abortar</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={() => { }}>Iniciar Restauración</Button>}</div>}
+				footer={<div className="flex gap-4 px-6 lg:px-8 pb-6"><Button variant="ghost" onClick={() => setShowBackupModal(false)}>{t('settings.abort')}</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={() => { }}>{t('settings.start')}</Button>}</div>}
 			>
 				{backupErrors.length ? (
-					<div className="p-6 bg-red-50 text-red-600 rounded-2xl flex gap-3 items-center">
+					<div className="p-4 lg:p-6 bg-red-50 text-red-600 rounded-2xl flex gap-3 items-center">
 						<AlertTriangle size={20} />
-						<p className="text-xs font-black uppercase tracking-widest">Archivo Inválido: {backupErrors[0]}</p>
+						<p className="text-xs font-black uppercase tracking-widest">{t('messages.error')}: {backupErrors[0]}</p>
 					</div>
 				) : backupPreview && (
 					<div className="space-y-6">
-						<div className="p-6 bg-blue-50 text-[#1a73e8] rounded-2xl flex gap-3 items-center">
+						<div className="p-4 lg:p-6 bg-blue-50 text-[#1a73e8] rounded-2xl flex gap-3 items-center">
 							<CheckCircle2 size={24} />
 							<div>
-								<p className="text-sm font-black uppercase tracking-widest leading-none">Cápsula de Datos Detectada</p>
-								<p className="text-[10px] font-bold opacity-70">Timestamp: {formatBackupDate(backupPreview.timestamp)}</p>
+								<p className="text-sm font-black uppercase tracking-widest">{t('settings.data_capsule_detected')}</p>
+								<p className="text-[10px] font-bold opacity-70">{formatBackupDate(backupPreview.timestamp)}</p>
 							</div>
 						</div>
-						<div className="p-6 border-2 border-dashed border-amber-200 bg-amber-50/50 rounded-2xl text-amber-700">
-							<p className="text-xs font-bold leading-relaxed uppercase">
-								Se procederá a sobrescribir la base de datos actual. Todos los registros locales actuales se perderán en favor de este respaldo.
+						<div className="p-4 lg:p-6 border-2 border-dashed border-amber-200 bg-amber-50/50 rounded-2xl text-amber-700">
+							<p className="text-[10px] font-bold leading-relaxed uppercase">
+								{t('settings.overwrite_warning')}
 							</p>
 						</div>
 					</div>

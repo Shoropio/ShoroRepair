@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
-import { ServiceOrder } from '../types';
+import { ServiceOrder, PaymentStatus } from '../types';
 import {
 	FileText,
 	Search,
@@ -56,7 +56,7 @@ const Invoices: React.FC = () => {
 		return {
 			total: invoices.length,
 			revenue: invoices.reduce((a, b) => a + (b.total || 0), 0),
-			pending: invoices.filter(i => i.paymentStatus !== 'Pagado').length
+			pending: invoices.filter(i => i.paymentStatus !== PaymentStatus.PAID).length
 		};
 	}, [invoices]);
 
@@ -64,44 +64,44 @@ const Invoices: React.FC = () => {
 
 	const handleHaciendaSync = async (order: ServiceOrder) => {
 		toast.promise(new Promise((resolve, reject) => {
-			setTimeout(() => reject(new Error("Certificado no configurado")), 2000);
+			setTimeout(() => reject(new Error(t('invoices.cert_not_configured'))), 2000);
 		}), {
-			loading: 'Estableciendo túnel con Hacienda API...',
-			success: 'Comprobante Aceptado',
-			error: (err) => `Fallo en sincronización: ${err.message}`
+			loading: t('invoices.hacienda_syncing'),
+			success: t('invoices.hacienda_success'),
+			error: (err: any) => t('invoices.sync_failed', { error: err.message })
 		});
 	};
 
 	if (!hasPermission('canViewReports')) return <Navigate to="/" replace />;
 
-	if (!invoices) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">Consultando Ledger Digital...</div>;
+	if (!invoices) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">{t('invoices.reading_ledger')}</div>;
 
 	return (
 		<div className="space-y-8 animate-in pb-20">
 			{/* High-Fidelity Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
 				<div className="relative z-10">
 					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
 						<Receipt className="text-[#1a73e8]" size={32} />
-						Consolidado Tributario
+						{t('invoices.title')}
 					</h1>
 					<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
-						Archivo histórico de comprobantes fiscales, facturas proformas y registros de pago ShoroRepair.
+						{t('invoices.subtitle')}
 					</p>
 				</div>
 
 				<div className="flex flex-wrap items-center gap-6 relative z-10">
 					<div className="flex gap-4">
 						<Card className="px-6 py-4 bg-gray-50 dark:bg-white/5 rounded-2xl border-none flex flex-col items-center">
-							<span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Volumen</span>
+							<span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('invoices.volume')}</span>
 							<span className="text-xl font-black text-gray-800 dark:text-white">{stats.total}</span>
 						</Card>
 						<Card className="px-6 py-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border-none flex flex-col items-center">
-							<span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Total Neto</span>
+							<span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">{t('invoices.net_total')}</span>
 							<span className="text-xl font-black text-emerald-600">{formatCurrency(stats.revenue).split(',')[0]}</span>
 						</Card>
 						<Card className="px-6 py-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border-none flex flex-col items-center">
-							<span className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">Pasivos</span>
+							<span className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">{t('invoices.liabilities')}</span>
 							<span className="text-xl font-black text-amber-600">{stats.pending}</span>
 						</Card>
 					</div>
@@ -115,7 +115,7 @@ const Invoices: React.FC = () => {
 					<Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={20} />
 					<input
 						type="text"
-						placeholder="Buscar por #Factura, #Orden o Nombre de Cliente..."
+						placeholder={t('invoices.search_placeholder')}
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
@@ -127,9 +127,9 @@ const Invoices: React.FC = () => {
 						value={statusFilter}
 						onChange={(e) => setStatusFilter(e.target.value)}
 					>
-						<option value="all">Filtrar por Estado</option>
-						<option value="Pagado">Solo Cancelados</option>
-						<option value="Pendiente">Pendientes Cobro</option>
+						<option value="all">{t('invoices.filter_status')}</option>
+						<option value={PaymentStatus.PAID}>{t('invoices.only_paid')}</option>
+						<option value={PaymentStatus.PENDING}>{t('invoices.pending_payment')}</option>
 					</Select>
 				</div>
 			</div>
@@ -140,12 +140,12 @@ const Invoices: React.FC = () => {
 					<table className="w-full text-left">
 						<thead>
 							<tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Folio / Referencia</th>
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Entidad / Cliente</th>
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">Fecha Emisión</th>
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">Importe Fiscal</th>
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-center">Crédito</th>
-								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">Bio-Acciones</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('invoices.table.folio')}</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('invoices.table.entity')}</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em]">{t('invoices.table.date')}</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">{t('invoices.table.amount')}</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-center">{t('invoices.table.credit')}</th>
+								<th className="px-8 py-6 text-[10px] font-black text-[#5f6368] uppercase tracking-[0.2em] text-right">{t('invoices.table.bio_actions')}</th>
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
@@ -176,15 +176,15 @@ const Invoices: React.FC = () => {
 											<span className="text-base font-black text-[#202124] dark:text-white tracking-tighter">{formatCurrency(invoice.total)}</span>
 										</td>
 										<td className="px-8 py-6 text-center">
-											<Badge variant={invoice.paymentStatus === 'Pagado' ? 'success' : 'warning'} size="xs" className="px-4 py-1.5 font-black uppercase">
-												{invoice.paymentStatus === 'Pagado' ? <><CheckCircle2 size={10} className="mr-1 inline" /> {invoice.paymentStatus}</> : <><Clock size={10} className="mr-1 inline" /> {invoice.paymentStatus}</>}
+											<Badge variant={invoice.paymentStatus === PaymentStatus.PAID ? 'success' : 'warning'} size="xs" className="px-4 py-1.5 font-black uppercase">
+												{invoice.paymentStatus === PaymentStatus.PAID ? <><CheckCircle2 size={10} className="mr-1 inline" /> {t('common.paid')}</> : <><Clock size={10} className="mr-1 inline" /> {t('common.pending')}</>}
 											</Badge>
 										</td>
 										<td className="px-8 py-6 text-right">
 											<div className="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-all">
-												<button onClick={() => generateInvoice(invoice, 'print')} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100" title="Impresión Térmica"><Printer size={16} /></button>
-												<button onClick={() => generateInvoice(invoice, 'download')} className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100" title="Descargar PDF"><Download size={16} /></button>
-												<button onClick={() => handleHaciendaSync(invoice)} className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100" title="Validar Ministerio"><CloudUpload size={16} /></button>
+												<button onClick={() => generateInvoice(invoice, 'print')} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100" title={t('invoices.thermal_print')}><Printer size={16} /></button>
+												<button onClick={() => generateInvoice(invoice, 'download')} className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100" title={t('invoices.download_pdf')}><Download size={16} /></button>
+												<button onClick={() => handleHaciendaSync(invoice)} className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100" title={t('invoices.validate_tax')}><CloudUpload size={16} /></button>
 											</div>
 										</td>
 									</tr>
@@ -196,7 +196,7 @@ const Invoices: React.FC = () => {
 				{invoices.length === 0 && (
 					<div className="py-32 flex flex-col items-center justify-center">
 						<History size={48} className="text-gray-200 mb-4" />
-						<p className="text-xs font-black text-gray-400 uppercase tracking-widest">Memoria de facturación vacía</p>
+						<p className="text-xs font-black text-gray-400 uppercase tracking-widest">{t('invoices.empty_ledger')}</p>
 					</div>
 				)}
 			</div>

@@ -28,14 +28,14 @@ const Login: React.FC = () => {
 		try {
 			const success = await login(username, password);
 			if (success) {
-				toast.success("Autenticación Exitosa");
+				toast.success(t('login.login_success'));
 				navigate('/');
 			} else {
 				setError(t('login.error'));
-				toast.error("Credenciales no válidas");
+				toast.error(t('login.error'));
 			}
 		} catch (err: any) {
-			setError('Fallo Crítico de Conexión');
+			setError(t('login.critical_conn_error'));
 		} finally {
 			setIsLoading(false);
 		}
@@ -47,13 +47,13 @@ const Login: React.FC = () => {
 		try {
 			const success = await loginWithGoogle();
 			if (success) {
-				toast.success('Identidad Google Sincronizada');
+				toast.success(t('login.google_success'));
 				navigate('/');
 			} else {
-				setError('Asociación fallida o cuenta desvinculada');
+				setError(t('login.google_error'));
 			}
 		} catch (err) {
-			setError('Fallo de protocolo Google Auth');
+			setError(t('login.google_protocol_error'));
 		} finally {
 			setIsLoading(false);
 		}
@@ -73,7 +73,7 @@ const Login: React.FC = () => {
 					</div>
 					<div className="space-y-2">
 						<h1 className="text-4xl font-black text-[#202124] dark:text-white tracking-tighter uppercase leading-none">ShoroRepair</h1>
-						<p className="text-[10px] font-black text-gray-400 dark:text-[#9aa0a6] uppercase tracking-[0.4em] opacity-80">Enterprise Management System</p>
+						<p className="text-[10px] font-black text-gray-400 dark:text-[#9aa0a6] uppercase tracking-[0.4em] opacity-80">{t('login.enterprise_system')}</p>
 					</div>
 				</div>
 
@@ -87,17 +87,17 @@ const Login: React.FC = () => {
 
 						<div className="space-y-6">
 							<Input
-								label="Identificador de Operador"
+								label={t('login.operator_id')}
 								leftIcon={<User size={20} className="text-gray-400" />}
 								value={username}
 								onChange={e => setUsername(e.target.value)}
-								placeholder="usuario_admin"
+								placeholder={t('login.username_placeholder')}
 								autoComplete="username"
 								className="h-14 rounded-2xl"
 							/>
 
 							<Input
-								label="Firma de Seguridad"
+								label={t('login.security_signature')}
 								type="password"
 								leftIcon={<Key size={20} className="text-gray-400" />}
 								value={password}
@@ -116,12 +116,12 @@ const Login: React.FC = () => {
 								isLoading={isLoading}
 								rightIcon={<ArrowRight size={20} />}
 							>
-								Acceder al Sistema
+								{t('login.access_system')}
 							</Button>
 
 							<div className="relative flex items-center py-4">
 								<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
-								<span className="flex-shrink-0 mx-6 text-[9px] font-black text-gray-300 uppercase tracking-widest">Social Multi-Factor</span>
+								<span className="flex-shrink-0 mx-6 text-[9px] font-black text-gray-300 uppercase tracking-widest">{t('login.social_mfa')}</span>
 								<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
 							</div>
 
@@ -137,7 +137,7 @@ const Login: React.FC = () => {
 									<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
 									<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
 								</svg>
-								Ingresar vía Google Cloud
+								{t('login.google_cloud_signin')}
 							</button>
 						</div>
 					</form>
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
 				<div className="text-center space-y-2">
 					<p className="text-[10px] font-bold text-gray-400 dark:text-[#9aa0a6] uppercase tracking-widest flex items-center justify-center gap-2">
 						<Lock size={12} className="text-blue-500" />
-						Punto de Acceso Autorizado ShoroRepair
+						{t('login.authorized_access')}
 					</p>
 				</div>
 			</div>

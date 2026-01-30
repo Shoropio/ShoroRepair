@@ -144,15 +144,15 @@ const AppContent: React.FC = () => {
         to={to}
         onClick={() => setSidebarOpen(false)}
         className={`
-          flex items-center gap-4 px-4 py-2.5 rounded-full transition-all duration-200 group
-          ${isActive
-            ? 'bg-[#e8f0fe] dark:bg-[#1a73e8]/20 text-[#1a73e8] dark:text-[#8ab4f8] font-bold shadow-sm'
+        flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group
+        ${isActive
+            ? 'bg-blue-50 dark:bg-blue-900/10 text-[#1a73e8] font-bold shadow-sm'
             : 'text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31] font-medium'
           }
-        `}
+      `}
       >
-        <Icon size={20} />
-        <span className="text-sm">{label}</span>
+        <Icon size={18} />
+        <span className="text-xs">{label}</span>
       </Link>
     );
   };
@@ -170,18 +170,18 @@ const AppContent: React.FC = () => {
         fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#1a1c1e] border-r border-[#f1f3f4] dark:border-[#3c4043]
         transition-all duration-300 ease-[cubic-bezier(0.4, 0, 0.2, 1)]
         lg:static overflow-hidden shrink-0
-        ${sidebarOpen ? 'translate-x-0 w-72 border-r' : '-translate-x-full w-0 border-none lg:translate-x-0'}
+        ${sidebarOpen ? 'translate-x-0 w-64 border-r' : '-translate-x-full w-0 border-none lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
           {/* Logo Section */}
-          <div className="h-20 flex items-center px-6">
+          <div className="h-16 flex items-center px-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1a73e8] to-[#1557b0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                 <Wrench size={20} strokeWidth={2.5} />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#202124] dark:text-white tracking-tight leading-none">Shoro<span className="text-[#1a73e8]">Repair</span></h1>
-                <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-medium tracking-widest uppercase mt-0.5">Management System</p>
+                <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-medium tracking-widest uppercase mt-0.5">{t('login.enterprise_system')}</p>
               </div>
             </div>
           </div>
@@ -192,15 +192,15 @@ const AppContent: React.FC = () => {
             <NavItem to="/orders" label={t('nav.orders')} icon={ClipboardList} />
             <NavItem to="/invoices" label={t('nav.invoices')} icon={FileText} roles={['Admin', 'Receptionist']} />
             <div className="my-4 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-2" />
-            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">Operaciones</p>
+            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">{t('nav.operations')}</p>
             <NavItem to="/clients" label={t('nav.clients')} icon={Users} />
             <NavItem to="/inventory" label={t('nav.inventory')} icon={Package} />
             <NavItem to="/expenses" label={t('nav.expenses')} icon={CreditCard} roles={['Admin']} />
             <div className="my-4 h-px bg-[#f1f3f4] dark:bg-[#3c4043] mx-2" />
-            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">Administración</p>
+            <p className="px-4 text-[10px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">{t('nav.administration')}</p>
             <NavItem to="/reports" label={t('nav.reports')} icon={BarChart3} roles={['Admin']} />
             <NavItem to="/activity" label={t('nav.activity')} icon={Activity} roles={['Admin']} />
-            <NavItem to="/ai-diagnostic" label="AI Diagnostic" icon={Sparkles} roles={['Admin', 'Technician']} />
+            <NavItem to="/ai-diagnostic" label={t('nav.ai_diagnostic')} icon={Sparkles} roles={['Admin', 'Technician']} />
             <NavItem to="/users" label={t('nav.users')} icon={Users} roles={['Admin']} />
             <NavItem to="/roles" label={t('nav.roles')} icon={Shield} roles={['Admin']} />
             <NavItem to="/settings" label={t('nav.settings')} icon={SettingsIcon} roles={['Admin']} />

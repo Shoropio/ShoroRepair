@@ -14,6 +14,7 @@ export interface Client extends SyncEntity {
     phone: string;
     email?: string;
     address?: string;
+    taxId?: string;
     createdAt: number;
 }
 

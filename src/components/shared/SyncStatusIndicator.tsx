@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Cloud, CloudOff, RefreshCw, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { syncManager, SyncStatus } from '../../offline/sync';
 
 const SyncStatusIndicator: React.FC = () => {
+    const { t } = useTranslation();
     const [status, setStatus] = useState<SyncStatus>(syncManager.getStatus());
 
     useEffect(() => {
@@ -28,14 +30,14 @@ const SyncStatusIndicator: React.FC = () => {
     const getLabel = () => {
         switch (status) {
             case 'syncing':
-                return 'Sincronizando';
+                return t('common.syncing');
             case 'offline':
-                return 'Desconectado';
+                return t('common.offline');
             case 'error':
-                return 'Error';
+                return t('common.error');
             case 'idle':
             default:
-                return 'Sincronizado';
+                return t('common.synced');
         }
     };
 
@@ -43,7 +45,7 @@ const SyncStatusIndicator: React.FC = () => {
         <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-none hover:bg-[#f1f3f4] dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group"
             onClick={() => syncManager.sync()}
-            title="Sincronizar ahora"
+            title={t('common.sync_now')}
         >
             {getIcon()}
             <span className="text-xs font-medium text-[#5f6368] dark:text-[#9aa0a6] group-hover:text-[#1a73e8] dark:group-hover:text-[#8ab4f8]">
