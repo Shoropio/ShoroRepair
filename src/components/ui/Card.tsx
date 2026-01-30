@@ -23,7 +23,7 @@ const Card: React.FC<CardProps> = ({
 
     return (
         <div className={`
-            overflow-hidden rounded-2xl transition-shadow duration-300
+            overflow-hidden rounded-none transition-shadow duration-300
             ${variants[variant]}
             ${className}
         `}>

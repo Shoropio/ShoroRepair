@@ -54,7 +54,11 @@ import { db } from '../offline/db';
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
   const { user, logout, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    const saved = localStorage.getItem('sidebar_open');
+    if (saved !== null) return saved === 'true';
+    return window.innerWidth > 1024;
+  });
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('theme');
     if (saved !== null) return saved === 'dark';
@@ -62,6 +66,20 @@ const AppContent: React.FC = () => {
   });
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_open', sidebarOpen.toString());
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
@@ -144,7 +162,7 @@ const AppContent: React.FC = () => {
         to={to}
         onClick={() => setSidebarOpen(false)}
         className={`
-        flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group
+        flex items-center gap-3 px-4 py-2.5 rounded-none transition-all duration-200 group
         ${isActive
             ? 'bg-blue-50 dark:bg-blue-900/10 text-[#1a73e8] font-bold shadow-sm'
             : 'text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31] font-medium'
@@ -176,7 +194,7 @@ const AppContent: React.FC = () => {
           {/* Logo Section */}
           <div className="h-16 flex items-center px-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1a73e8] to-[#1557b0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+              <div className="w-10 h-10 rounded-none bg-gradient-to-br from-[#1a73e8] to-[#1557b0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
                 <Wrench size={20} strokeWidth={2.5} />
               </div>
               <div>
@@ -207,16 +225,16 @@ const AppContent: React.FC = () => {
           </nav>
 
           {/* Footer Navigation (User) */}
-          <div className="p-4 mx-4 mb-4 rounded-2xl bg-[#f8f9fa] dark:bg-[#2d2f31]">
+          <div className="p-4 mx-4 mb-4 rounded-none bg-[#f8f9fa] dark:bg-[#2d2f31]">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#1a73e8] flex items-center justify-center text-white font-semibold text-xs shadow-md">
+              <div className="w-9 h-9 rounded-none bg-[#1a73e8] flex items-center justify-center text-white font-semibold text-xs shadow-md">
                 {user?.fullName.charAt(0)}
               </div>
               <div className="flex-1 overflow-hidden">
                 <p className="text-sm font-semibold text-[#202124] dark:text-white truncate">{user?.fullName}</p>
                 <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] uppercase font-bold tracking-wide">{user?.role}</p>
               </div>
-              <button onClick={handleLogout} className="p-2 text-[#5f6368] hover:bg-white dark:hover:bg-white/10 hover:text-red-500 rounded-full transition-all shadow-sm hover:shadow">
+              <button onClick={handleLogout} className="p-2 text-[#5f6368] hover:bg-white dark:hover:bg-white/10 hover:text-red-500 rounded-none transition-all shadow-sm hover:shadow">
                 <LogOut size={16} />
               </button>
             </div>
@@ -229,7 +247,7 @@ const AppContent: React.FC = () => {
         {/* Top bar */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-[#f1f3f4] dark:border-[#3c4043]">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-full transition-all">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all">
               <Menu size={20} />
             </button>
             <div className="relative group hidden sm:block">

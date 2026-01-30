@@ -30,7 +30,7 @@ const Input: React.FC<InputProps> = ({
                     className={`
                         w-full bg-[#f1f3f4] dark:bg-[#1a1c1e] border-2 border-transparent 
                         px-4 py-3 text-sm focus:outline-none focus:bg-white dark:focus:bg-[#1a1c1e]
-                        focus:border-[#1a73e8] dark:focus:border-[#8ab4f8] rounded-2xl
+                        focus:border-[#1a73e8] dark:focus:border-[#8ab4f8] rounded-none
                         transition-all duration-200 placeholder:text-[#5f6368] dark:text-white
                         ${leftIcon ? 'pl-11' : ''}
                         ${error ? 'border-[#ea4335] focus:border-[#ea4335]' : ''}

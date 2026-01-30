@@ -156,7 +156,7 @@ const Inventory: React.FC = () => {
   return (
     <div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
       {/* High-Fidelity Header */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
             <Archive className="text-[#1a73e8]" size={28} />
@@ -185,7 +185,7 @@ const Inventory: React.FC = () => {
           {hasPermission('canManageInventory') && (
             <Button
               variant="primary"
-              className="rounded-xl px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]"
+              className="rounded-none px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]"
               leftIcon={<Plus size={18} />}
               onClick={() => setShowAddModal(true)}
             >
@@ -204,19 +204,19 @@ const Inventory: React.FC = () => {
             placeholder={t('inventory.search_placeholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-6 py-3.5 bg-white dark:bg-[#1a1c1e] rounded-2xl outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-6 py-3.5 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
           />
         </div>
-        <div className="flex bg-white dark:bg-[#1a1c1e] p-1.5 rounded-2xl shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
+        <div className="flex bg-white dark:bg-[#1a1c1e] p-1.5 rounded-none shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
           <button
             onClick={() => { setViewMode('grid'); localStorage.setItem('inventory_view_mode', 'grid'); }}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-none transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
           >
             <LayoutGrid size={14} /> {t('common.grid')}
           </button>
           <button
             onClick={() => { setViewMode('list'); localStorage.setItem('inventory_view_mode', 'list'); }}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
+            className={`px-4 py-2 rounded-none transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white shadow-md' : 'text-[#5f6368] hover:bg-gray-50'}`}
           >
             <List size={14} /> {t('common.list')}
           </button>
@@ -225,7 +225,7 @@ const Inventory: React.FC = () => {
 
       {/* Parts Display */}
       {parts.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-[#dadce0] dark:border-white/10">
+        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-none border-2 border-dashed border-[#dadce0] dark:border-white/10">
           <Package className="w-16 h-16 text-gray-200 mb-6" />
           <h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tight">{t('inventory.empty_catalog_title')}</h3>
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2">{t('inventory.empty_catalog_subtitle')}</p>
@@ -233,9 +233,9 @@ const Inventory: React.FC = () => {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {parts.map(part => (
-            <Card key={part.id} className="p-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-3xl group border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#202124]">
+            <Card key={part.id} className="p-5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-none group border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#202124]">
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-2 rounded-xl ${part.quantity <= (part.minStock || 2) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                <div className={`p-2 rounded-none ${part.quantity <= (part.minStock || 2) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                   <Package size={20} />
                 </div>
                 {part.quantity <= (part.minStock || 2) && <Badge variant="error" size="xs" className="animate-pulse">{t('inventory.critical_stock')}</Badge>}
@@ -258,17 +258,17 @@ const Inventory: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex gap-2">
-                <button onClick={() => openEdit(part)} className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/30 text-[#1a73e8] rounded-xl text-[10px] font-bold uppercase hover:bg-blue-100 transition-colors">{t('common.edit')}</button>
-                <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 dark:bg-white/5 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors"><Tag size={14} /></button>
+                <button onClick={() => openEdit(part)} className="flex-1 py-2 bg-blue-50 dark:bg-blue-900/30 text-[#1a73e8] rounded-none text-[10px] font-bold uppercase hover:bg-blue-100 transition-colors">{t('common.edit')}</button>
+                <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 dark:bg-white/5 text-gray-600 rounded-none hover:bg-gray-100 transition-colors"><Tag size={14} /></button>
                 {hasPermission('canManageInventory') && (
-                  <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"><Trash2 size={14} /></button>
+                  <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-none transition-colors"><Trash2 size={14} /></button>
                 )}
               </div>
             </Card>
           ))}
         </div>
       ) : (
-        <Card className="rounded-3xl overflow-hidden border-[#f1f3f4] dark:border-white/5 shadow-2xl shadow-black/5 bg-white dark:bg-[#1a1c1e]">
+        <Card className="rounded-none overflow-hidden border-[#f1f3f4] dark:border-white/5 shadow-2xl shadow-black/5 bg-white dark:bg-[#1a1c1e]">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -291,9 +291,9 @@ const Inventory: React.FC = () => {
                     <td className="px-6 py-4 text-right font-black text-xs text-emerald-600">{formatCurrency(part.price)}</td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(part)} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Edit2 size={14} /></button>
-                        <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 text-gray-600 rounded-lg"><Tag size={14} /></button>
-                        <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={14} /></button>
+                        <button onClick={() => openEdit(part)} className="p-2 bg-blue-50 text-blue-600 rounded-none"><Edit2 size={14} /></button>
+                        <button onClick={() => generateTag(part, 'print')} className="p-2 bg-gray-50 text-gray-600 rounded-none"><Tag size={14} /></button>
+                        <button onClick={() => deletePart(part.id!)} className="p-2 text-red-500 hover:bg-red-50 rounded-none"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -322,8 +322,8 @@ const Inventory: React.FC = () => {
             <Input label={t('inventory.fields.sale_price')} type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })} required />
           </div>
           <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex justify-end gap-3">
-            <Button variant="ghost" className="rounded-xl px-6 py-2.5 font-bold uppercase text-[10px]" onClick={closeModal}>{t('common.cancel')}</Button>
-            <Button type="submit" variant="primary" className="rounded-xl px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.confirm_entry')}</Button>
+            <Button variant="ghost" className="rounded-none px-6 py-2.5 font-bold uppercase text-[10px]" onClick={closeModal}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" className="rounded-none px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.confirm_entry')}</Button>
           </div>
         </form>
       </Modal>

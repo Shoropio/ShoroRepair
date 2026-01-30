@@ -121,7 +121,7 @@ const Expenses: React.FC = () => {
     return (
         <div className="space-y-8 animate-in pb-20">
             {/* Premium Header */}
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-red-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-none shadow-xl shadow-red-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
                 <div className="relative z-10">
                     <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <Wallet className="text-[#ea4335]" size={32} />
@@ -145,14 +145,14 @@ const Expenses: React.FC = () => {
                     </div>
                     <Button
                         variant="primary"
-                        className="rounded-2xl px-10 py-4 shadow-lg shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]"
+                        className="rounded-none px-10 py-4 shadow-lg shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]"
                         leftIcon={<Plus size={20} />}
                         onClick={() => setShowModal(true)}
                     >
                         {t('expenses.new')}
                     </Button>
                 </div>
-                <div className="absolute -right-10 -top-10 w-48 h-48 bg-red-50 dark:bg-red-900/10 rounded-full blur-3xl opacity-50"></div>
+                <div className="absolute -right-10 -top-10 w-48 h-48 bg-red-50 dark:bg-red-900/10 rounded-none blur-3xl opacity-50"></div>
             </header>
 
             {/* Browser & Filters */}
@@ -164,19 +164,19 @@ const Expenses: React.FC = () => {
                         placeholder={t('expenses.search_placeholder') || "Search..."}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-red-500/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
+                        className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-red-500/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
                     />
                 </div>
-                <div className="flex bg-white dark:bg-[#1a1c1e] p-2 rounded-[1.5rem] shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
+                <div className="flex bg-white dark:bg-[#1a1c1e] p-2 rounded-none shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
                     <button
                         onClick={() => { setViewMode('grid'); localStorage.setItem('expenses_view_mode', 'grid'); }}
-                        className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
+                        className={`px-5 py-2.5 rounded-none transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
                     >
                         <LayoutGrid size={16} /> {t('common.grid')}
                     </button>
                     <button
                         onClick={() => { setViewMode('list'); localStorage.setItem('expenses_view_mode', 'list'); }}
-                        className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
+                        className={`px-5 py-2.5 rounded-none transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#ea4335] text-white shadow-lg' : 'text-[#5f6368] hover:bg-gray-50'}`}
                     >
                         <List size={16} /> {t('common.list')}
                     </button>
@@ -185,8 +185,8 @@ const Expenses: React.FC = () => {
 
             {/* Content Area */}
             {expenses.length === 0 ? (
-                <div className="py-32 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-[3rem] border-2 border-dashed border-[#dadce0] dark:border-white/10">
-                    <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-3xl flex items-center justify-center text-red-200 mb-6 shadow-sm">
+                <div className="py-32 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-none border-2 border-dashed border-[#dadce0] dark:border-white/10">
+                    <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-none flex items-center justify-center text-red-200 mb-6 shadow-sm">
                         <Receipt size={40} />
                     </div>
                     <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">{t('expenses.empty')}</h3>
@@ -195,12 +195,12 @@ const Expenses: React.FC = () => {
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                     {expenses.map(e => (
-                        <Card key={e.id} className="group p-8 rounded-[2.5rem] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white">
+                        <Card key={e.id} className="group p-8 rounded-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white">
                             <div className="flex justify-between items-start mb-8">
-                                <div className="p-4 bg-red-50 text-[#ea4335] rounded-2xl shadow-sm group-hover:bg-red-100 transition-colors">
+                                <div className="p-4 bg-red-50 text-[#ea4335] rounded-none shadow-sm group-hover:bg-red-100 transition-colors">
                                     <Tag size={24} />
                                 </div>
-                                <button onClick={() => deleteExpense(e.id!)} className="p-3 bg-red-50/50 text-red-600 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"><Trash2 size={16} /></button>
+                                <button onClick={() => deleteExpense(e.id!)} className="p-3 bg-red-50/50 text-red-600 rounded-none opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"><Trash2 size={16} /></button>
                             </div>
 
                             <div className="space-y-1 mb-8">
@@ -211,7 +211,7 @@ const Expenses: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between p-6 bg-red-50/30 rounded-[2rem] border border-dashed border-red-100">
+                            <div className="flex items-center justify-between p-6 bg-red-50/30 rounded-none border border-dashed border-red-100">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">{t('expenses.fields.amount')}</span>
                                     <span className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(e.amount).split(',')[0]}</span>
@@ -226,7 +226,7 @@ const Expenses: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5">
+                <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -256,7 +256,7 @@ const Expenses: React.FC = () => {
                                             <span className="text-base font-black text-red-600">{formatCurrency(e.amount)}</span>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <button onClick={() => deleteExpense(e.id!)} className="p-2.5 bg-red-50 text-red-600 rounded-xl opacity-20 group-hover:opacity-100 transition-all hover:bg-red-100"><Trash2 size={16} /></button>
+                                            <button onClick={() => deleteExpense(e.id!)} className="p-2.5 bg-red-50 text-red-600 rounded-none opacity-20 group-hover:opacity-100 transition-all hover:bg-red-100"><Trash2 size={16} /></button>
                                         </td>
                                     </tr>
                                 ))}
@@ -273,7 +273,7 @@ const Expenses: React.FC = () => {
                 title={t('expenses.new')}
                 subtitle={t('expenses.subtitle')}
                 size="2xl"
-                footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]" onClick={handleSubmit}>{t('expenses.save')}</Button></div>}
+                footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-none px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-none px-12 shadow-xl shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]" onClick={handleSubmit}>{t('expenses.save')}</Button></div>}
             >
                 <form onSubmit={handleSubmit} className="space-y-8 py-6">
                     <Input label={t('expenses.fields.description')} placeholder={t('expenses.fields.description') + "..."} value={formData.description} onChange={v => setFormData({ ...formData, description: v.target.value })} required />

@@ -65,9 +65,9 @@ const Dashboard: React.FC = () => {
 
   if (!data) return (
     <div className="space-y-8 animate-in p-8">
-      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse w-full"></div>
+      <div className="h-20 bg-gray-100 dark:bg-gray-800 rounded-none animate-pulse w-full"></div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-3xl animate-pulse"></div>)}
+        {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-none animate-pulse"></div>)}
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-8 animate-in pb-12">
       {/* Premium Welcome Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a73e8] to-[#1557b0] p-6 md:p-10 text-white shadow-2xl shadow-blue-500/20">
+      <div className="relative overflow-hidden rounded-none bg-gradient-to-br from-[#1a73e8] to-[#1557b0] p-6 md:p-10 text-white shadow-2xl shadow-blue-500/20">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl">
             <Badge variant="brand" className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">
@@ -89,12 +89,12 @@ const Dashboard: React.FC = () => {
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
               <Link to="/orders">
-                <Button variant="primary" className="bg-white text-[#1a73e8] hover:bg-blue-50 border-none px-8 py-4 rounded-2xl shadow-xl shadow-black/10 font-bold" leftIcon={<Plus size={20} />}>
+                <Button variant="primary" className="bg-[#202124] text-white hover:bg-black border-none px-10 py-5 rounded-none shadow-2xl shadow-black/30 font-black uppercase tracking-widest text-[11px] transform transition-all hover:scale-105" leftIcon={<Plus size={20} />}>
                   {t('orders.new')}
                 </Button>
               </Link>
               <Link to="/ai-diagnostic">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl font-bold" leftIcon={<Sparkles size={20} />}>
+                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-md px-8 py-4 rounded-none font-bold" leftIcon={<Sparkles size={20} />}>
                   {t('dashboard.ai_assist')}
                 </Button>
               </Link>
@@ -102,20 +102,20 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="hidden lg:block relative">
             <div className="absolute inset-0 bg-blue-400 blur-[80px] opacity-30 animate-pulse"></div>
-            <div className="relative p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] shadow-2xl">
+            <div className="relative p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-none shadow-2xl">
               <Cpu size={80} strokeWidth={1} className="text-white opacity-80" />
             </div>
           </div>
         </div>
         {/* Decorative Elements */}
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/10 rounded-none blur-[100px]"></div>
       </div>
 
       {/* Core Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card variant="tonal" className="p-6 transition-transform hover:scale-[1.02] duration-300">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 text-blue-600 rounded-2xl">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/20 text-blue-600 rounded-none">
               <ClipboardCheck size={24} />
             </div>
             <div className="flex items-center gap-1 text-xs font-bold text-green-600">
@@ -130,7 +130,7 @@ const Dashboard: React.FC = () => {
 
         <Card variant="tonal" className="p-6 transition-transform hover:scale-[1.02] duration-300">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-amber-100 dark:bg-amber-900/20 text-amber-600 rounded-2xl">
+            <div className="p-3 bg-amber-100 dark:bg-amber-900/20 text-amber-600 rounded-none">
               <Clock size={24} />
             </div>
           </div>
@@ -142,7 +142,7 @@ const Dashboard: React.FC = () => {
 
         <Card variant="tonal" className="p-6 transition-transform hover:scale-[1.02] duration-300">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-2xl">
+            <div className="p-3 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-none">
               <CheckCircle2 size={24} />
             </div>
           </div>
@@ -154,7 +154,7 @@ const Dashboard: React.FC = () => {
 
         <Card variant="tonal" className="p-6 transition-transform hover:scale-[1.02] duration-300">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl">
+            <div className="p-3 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 rounded-none">
               <TrendingUp size={24} />
             </div>
           </div>
@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
       {/* Layout Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workshop Flow Chart */}
-        <Card className="lg:col-span-2 p-6 shadow-xl shadow-blue-500/5 rounded-3xl border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-8"><h3 className="text-base font-bold text-[#202124] dark:text-white flex items-center gap-3"><Monitor className="text-[#1a73e8]" size={18} /> {t('dashboard.workshop_status')}</h3><Badge variant="brand" size="xs">{t('dashboard.live_update')}</Badge></div>}>
+        <Card className="lg:col-span-2 p-6 shadow-xl shadow-blue-500/5 rounded-none border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-8"><h3 className="text-base font-bold text-[#202124] dark:text-white flex items-center gap-3"><Monitor className="text-[#1a73e8]" size={18} /> {t('dashboard.workshop_status')}</h3><Badge variant="brand" size="xs">{t('dashboard.live_update')}</Badge></div>}>
           <div className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.statusGroups} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
@@ -179,13 +179,13 @@ const Dashboard: React.FC = () => {
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{
                     backgroundColor: '#fff',
-                    borderRadius: '16px',
+                    borderRadius: '0px',
                     border: 'none',
                     boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
                     padding: '12px'
                   }}
                 />
-                <Bar dataKey="count" radius={[12, 12, 0, 0]} barSize={50}>
+                <Bar dataKey="count" radius={[0, 0, 0, 0]} barSize={50}>
                   {data.statusGroups.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -204,7 +204,7 @@ const Dashboard: React.FC = () => {
         </Card>
 
         {/* Recent Entries */}
-        <Card className="shadow-xl shadow-blue-500/5 rounded-3xl border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-6"><h3 className="text-base font-bold text-[#202124] dark:text-white">{t('dashboard.recent_entries')}</h3><div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600"><Activity size={16} /></div></div>} footer={<Link to="/orders" className="text-xs font-bold text-[#1a73e8] hover:underline flex items-center gap-2 justify-center py-4">{t('dashboard.view_all')} <ArrowRight size={14} /></Link>}>
+        <Card className="shadow-xl shadow-blue-500/5 rounded-none border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center justify-between mb-6"><h3 className="text-base font-bold text-[#202124] dark:text-white">{t('dashboard.recent_entries')}</h3><div className="w-8 h-8 rounded-none bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600"><Activity size={16} /></div></div>} footer={<Link to="/orders" className="text-xs font-bold text-[#1a73e8] hover:underline flex items-center gap-2 justify-center py-4">{t('dashboard.view_all')} <ArrowRight size={14} /></Link>}>
           <div className="space-y-4 px-2">
             {data.recentOrders.length === 0 ? (
               <div className="py-20 text-center">
@@ -212,10 +212,10 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm font-medium text-gray-400">{t('dashboard.no_recent_entries')}</p>
               </div>
             ) : data.recentOrders.map((order, idx) => (
-              <div key={order.id} className="p-4 rounded-2xl bg-[#f8f9fa] dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group">
+              <div key={order.id} className="p-4 rounded-none bg-[#f8f9fa] dark:bg-white/5 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#1a1c1e] flex items-center justify-center font-black text-lg text-[#1a73e8] shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="w-12 h-12 rounded-none bg-white dark:bg-[#1a1c1e] flex items-center justify-center font-black text-lg text-[#1a73e8] shadow-sm group-hover:shadow-md transition-shadow">
                       {order.brand.charAt(0)}
                     </div>
                     <div>
@@ -242,7 +242,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card variant="tonal" className="p-6 relative overflow-hidden group">
           <div className="relative z-10 flex items-start gap-5">
-            <div className="p-3 bg-white dark:bg-white/10 rounded-xl shadow-lg">
+            <div className="p-3 bg-white dark:bg-white/10 rounded-none shadow-lg">
               <Activity size={24} className="text-[#1a73e8]" />
             </div>
             <div className="space-y-1">
@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
 
         <Card variant="tonal" className="p-6 relative overflow-hidden bg-emerald-50 dark:bg-emerald-900/5">
           <div className="flex items-start gap-5">
-            <div className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/20">
+            <div className="p-3 bg-emerald-500 text-white rounded-none shadow-lg shadow-emerald-500/20">
               <Users size={24} />
             </div>
             <div className="space-y-1">

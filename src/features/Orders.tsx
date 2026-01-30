@@ -121,7 +121,7 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
 
   return (
     <div className="space-y-4">
-      <div className="relative border-2 border-dashed border-[#dadce0] dark:border-white/10 rounded-2xl bg-white dark:bg-[#1a1c1e] overflow-hidden group">
+      <div className="relative border-2 border-dashed border-[#dadce0] dark:border-white/10 rounded-none bg-white dark:bg-[#1a1c1e] overflow-hidden group">
         <canvas
           ref={canvasRef}
           width={600}
@@ -136,8 +136,8 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
           onTouchEnd={stopDrawing}
         />
         <div className="absolute top-4 right-4 flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-xl px-4 py-2 font-bold uppercase text-[10px]" onClick={handleClear}>{t('common.clear')}</Button>
-          <Button variant="primary" size="sm" className="rounded-xl px-4 py-2 font-bold uppercase text-[10px]" onClick={handleSave}>{t('common.save')}</Button>
+          <Button variant="outline" size="sm" className="rounded-none px-4 py-2 font-bold uppercase text-[10px]" onClick={handleClear}>{t('common.clear')}</Button>
+          <Button variant="primary" size="sm" className="rounded-none px-4 py-2 font-bold uppercase text-[10px]" onClick={handleSave}>{t('common.save')}</Button>
         </div>
         <div className="absolute bottom-4 left-4 flex items-center gap-2 pointer-events-none opacity-40">
           <AlertCircle size={14} />
@@ -476,7 +476,7 @@ const Orders: React.FC = () => {
   return (
     <div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
       {/* Header section with Stats or controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
         <div>
           <h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
             <Wrench className="text-[#1a73e8]" size={24} />
@@ -487,12 +487,12 @@ const Orders: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-xl">
-            <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><List size={16} /></button>
-            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><LayoutGrid size={16} /></button>
+          <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-none">
+            <button onClick={() => setViewMode('list')} className={`p-2 rounded-none transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><List size={16} /></button>
+            <button onClick={() => setViewMode('grid')} className={`p-2 rounded-none transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-sm' : 'text-[#5f6368] hover:bg-gray-50'}`}><LayoutGrid size={16} /></button>
           </div>
           {hasPermission('canEditOrders') && (
-            <Button variant="primary" className="rounded-xl px-4 lg:px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowModal(true)} leftIcon={<Plus size={18} />}>
+            <Button variant="primary" className="rounded-none px-4 lg:px-6 py-2.5 font-bold uppercase tracking-widest text-[10px]" onClick={() => setShowModal(true)} leftIcon={<Plus size={18} />}>
               {t('orders.new')}
             </Button>
           )}
@@ -500,7 +500,7 @@ const Orders: React.FC = () => {
       </div>
 
       {/* Controls Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white dark:bg-[#1a1c1e] p-4 rounded-3xl border border-[#f1f3f4] dark:border-white/5 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white dark:bg-[#1a1c1e] p-4 rounded-none border border-[#f1f3f4] dark:border-white/5 shadow-sm">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={18} />
           <input
@@ -508,7 +508,7 @@ const Orders: React.FC = () => {
             placeholder={t('orders.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-6 py-3 bg-[#f1f3f4] dark:bg-white/5 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
+            className="w-full pl-12 pr-6 py-3 bg-[#f1f3f4] dark:bg-white/5 rounded-none outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
@@ -516,7 +516,7 @@ const Orders: React.FC = () => {
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`px-4 lg:px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
+              className={`px-4 lg:px-5 py-2 rounded-none text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
                 ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
                 : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30'
                 }`}
@@ -529,15 +529,15 @@ const Orders: React.FC = () => {
 
       {/* Orders Table/Grid */}
       {orders.length === 0 ? (
-        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-[#dadce0] dark:border-white/10">
-          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-2xl flex items-center justify-center text-blue-200 mb-6 drop-shadow-sm">
+        <div className="py-20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-none border-2 border-dashed border-[#dadce0] dark:border-white/10">
+          <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-none flex items-center justify-center text-blue-200 mb-6 drop-shadow-sm">
             <Wrench size={40} />
           </div>
           <h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tighter">{t('orders.empty_movements')}</h3>
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">{t('orders.empty_movements_subtitle')}</p>
         </div>
       ) : viewMode === 'list' ? (
-        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl shadow-black/5">
+        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -555,7 +555,7 @@ const Orders: React.FC = () => {
                     <tr key={order.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
-                          <div className="shrink-0 w-10 h-10 bg-[#1a73e8] text-white rounded-xl flex items-center justify-center font-black text-[10px] shadow-lg shadow-blue-500/10 transition-transform">
+                          <div className="shrink-0 w-10 h-10 bg-[#1a73e8] text-white rounded-none flex items-center justify-center font-black text-[10px] shadow-lg shadow-blue-500/10 transition-transform">
                             #{order.orderNumber.slice(-4)}
                           </div>
                           <div className="min-w-0">
@@ -594,10 +594,10 @@ const Orders: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setShowDetailModal(order)} className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-lg hover:bg-blue-100 transition-colors" title={t('orders.manage_file')}><Edit2 size={14} /></button>
-                          <button onClick={() => generateInvoice(order, 'print')} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-lg hover:bg-gray-100 transition-colors"><Printer size={14} /></button>
-                          <button onClick={() => generateEntryTicket(order)} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-lg hover:bg-gray-100 transition-colors" title={t('orders.entry_ticket')}><FileText size={14} /></button>
-                          <button onClick={() => notifyWhatsApp(order)} className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-lg hover:bg-emerald-100 transition-colors"><MessageSquare size={14} /></button>
+                          <button onClick={() => setShowDetailModal(order)} className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-none hover:bg-blue-100 transition-colors" title={t('orders.manage_file')}><Edit2 size={14} /></button>
+                          <button onClick={() => generateInvoice(order, 'print')} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors"><Printer size={14} /></button>
+                          <button onClick={() => generateEntryTicket(order)} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors" title={t('orders.entry_ticket')}><FileText size={14} /></button>
+                          <button onClick={() => notifyWhatsApp(order)} className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-none hover:bg-emerald-100 transition-colors"><MessageSquare size={14} /></button>
                         </div>
                       </td>
                     </tr>
@@ -612,10 +612,10 @@ const Orders: React.FC = () => {
           {orders.map(order => {
             const client = clients?.find(c => c.id === order.clientId);
             return (
-              <Card key={order.id} className="p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-3xl group border border-[#f1f3f4] dark:border-white/5">
+              <Card key={order.id} className="p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-none group border border-[#f1f3f4] dark:border-white/5">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black text-xs">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-none flex items-center justify-center font-black text-xs">
                       {order.brand.charAt(0)}
                     </div>
                     <div>
@@ -638,8 +638,8 @@ const Orders: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
-                  <Button variant="outline" size="sm" className="flex-1 rounded-xl text-[10px] font-bold uppercase py-2" onClick={() => setShowDetailModal(order)}>{t('orders.manage_file')}</Button>
-                  <Button variant="outline" size="sm" className="rounded-xl p-2" onClick={() => notifyWhatsApp(order)}><MessageSquare size={14} /></Button>
+                  <Button variant="outline" size="sm" className="flex-1 rounded-none text-[10px] font-bold uppercase py-2" onClick={() => setShowDetailModal(order)}>{t('orders.manage_file')}</Button>
+                  <Button variant="outline" size="sm" className="rounded-none p-2" onClick={() => notifyWhatsApp(order)}><MessageSquare size={14} /></Button>
                 </div>
               </Card>
             );
@@ -678,8 +678,8 @@ const Orders: React.FC = () => {
           </div>
           <Input label={t('orders.fields.issue')} value={formData.issueDescription} onChange={e => setFormData({ ...formData, issueDescription: e.target.value })} required />
           <div className="pt-4 border-t border-[#f1f3f4] dark:border-white/5 flex justify-end gap-3">
-            <Button variant="ghost" className="rounded-xl px-6 py-2.5 font-bold uppercase text-[10px]" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
-            <Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.save')}</Button>
+            <Button variant="ghost" className="rounded-none px-6 py-2.5 font-bold uppercase text-[10px]" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
+            <Button type="submit" variant="primary" className="rounded-none px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('common.save')}</Button>
           </div>
         </form>
       </Modal>
@@ -696,7 +696,7 @@ const Orders: React.FC = () => {
             {/* Sidebar info */}
             <div className="lg:col-span-4 bg-[#f8f9fa] dark:bg-[#1a1c1e] p-6 lg:p-8 border-r border-[#f1f3f4] dark:border-white/5 overflow-y-auto space-y-6">
               <div className="space-y-4">
-                <div className="p-5 bg-white dark:bg-[#202124] rounded-2xl shadow-sm border border-[#f1f3f4] dark:border-white/5">
+                <div className="p-5 bg-white dark:bg-[#202124] rounded-none shadow-sm border border-[#f1f3f4] dark:border-white/5">
                   <div className="flex items-center gap-3 text-[#1a73e8] mb-3">
                     <Smartphone size={20} />
                     <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.device_info')}</h4>
@@ -705,7 +705,7 @@ const Orders: React.FC = () => {
                   <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">SN/IMEI: {showDetailModal.serialNumber || t('common.none')}</p>
                 </div>
 
-                <div className="p-5 bg-white dark:bg-[#202124] rounded-2xl shadow-sm border border-[#f1f3f4] dark:border-white/5">
+                <div className="p-5 bg-white dark:bg-[#202124] rounded-none shadow-sm border border-[#f1f3f4] dark:border-white/5">
                   <div className="flex items-center gap-3 text-amber-600 mb-3">
                     <AlertCircle size={20} />
                     <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.failure_report')}</h4>
@@ -718,16 +718,16 @@ const Orders: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-black text-[10px] uppercase tracking-widest text-[#5f6368]">{t('orders.photo_record')}</h4>
-                  <label className="cursor-pointer p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                  <label className="cursor-pointer p-2 bg-blue-50 text-blue-600 rounded-none hover:bg-blue-100 transition-colors">
                     <Camera size={14} />
                     <input type="file" className="hidden" multiple accept="image/*" onChange={(e) => handleFileChange(e, false)} />
                   </label>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   {showDetailModal.photos?.map((url, i) => (
-                    <div key={i} className="relative group aspect-square rounded-xl overflow-hidden shadow-md">
+                    <div key={i} className="relative group aspect-square rounded-none overflow-hidden shadow-md">
                       <img src={url} alt="Evidencia" className="w-full h-full object-cover" />
-                      <button onClick={() => removePhoto(i, false)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                      <button onClick={() => removePhoto(i, false)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-none opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
                     </div>
                   ))}
                 </div>
@@ -744,7 +744,7 @@ const Orders: React.FC = () => {
                       <button
                         key={s}
                         onClick={() => setShowDetailModal({ ...showDetailModal, status: s })}
-                        className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all border-2 ${showDetailModal.status === s ? 'bg-[#1a73e8] text-white border-transparent' : 'text-gray-400 border-gray-100 hover:border-blue-200'}`}
+                        className={`px-4 py-2 rounded-none text-[9px] font-bold uppercase tracking-widest transition-all border-2 ${showDetailModal.status === s ? 'bg-[#1a73e8] text-white border-transparent' : 'text-gray-400 border-gray-100 hover:border-blue-200'}`}
                       >
                         {getStatusLabel(s)}
                       </button>
@@ -777,7 +777,7 @@ const Orders: React.FC = () => {
               </div>
 
               {showDetailModal.parts && showDetailModal.parts.length > 0 && (
-                <div className="bg-[#f8f9fa] dark:bg-white/5 rounded-2xl p-6 border border-[#f1f3f4] dark:border-white/5">
+                <div className="bg-[#f8f9fa] dark:bg-white/5 rounded-none p-6 border border-[#f1f3f4] dark:border-white/5">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-[#5f6368] font-black uppercase tracking-widest">
@@ -798,7 +798,7 @@ const Orders: React.FC = () => {
                               const newParts = [...showDetailModal.parts!];
                               newParts.splice(i, 1);
                               setShowDetailModal({ ...showDetailModal, parts: newParts });
-                            }} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg"><X size={14} /></button>
+                            }} className="p-1.5 text-red-500 hover:bg-red-50 rounded-none"><X size={14} /></button>
                           </td>
                         </tr>
                       ))}
@@ -808,14 +808,14 @@ const Orders: React.FC = () => {
               )}
 
               <div className="pt-8 border-t border-[#f1f3f4] dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-20">
-                <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl">
+                <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-none">
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{t('orders.estimated_total')}</p>
                   <p className="text-2xl font-black text-blue-800 dark:text-blue-100">{formatCurrency(showDetailModal.total || 0)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="ghost" className="rounded-xl px-10 py-3 font-black uppercase text-[10px]" onClick={() => setShowDetailModal(null)}>{t('common.discard')}</Button>
-                  <Button variant="danger" className="rounded-xl px-4 lg:px-6 py-3 font-black uppercase text-[10px]" onClick={() => handleDeleteOrder(showDetailModal)}>{t('common.delete')}</Button>
-                  <Button variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[10px]" onClick={() => updateOrder(showDetailModal)}>{t('orders.update_os')}</Button>
+                  <Button variant="ghost" className="rounded-none px-10 py-3 font-black uppercase text-[10px]" onClick={() => setShowDetailModal(null)}>{t('common.discard')}</Button>
+                  <Button variant="danger" className="rounded-none px-4 lg:px-6 py-3 font-black uppercase text-[10px]" onClick={() => handleDeleteOrder(showDetailModal)}>{t('common.delete')}</Button>
+                  <Button variant="primary" className="rounded-none px-10 py-3 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[10px]" onClick={() => updateOrder(showDetailModal)}>{t('orders.update_os')}</Button>
                 </div>
               </div>
             </div>

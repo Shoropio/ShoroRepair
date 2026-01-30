@@ -124,7 +124,7 @@ const Settings: React.FC = () => {
 	return (
 		<div className="space-y-6 lg:space-y-10 animate-in pb-12 lg:pb-20">
 			{/* Premium Settings Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
 				<div className="relative z-10">
 					<h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
 						<SettingsIcon className="text-[#1a73e8]" size={28} />
@@ -134,7 +134,7 @@ const Settings: React.FC = () => {
 						{t('settings.subtitle_desc')}
 					</p>
 				</div>
-				<div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-2xl relative z-10 border border-gray-200 dark:border-white/5 shadow-inner">
+				<div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-none relative z-10 border border-gray-200 dark:border-white/5 shadow-inner">
 					{navItems.map(item => {
 						if (item.adminOnly && user?.role !== 'Admin') return null;
 						const Icon = item.icon;
@@ -142,7 +142,7 @@ const Settings: React.FC = () => {
 							<button
 								key={item.id}
 								onClick={() => setActiveTab(item.id as any)}
-								className={`px-4 lg:px-6 py-2 rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+								className={`px-4 lg:px-6 py-2 rounded-none text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
 							>
 								<Icon size={14} />
 								<span className="hidden sm:inline">{item.label}</span>
@@ -155,9 +155,9 @@ const Settings: React.FC = () => {
 			<div className="max-w-5xl mx-auto space-y-6 lg:space-y-8">
 				{activeTab === 'profile' && (
 					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4">
-						<Card className="lg:col-span-1 p-6 rounded-3xl shadow-xl border-none">
+						<Card className="lg:col-span-1 p-6 rounded-none shadow-xl border-none">
 							<div className="flex flex-col items-center py-6">
-								<div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center text-blue-600 border-4 border-white dark:border-white/5 shadow-xl mb-6">
+								<div className="w-20 h-20 lg:w-24 lg:h-24 rounded-none bg-blue-50 dark:bg-blue-900/10 flex items-center justify-center text-blue-600 border-4 border-white dark:border-white/5 shadow-xl mb-6">
 									<UserIcon size={32} />
 								</div>
 								<h3 className="text-lg font-bold uppercase tracking-tight">{user?.fullName}</h3>
@@ -165,7 +165,7 @@ const Settings: React.FC = () => {
 							</div>
 						</Card>
 
-						<Card className="lg:col-span-2 p-6 rounded-3xl shadow-xl border-none">
+						<Card className="lg:col-span-2 p-6 rounded-none shadow-xl border-none">
 							<div className="flex items-center gap-3 mb-6">
 								<Info className="text-blue-500" size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.profile_credentials')}</h3>
@@ -176,7 +176,7 @@ const Settings: React.FC = () => {
 									<Input label={t('users.fields.password')} type="password" value={profile.password} onChange={v => setProfile({ ...profile, password: v.target.value })} leftIcon={<Lock size={16} />} />
 								</div>
 								<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-									<Button type="submit" variant="primary" className="rounded-xl px-6 lg:px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_profile')}</Button>
+									<Button type="submit" variant="primary" className="rounded-none px-6 lg:px-8 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_profile')}</Button>
 								</div>
 							</form>
 						</Card>
@@ -185,19 +185,20 @@ const Settings: React.FC = () => {
 
 				{activeTab === 'company' && company && (
 					<form onSubmit={saveCompanySettings} className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4">
-						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-3xl shadow-xl border-none space-y-8">
+						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-none shadow-xl border-none space-y-8">
 							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
 								<Shield className="text-blue-500" size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.corporate_info')}</h3>
 							</div>
-							<div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-gray-50 dark:bg-white/5 rounded-2xl border border-dashed border-gray-200 dark:border-white/10">
-								<div className="w-16 h-16 lg:w-20 lg:h-20 bg-white dark:bg-[#1a1c1e] rounded-xl shadow-xl border-4 border-white flex items-center justify-center overflow-hidden shrink-0">
+
+							<div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-gray-50 dark:bg-white/5 rounded-none border border-dashed border-gray-200 dark:border-white/10 mb-6">
+								<div className="w-16 h-16 lg:w-20 lg:h-20 bg-white dark:bg-[#1a1c1e] rounded-none shadow-xl border-4 border-white flex items-center justify-center overflow-hidden shrink-0">
 									{company.logo ? <img src={company.logo} alt="Logo" className="w-full h-full object-contain" /> : <ImageIcon size={24} className="text-gray-200" />}
 								</div>
 								<div className="space-y-2 text-center md:text-left">
 									<h4 className="font-bold text-xs uppercase tracking-widest text-gray-700 dark:text-gray-300">{t('settings.company_logo')}</h4>
 									<p className="text-[10px] text-gray-500 font-medium">{t('settings.logo_desc')}</p>
-									<Button variant="outline" size="sm" className="rounded-lg font-bold text-[10px] py-1.5 px-3" onClick={() => document.getElementById('logo-upload')?.click()}>{t('settings.choose_image')}</Button>
+									<Button variant="outline" size="sm" className="rounded-none font-bold text-[10px] py-1.5 px-3" onClick={() => document.getElementById('logo-upload')?.click()}>{t('settings.choose_image')}</Button>
 									<input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
 								</div>
 							</div>
@@ -211,18 +212,18 @@ const Settings: React.FC = () => {
 								</Select>
 								<div className="space-y-2">
 									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">{t('settings.brand_color')}</label>
-									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-xl h-10">
-										<div className="w-6 h-6 rounded-md shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
+									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-none h-10">
+										<div className="w-6 h-6 rounded-none shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
 										<input type="text" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="flex-1 bg-transparent border-none text-[10px] font-black uppercase tracking-tighter text-gray-700 outline-none" />
 									</div>
 								</div>
 							</div>
 							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-								<Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.save_changes')}</Button>
+								<Button type="submit" variant="primary" className="rounded-none px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.save_changes')}</Button>
 							</div>
 						</Card>
 
-						<Card className="lg:col-span-4 p-6 rounded-3xl shadow-xl border-none space-y-6">
+						<Card className="lg:col-span-4 p-6 rounded-none shadow-xl border-none space-y-6">
 							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
 								<Info className="text-blue-500" size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.about')}</h3>
@@ -247,12 +248,13 @@ const Settings: React.FC = () => {
 
 				{activeTab === 'cloud' && company && (
 					<form onSubmit={saveCompanySettings} className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in slide-in-from-bottom-4">
-						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-3xl shadow-xl border-none space-y-8">
+						<Card className="lg:col-span-8 p-6 lg:p-10 rounded-none shadow-xl border-none space-y-8">
 							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5">
 								<Cloud className="text-blue-500" size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('settings.cloud_ai_services')}</h3>
 							</div>
-							<div className="p-5 lg:p-6 bg-blue-50/50 dark:bg-blue-900/5 rounded-2xl border border-blue-100 dark:border-blue-900/20 space-y-4">
+
+							<div className="p-5 lg:p-8 bg-blue-50/10 dark:bg-blue-900/5 rounded-none border border-blue-100/50 dark:border-blue-900/20 space-y-6 mb-10">
 								<div className="flex items-center gap-3 text-[#1a73e8]">
 									<Sparkles size={18} />
 									<h4 className="font-bold text-xs uppercase tracking-widest">{t('settings.ai_title')}</h4>
@@ -280,11 +282,11 @@ const Settings: React.FC = () => {
 							</div>
 
 							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
-								<Button type="submit" variant="primary" className="rounded-xl px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_services')}</Button>
+								<Button type="submit" variant="primary" className="rounded-none px-10 py-3 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]">{t('settings.update_services')}</Button>
 							</div>
 						</Card>
 
-						<Card className="lg:col-span-4 p-6 rounded-3xl shadow-xl border-none space-y-6">
+						<Card className="lg:col-span-4 p-6 rounded-none shadow-xl border-none space-y-6">
 							<div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-white/5 text-amber-600">
 								<AlertOctagon size={18} />
 								<h3 className="text-[10px] font-black uppercase tracking-widest">{t('settings.advertencia')}</h3>
@@ -298,22 +300,22 @@ const Settings: React.FC = () => {
 
 				{activeTab === 'advanced' && (
 					<div className="space-y-6 lg:space-y-8 animate-in slide-in-from-bottom-4">
-						<Card className="p-6 lg:p-10 rounded-3xl shadow-xl border-none" header={<div className="flex items-center gap-4 mb-6 lg:mb-8"><div className="p-3 bg-red-50 text-red-600 rounded-2xl"><Zap size={24} /></div><div><h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tight">{t('settings.maint_zone')}</h3><p className="text-[10px] text-gray-500 font-bold uppercase">{t('settings.maint_subtitle')}</p></div></div>}>
+						<Card className="p-6 lg:p-10 rounded-none shadow-xl border-none" header={<div className="flex items-center gap-4 mb-6 lg:mb-8"><div className="p-3 bg-red-50 text-red-600 rounded-none"><Zap size={24} /></div><div><h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tight">{t('settings.maint_zone')}</h3><p className="text-[10px] text-gray-500 font-bold uppercase">{t('settings.maint_subtitle')}</p></div></div>}>
 							<div className="space-y-4 lg:space-y-6">
-								<div className="flex items-center justify-between p-4 lg:p-6 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+								<div className="flex items-center justify-between p-4 lg:p-6 bg-gray-50 dark:bg-white/5 rounded-none border border-gray-100 dark:border-white/10">
 									<div className="space-y-1">
 										<p className="font-bold text-sm uppercase text-gray-700 dark:text-white">{t('settings.manual_backup')}</p>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{t('settings.estimated_size')}: {backupSize}</p>
 									</div>
-									<Button variant="outline" className="rounded-xl px-4 lg:px-6 py-2 font-bold uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>{t('settings.export_sqlite')}</Button>
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>{t('settings.export_sqlite')}</Button>
 								</div>
 
-								<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-2xl border border-red-100 dark:border-red-900/20">
+								<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-none border border-red-100 dark:border-red-900/20">
 									<div className="space-y-1">
 										<p className="font-bold text-sm uppercase text-red-600">{t('settings.factory_reset_title')}</p>
 										<p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">{t('settings.factory_reset_subtitle')}</p>
 									</div>
-									<Button variant="outline" className="rounded-xl px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
 										if (window.confirm(t('settings.confirm_factory_1'))) {
 											if (window.confirm(t('settings.confirm_factory_2'))) {
 												await db.delete();
@@ -326,7 +328,7 @@ const Settings: React.FC = () => {
 							</div>
 						</Card>
 
-						<div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-3xl border border-amber-100 dark:border-amber-900/20 flex gap-4">
+						<div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-none border border-amber-100 dark:border-amber-900/20 flex gap-4">
 							<AlertTriangle size={20} className="text-amber-500 shrink-0" />
 							<div className="space-y-1">
 								<h4 className="font-bold text-[10px] uppercase text-amber-700 tracking-widest">{t('settings.cloud_security_protocol')}</h4>
@@ -347,20 +349,20 @@ const Settings: React.FC = () => {
 				footer={<div className="flex gap-4 px-6 lg:px-8 pb-6"><Button variant="ghost" onClick={() => setShowBackupModal(false)}>{t('settings.abort')}</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={() => { }}>{t('settings.start')}</Button>}</div>}
 			>
 				{backupErrors.length ? (
-					<div className="p-4 lg:p-6 bg-red-50 text-red-600 rounded-2xl flex gap-3 items-center">
+					<div className="p-4 lg:p-6 bg-red-50 text-red-600 rounded-none flex gap-3 items-center">
 						<AlertTriangle size={20} />
 						<p className="text-xs font-black uppercase tracking-widest">{t('messages.error')}: {backupErrors[0]}</p>
 					</div>
 				) : backupPreview && (
 					<div className="space-y-6">
-						<div className="p-4 lg:p-6 bg-blue-50 text-[#1a73e8] rounded-2xl flex gap-3 items-center">
+						<div className="p-4 lg:p-6 bg-blue-50 text-[#1a73e8] rounded-none flex gap-3 items-center">
 							<CheckCircle2 size={24} />
 							<div>
 								<p className="text-sm font-black uppercase tracking-widest">{t('settings.data_capsule_detected')}</p>
 								<p className="text-[10px] font-bold opacity-70">{formatBackupDate(backupPreview.timestamp)}</p>
 							</div>
 						</div>
-						<div className="p-4 lg:p-6 border-2 border-dashed border-amber-200 bg-amber-50/50 rounded-2xl text-amber-700">
+						<div className="p-4 lg:p-6 border-2 border-dashed border-amber-200 bg-amber-50/50 rounded-none text-amber-700">
 							<p className="text-[10px] font-bold leading-relaxed uppercase">
 								{t('settings.overwrite_warning')}
 							</p>

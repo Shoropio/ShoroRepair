@@ -56,7 +56,8 @@
         "syncing": "Sincronizando",
         "offline": "Desconectado",
         "synced": "Sincronizado",
-        "sync_now": "Sincronizar ahora"
+        "sync_now": "Sincronizar ahora",
+        "reset": "Restablecer"
     },
     "nav": {
         "dashboard": "Panel de control",
@@ -432,6 +433,7 @@
         "profile_credentials": "Credenciales de Operador",
         "update_profile": "Actualizar Perfil",
         "corporate_info": "Información Corporativa",
+        "business_name": "Nombre del Negocio",
         "company_logo": "Logo de la Empresa",
         "logo_desc": "Se recomienda una imagen cuadrada de fondo blanco o transparente (PNG/JPG).",
         "choose_image": "Elegir nueva imagen",

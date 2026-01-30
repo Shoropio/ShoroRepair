@@ -17,10 +17,10 @@
   --surface-tonal-1: #f8f9fa;
   --surface-tonal-2: #f1f3f4;
 
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.75rem;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
 }
 
 @layer base {
@@ -69,21 +69,21 @@
 
   /* Material Surface */
   .m3-card {
-    @apply bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-2xl transition-all duration-200;
+    @apply bg-white dark:bg-[#202124] border border-[#dadce0] dark:border-[#3c4043] rounded-none transition-all duration-200;
   }
 
   .m3-card-tonal {
-    @apply bg-[#f8f9fa] dark:bg-[#2d2f31] border-none rounded-2xl;
+    @apply bg-[#f8f9fa] dark:bg-[#2d2f31] border-none rounded-none;
   }
 
   /* Material Buttons */
   .btn-google {
-    @apply px-6 py-2.5 rounded-full font-medium transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
+    @apply px-6 py-2.5 rounded-none font-medium transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
   }
 
   /* Navigation Item Style */
   .nav-google {
-    @apply flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31];
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-none transition-all duration-200 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-[#2d2f31];
   }
 
   .nav-google-active {
@@ -119,7 +119,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 dark:bg-slate-700 rounded-full;
+  @apply bg-slate-200 dark:bg-slate-700 rounded-none;
 }
 
 ::-webkit-scrollbar-thumb:hover {

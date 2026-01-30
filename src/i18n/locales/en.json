@@ -56,7 +56,8 @@
         "syncing": "Syncing",
         "offline": "Offline",
         "synced": "Synced",
-        "sync_now": "Sync now"
+        "sync_now": "Sync now",
+        "reset": "Reset"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -432,6 +433,7 @@
         "profile_credentials": "Operator Credentials",
         "update_profile": "Update Profile",
         "corporate_info": "Corporate Information",
+        "business_name": "Business Name",
         "company_logo": "Company Logo",
         "logo_desc": "A square image with a white or transparent background (PNG/JPG) is recommended.",
         "choose_image": "Choose new image",

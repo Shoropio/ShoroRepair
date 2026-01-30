@@ -75,7 +75,7 @@ const AIDiagnostic: React.FC = () => {
     return (
         <div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
             {/* Premium Header */}
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-purple-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-none shadow-xl shadow-purple-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
                 <div className="relative z-10">
                     <h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <BrainCircuit className="text-purple-600" size={28} />
@@ -85,12 +85,12 @@ const AIDiagnostic: React.FC = () => {
                         {t('ai.assistant_subtitle')}
                     </p>
                 </div>
-                <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-2xl relative z-10 border border-gray-100 dark:border-white/5 shadow-inner">
+                <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-none relative z-10 border border-gray-100 dark:border-white/5 shadow-inner">
                     {AI_MODELS.map(m => (
                         <button
                             key={m.id}
                             onClick={() => setSelectedModel(m.id)}
-                            className={`px-4 lg:px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectedModel === m.id ? 'bg-white dark:bg-[#1a1c1e] text-purple-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                            className={`px-4 lg:px-6 py-2 rounded-none text-[10px] font-black uppercase tracking-widest transition-all ${selectedModel === m.id ? 'bg-white dark:bg-[#1a1c1e] text-purple-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                             {m.id === 'gemini-1.5-flash' ? t('ai.model_flash') : t('ai.model_pro')}
                         </button>
@@ -101,7 +101,7 @@ const AIDiagnostic: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
                 {/* Configuration Panel */}
                 <div className="lg:col-span-12 xl:col-span-4 space-y-6">
-                    <Card className="p-6 lg:p-8 rounded-3xl shadow-xl border-none bg-white dark:bg-[#1a1c1e]">
+                    <Card className="p-6 lg:p-8 rounded-none shadow-xl border-none bg-white dark:bg-[#1a1c1e]">
                         <div className="flex items-center gap-3 mb-6">
                             <Zap className="text-amber-500" size={18} />
                             <h3 className="text-[10px] font-black uppercase tracking-widest text-[#5f6368]">{t('ai.analysis_input')}</h3>
@@ -115,7 +115,7 @@ const AIDiagnostic: React.FC = () => {
                                     placeholder={t('ai.search_order')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] dark:bg-white/5 rounded-2xl outline-none focus:ring-2 ring-purple-500/10 border border-transparent focus:border-purple-500/20 text-sm font-medium transition-all"
+                                    className="w-full pl-10 pr-4 py-3 bg-[#f8f9fa] dark:bg-white/5 rounded-none outline-none focus:ring-2 ring-purple-500/10 border border-transparent focus:border-purple-500/20 text-sm font-medium transition-all"
                                 />
                             </div>
 
@@ -125,7 +125,7 @@ const AIDiagnostic: React.FC = () => {
                                         <button
                                             key={o.id}
                                             onClick={() => { runDiagnostic(o); setSearchQuery(''); }}
-                                            className="w-full p-3 rounded-xl bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20 text-left hover:bg-purple-100 transition-colors flex items-center justify-between group"
+                                            className="w-full p-3 rounded-none bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/20 text-left hover:bg-purple-100 transition-colors flex items-center justify-between group"
                                         >
                                             <div>
                                                 <p className="text-[10px] font-black uppercase tracking-widest text-purple-600">OS-{o.orderNumber.slice(-4)}</p>
@@ -140,14 +140,14 @@ const AIDiagnostic: React.FC = () => {
                             <div className="pt-4 border-t border-gray-100 dark:border-white/5">
                                 <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-3 block">{t('ai.custom_analysis')}</label>
                                 <textarea
-                                    className="w-full p-4 bg-[#f8f9fa] dark:bg-white/5 rounded-2xl text-xs font-medium min-h-[120px] outline-none focus:ring-2 ring-purple-500/10 border border-transparent focus:border-purple-500/20 transition-all resize-none"
+                                    className="w-full p-4 bg-[#f8f9fa] dark:bg-white/5 rounded-none text-xs font-medium min-h-[120px] outline-none focus:ring-2 ring-purple-500/10 border border-transparent focus:border-purple-500/20 transition-all resize-none"
                                     placeholder={t('ai.write_symptoms')}
                                     value={customPrompt}
                                     onChange={(e) => setCustomPrompt(e.target.value)}
                                 />
                                 <Button
                                     variant="primary"
-                                    className="w-full mt-4 bg-purple-600 hover:bg-purple-700 shadow-purple-500/20 rounded-xl py-3 text-[10px] font-black uppercase tracking-widest"
+                                    className="w-full mt-4 bg-purple-600 hover:bg-purple-700 shadow-purple-500/20 rounded-none py-3 text-[10px] font-black uppercase tracking-widest"
                                     onClick={() => runDiagnostic()}
                                     disabled={isLoading || (!customPrompt && !searchQuery)}
                                     leftIcon={isLoading ? <Cpu className="animate-spin" size={16} /> : <Stars size={16} />}
@@ -158,9 +158,9 @@ const AIDiagnostic: React.FC = () => {
                         </div>
                     </Card>
 
-                    <Card className="p-4 lg:p-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl border-none text-white overflow-hidden relative group">
+                    <Card className="p-4 lg:p-6 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-none border-none text-white overflow-hidden relative group">
                         <div className="relative z-10 flex items-center gap-4">
-                            <div className="p-3 bg-white/10 rounded-2xl">
+                            <div className="p-3 bg-white/10 rounded-none">
                                 <Lightbulb size={24} className="animate-pulse" />
                             </div>
                             <div>
@@ -175,9 +175,9 @@ const AIDiagnostic: React.FC = () => {
                 {/* Display Panel */}
                 <div className="lg:col-span-12 xl:col-span-8">
                     {isLoading ? (
-                        <div className="h-full flex flex-col items-center justify-center py-20 bg-white dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-purple-100">
+                        <div className="h-full flex flex-col items-center justify-center py-20 bg-white dark:bg-[#1a1c1e] rounded-none border-2 border-dashed border-purple-100">
                             <div className="relative">
-                                <div className="w-16 h-16 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
+                                <div className="w-16 h-16 border-4 border-purple-100 border-t-purple-600 rounded-none animate-spin"></div>
                                 <BrainCircuit className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-purple-600" size={24} />
                             </div>
                             <h3 className="mt-8 text-sm font-black uppercase tracking-widest text-purple-600 animate-pulse">{t('ai.analyzing')}</h3>
@@ -185,12 +185,12 @@ const AIDiagnostic: React.FC = () => {
                         </div>
                     ) : result ? (
                         <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                            <Card className="p-6 lg:p-10 rounded-3xl shadow-xl border-none bg-white dark:bg-[#1a1c1e] relative overflow-hidden">
+                            <Card className="p-6 lg:p-10 rounded-none shadow-xl border-none bg-white dark:bg-[#1a1c1e] relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-6 pointer-events-none opacity-5">
                                     <Stars size={80} />
                                 </div>
                                 <div className="flex items-center gap-4 mb-8">
-                                    <div className="p-3 bg-purple-50 dark:bg-purple-900/10 text-purple-600 rounded-2xl">
+                                    <div className="p-3 bg-purple-50 dark:bg-purple-900/10 text-purple-600 rounded-none">
                                         <Microscope size={24} />
                                     </div>
                                     <div>
@@ -209,13 +209,13 @@ const AIDiagnostic: React.FC = () => {
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
                                         <Clock size={12} /> {t('ai.processed_in', { time: 1.2 })}
                                     </div>
-                                    <Button variant="outline" className="rounded-xl px-6 py-2 text-[10px] font-black uppercase" onClick={() => setResult(null)}>{t('ai.new_query')}</Button>
+                                    <Button variant="outline" className="rounded-none px-6 py-2 text-[10px] font-black uppercase" onClick={() => setResult(null)}>{t('ai.new_query')}</Button>
                                 </div>
                             </Card>
                         </div>
                     ) : (
-                        <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-[#f8f9fa] dark:bg-[#1a1c1e] rounded-3xl border-2 border-dashed border-[#dadce0] dark:border-white/10 group">
-                            <div className="w-20 h-20 bg-white dark:bg-[#202124] rounded-2xl shadow-lg flex items-center justify-center text-gray-200 group-hover:scale-110 group-hover:text-purple-300 transition-all duration-500">
+                        <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-[#f8f9fa] dark:bg-[#1a1c1e] rounded-none border-2 border-dashed border-[#dadce0] dark:border-white/10 group">
+                            <div className="w-20 h-20 bg-white dark:bg-[#202124] rounded-none shadow-lg flex items-center justify-center text-gray-200 group-hover:scale-110 group-hover:text-purple-300 transition-all duration-500">
                                 <Sparkles size={40} />
                             </div>
                             <h3 className="mt-8 text-sm font-black uppercase tracking-widest text-gray-400">{t('ai.results_panel')}</h3>

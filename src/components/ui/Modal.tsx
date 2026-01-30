@@ -79,7 +79,7 @@ const Modal: React.FC<ModalProps> = ({
 
             {/* Modal Container */}
             <div className={`
-                relative w-full bg-white dark:bg-[#202124] shadow-2xl overflow-hidden rounded-2xl
+                relative w-full bg-white dark:bg-[#202124] shadow-2xl overflow-hidden rounded-none
                 animate-in zoom-in-95 slide-in-from-bottom-2 duration-300
                 ${isFullscreen ? 'h-full max-w-full rounded-none' : sizes[size]}
             `}>
@@ -99,7 +99,7 @@ const Modal: React.FC<ModalProps> = ({
                         {allowFullscreen && (
                             <button
                                 onClick={() => setIsFullscreen(!isFullscreen)}
-                                className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 transition-all rounded-full"
+                                className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 transition-all rounded-none"
                                 title={isFullscreen ? t('common.exit_fullscreen', 'Salir de pantalla completa') : t('common.fullscreen', 'Pantalla completa')}
                             >
                                 {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
@@ -107,7 +107,7 @@ const Modal: React.FC<ModalProps> = ({
                         )}
                         <button
                             onClick={onClose}
-                            className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 transition-all rounded-full"
+                            className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 transition-all rounded-none"
                         >
                             <X size={20} />
                         </button>

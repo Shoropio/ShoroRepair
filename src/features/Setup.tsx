@@ -161,12 +161,12 @@ const Setup: React.FC = () => {
 		<div className="min-h-screen bg-gray-50 dark:bg-[#121416] flex items-center justify-center p-8 overflow-hidden relative">
 			{/* Background Decorative Elements */}
 			<div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-			<div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-500/5 rounded-full blur-[120px]"></div>
-			<div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-blue-600/5 rounded-full blur-[120px]"></div>
+			<div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-500/5 rounded-none blur-[120px]"></div>
+			<div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-blue-600/5 rounded-none blur-[120px]"></div>
 
 			<div className="max-w-3xl w-full relative z-10">
 				<div className="text-center mb-16 space-y-6">
-					<div className="w-24 h-24 bg-white dark:bg-[#1a1c1e] rounded-[2rem] mx-auto flex items-center justify-center text-[#1a73e8] shadow-2xl shadow-blue-500/10 border-4 border-white dark:border-white/5 group transform transition-transform duration-700 hover:rotate-[360deg]">
+					<div className="w-24 h-24 bg-white dark:bg-[#1a1c1e] rounded-none mx-auto flex items-center justify-center text-[#1a73e8] shadow-2xl shadow-blue-500/10 border-4 border-white dark:border-white/5 group transform transition-transform duration-700 hover:rotate-[360deg]">
 						<Shield size={48} className="drop-shadow-sm" />
 					</div>
 					<div>
@@ -183,7 +183,7 @@ const Setup: React.FC = () => {
 				<div className="flex items-center justify-center mb-16 gap-12">
 					{[1, 2, 3].map((s) => (
 						<div key={s} className="flex flex-col items-center gap-3 relative">
-							<div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-black transition-all duration-700 ${s <= step ? 'bg-[#1a73e8] text-white shadow-xl shadow-blue-500/20' : 'bg-white dark:bg-[#1c1e21] text-gray-400'}`}>
+							<div className={`w-12 h-12 rounded-none flex items-center justify-center text-sm font-black transition-all duration-700 ${s <= step ? 'bg-[#1a73e8] text-white shadow-xl shadow-blue-500/20' : 'bg-white dark:bg-[#1c1e21] text-gray-400'}`}>
 								{s < step ? <Check size={20} /> : s}
 							</div>
 							{s < 3 && <div className={`absolute left-16 top-6 w-8 h-[2px] ${s < step ? 'bg-blue-500' : 'bg-gray-200'}`}></div>}
@@ -191,10 +191,10 @@ const Setup: React.FC = () => {
 					))}
 				</div>
 
-				<Card className="p-12 rounded-[3.5rem] shadow-2xl border-none bg-white dark:bg-[#1a1c1e] relative overflow-hidden">
+				<Card className="p-12 rounded-none shadow-2xl border-none bg-white dark:bg-[#1a1c1e] relative overflow-hidden">
 					{step === 1 && (
 						<div className="space-y-10 animate-in slide-in-from-bottom-10 duration-700">
-							<div className="p-8 bg-blue-50/50 dark:bg-blue-900/5 rounded-[2.5rem] border border-blue-100 flex gap-4 items-center">
+							<div className="p-8 bg-blue-50/50 dark:bg-blue-900/5 rounded-none border border-blue-100 flex gap-4 items-center">
 								<Sparkles className="text-blue-500 shrink-0" size={24} />
 								<p className="text-xs font-bold text-blue-700 uppercase tracking-widest leading-relaxed">
 									{t('setup.welcome_desc')}
@@ -208,11 +208,11 @@ const Setup: React.FC = () => {
 								onChange={handleChange}
 								leftIcon={<Building size={20} />}
 								placeholder={t('setup.business_placeholder')}
-								className="h-16 rounded-2xl"
+								className="h-16 rounded-none"
 							/>
 
 							<div className="space-y-4 pt-4">
-								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={() => setStep(2)} rightIcon={<ArrowRight size={20} />}>{t('setup.deploy_station')}</Button>
+								<Button variant="primary" className="w-full h-16 rounded-none font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={() => setStep(2)} rightIcon={<ArrowRight size={20} />}>{t('setup.deploy_station')}</Button>
 
 								<div className="relative flex items-center py-6">
 									<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
@@ -222,7 +222,7 @@ const Setup: React.FC = () => {
 
 								<Button
 									variant="outline"
-									className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] border-gray-100 bg-gray-50/50 hover:bg-white"
+									className="w-full h-16 rounded-none font-black uppercase tracking-widest text-[11px] border-gray-100 bg-gray-50/50 hover:bg-white"
 									onClick={handleRestore}
 									isLoading={isLoading}
 									leftIcon={<Database size={20} className="text-blue-500" />}
@@ -244,7 +244,7 @@ const Setup: React.FC = () => {
 								<Input label={t('setup.validate_password')} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} leftIcon={<Check size={18} />} />
 							</div>
 							<div className="pt-6">
-								<Button variant="primary" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={handleCreateAdmin} isLoading={isLoading} rightIcon={<Zap size={20} />}>{t('setup.init_commands')}</Button>
+								<Button variant="primary" className="w-full h-16 rounded-none font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20" onClick={handleCreateAdmin} isLoading={isLoading} rightIcon={<Zap size={20} />}>{t('setup.init_commands')}</Button>
 								<button className="w-full mt-6 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-blue-500" onClick={() => setStep(1)}>{t('setup.back_step1')}</button>
 							</div>
 						</div>
@@ -253,7 +253,7 @@ const Setup: React.FC = () => {
 					{step === 3 && (
 						<div className="space-y-12 animate-in slide-in-from-right-10 duration-700 text-center py-6">
 							<div className="flex flex-col items-center gap-6">
-								<div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-full flex items-center justify-center text-blue-600 shadow-inner">
+								<div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/10 rounded-none flex items-center justify-center text-blue-600 shadow-inner">
 									<Cloud size={40} />
 								</div>
 								<div className="space-y-2">
@@ -264,17 +264,17 @@ const Setup: React.FC = () => {
 
 							<div className="flex flex-col items-center gap-6">
 								{googleAccessToken ? (
-									<div className="w-full bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-[2rem] border-2 border-emerald-100 flex items-center justify-center gap-4 text-emerald-600 font-black uppercase text-xs tracking-widest animate-pulse">
+									<div className="w-full bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-none border-2 border-emerald-100 flex items-center justify-center gap-4 text-emerald-600 font-black uppercase text-xs tracking-widest animate-pulse">
 										<ShieldCheck size={24} /> {t('setup.active_secure')}
 									</div>
 								) : (
-									<Button variant="outline" className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] bg-white text-gray-800 shadow-xl shadow-black/5" onClick={handleCloudLink} leftIcon={<Globe size={18} />}>{t('setup.link_google')}</Button>
+									<Button variant="outline" className="w-full h-16 rounded-none font-black uppercase tracking-widest text-[11px] bg-white text-gray-800 shadow-xl shadow-black/5" onClick={handleCloudLink} leftIcon={<Globe size={18} />}>{t('setup.link_google')}</Button>
 								)}
 							</div>
 
 							<div className="pt-10 border-t border-gray-100 dark:border-white/5 flex gap-6">
-								<Button variant="ghost" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px]" onClick={finishSetup}>{t('setup.skip_cloud')}</Button>
-								<Button variant="primary" className="flex-1 h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" onClick={finishSetup} disabled={!googleAccessToken}>{t('setup.complete_deploy')}</Button>
+								<Button variant="ghost" className="flex-1 h-14 rounded-none font-black uppercase tracking-widest text-[10px]" onClick={finishSetup}>{t('setup.skip_cloud')}</Button>
+								<Button variant="primary" className="flex-1 h-14 rounded-none font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" onClick={finishSetup} disabled={!googleAccessToken}>{t('setup.complete_deploy')}</Button>
 							</div>
 						</div>
 					)}

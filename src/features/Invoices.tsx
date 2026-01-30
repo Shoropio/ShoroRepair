@@ -79,7 +79,7 @@ const Invoices: React.FC = () => {
 	return (
 		<div className="space-y-8 animate-in pb-20">
 			{/* High-Fidelity Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
 				<div className="relative z-10">
 					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
 						<Receipt className="text-[#1a73e8]" size={32} />
@@ -92,21 +92,21 @@ const Invoices: React.FC = () => {
 
 				<div className="flex flex-wrap items-center gap-6 relative z-10">
 					<div className="flex gap-4">
-						<Card className="px-6 py-4 bg-gray-50 dark:bg-white/5 rounded-2xl border-none flex flex-col items-center">
+						<Card className="px-6 py-4 bg-gray-50 dark:bg-white/5 rounded-none border-none flex flex-col items-center">
 							<span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{t('invoices.volume')}</span>
-							<span className="text-xl font-black text-gray-800 dark:text-white">{stats.total}</span>
+							<span className="text-xl font-black text-gray-800 dark:text-white"> {stats.total}</span>
 						</Card>
-						<Card className="px-6 py-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border-none flex flex-col items-center">
+						<Card className="px-6 py-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-none border-none flex flex-col items-center">
 							<span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">{t('invoices.net_total')}</span>
-							<span className="text-xl font-black text-emerald-600">{formatCurrency(stats.revenue).split(',')[0]}</span>
+							<span className="text-xl font-black text-emerald-600"> {formatCurrency(stats.revenue).split(',')[0]}</span>
 						</Card>
-						<Card className="px-6 py-4 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border-none flex flex-col items-center">
+						<Card className="px-6 py-4 bg-amber-50 dark:bg-amber-900/10 rounded-none border-none flex flex-col items-center">
 							<span className="text-[9px] font-black text-amber-400 uppercase tracking-widest mb-1">{t('invoices.liabilities')}</span>
-							<span className="text-xl font-black text-amber-600">{stats.pending}</span>
+							<span className="text-xl font-black text-amber-600"> {stats.pending}</span>
 						</Card>
 					</div>
 				</div>
-				<div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-50"></div>
+				<div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-none blur-3xl opacity-50"></div>
 			</header>
 
 			{/* Premium Browser Bar */}
@@ -118,12 +118,12 @@ const Invoices: React.FC = () => {
 						placeholder={t('invoices.search_placeholder')}
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
+						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
 					/>
 				</div>
 				<div className="flex gap-4">
 					<Select
-						className="w-56 h-auto py-4 rounded-[1.5rem] bg-white border-none shadow-xl shadow-black/5 font-bold text-xs uppercase tracking-widest text-[#5f6368]"
+						className="w-56 h-auto py-4 rounded-none bg-white border-none shadow-xl shadow-black/5 font-bold text-xs uppercase tracking-widest text-[#5f6368]"
 						value={statusFilter}
 						onChange={(e) => setStatusFilter(e.target.value)}
 					>
@@ -135,7 +135,7 @@ const Invoices: React.FC = () => {
 			</div>
 
 			{/* Modern Table Container */}
-			<div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5">
+			<div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
 				<div className="overflow-x-auto">
 					<table className="w-full text-left">
 						<thead>
@@ -161,7 +161,7 @@ const Invoices: React.FC = () => {
 										</td>
 										<td className="px-8 py-6">
 											<div className="flex items-center gap-3">
-												<div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+												<div className="w-8 h-8 rounded-none bg-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
 													<UserIcon size={14} />
 												</div>
 												<span className="text-sm text-[#202124] dark:text-white font-black uppercase tracking-tight">{client?.name || '---'}</span>
@@ -182,9 +182,9 @@ const Invoices: React.FC = () => {
 										</td>
 										<td className="px-8 py-6 text-right">
 											<div className="flex justify-end gap-2 opacity-20 group-hover:opacity-100 transition-all">
-												<button onClick={() => generateInvoice(invoice, 'print')} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100" title={t('invoices.thermal_print')}><Printer size={16} /></button>
-												<button onClick={() => generateInvoice(invoice, 'download')} className="p-3 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100" title={t('invoices.download_pdf')}><Download size={16} /></button>
-												<button onClick={() => handleHaciendaSync(invoice)} className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100" title={t('invoices.validate_tax')}><CloudUpload size={16} /></button>
+												<button onClick={() => generateInvoice(invoice, 'print')} className="p-3 bg-blue-50 text-blue-600 rounded-none hover:bg-blue-100" title={t('invoices.thermal_print')}><Printer size={16} /></button>
+												<button onClick={() => generateInvoice(invoice, 'download')} className="p-3 bg-gray-50 text-gray-600 rounded-none hover:bg-gray-100" title={t('invoices.download_pdf')}><Download size={16} /></button>
+												<button onClick={() => handleHaciendaSync(invoice)} className="p-3 bg-emerald-50 text-emerald-600 rounded-none hover:bg-emerald-100" title={t('invoices.validate_tax')}><CloudUpload size={16} /></button>
 											</div>
 										</td>
 									</tr>

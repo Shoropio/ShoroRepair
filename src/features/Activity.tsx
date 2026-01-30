@@ -72,7 +72,7 @@ const ActivityPage: React.FC = () => {
     return (
         <div className="space-y-8 animate-in pb-20">
             {/* Premium Header */}
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
                 <div className="relative z-10">
                     <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
                         <Fingerprint className="text-[#1a73e8]" size={32} />
@@ -89,9 +89,9 @@ const ActivityPage: React.FC = () => {
                             <p className="text-2xl font-black text-[#1a73e8]">{activities.length}</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>{t('activity.real_frequency')}</Button>
+                    <Button variant="outline" className="rounded-none px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>{t('activity.real_frequency')}</Button>
                 </div>
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30"></div>
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-none blur-3xl opacity-30"></div>
             </header>
 
             {/* Filter Chips */}
@@ -109,7 +109,7 @@ const ActivityPage: React.FC = () => {
                         <button
                             key={f.id}
                             onClick={() => setFilter(f.id)}
-                            className={`px-6 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/5 flex items-center gap-2 border-2 ${filter === f.id ? 'bg-[#1a73e8] text-white border-transparent' : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] border-transparent hover:border-blue-100'}`}
+                            className={`px-6 py-3.5 rounded-none text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/5 flex items-center gap-2 border-2 ${filter === f.id ? 'bg-[#1a73e8] text-white border-transparent' : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] border-transparent hover:border-blue-100'}`}
                         >
                             <Icon size={14} />
                             {f.label}
@@ -119,7 +119,7 @@ const ActivityPage: React.FC = () => {
             </div>
 
             {/* Audit Timeline */}
-            <Card className="p-0 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5 bg-white">
+            <Card className="p-0 rounded-none overflow-hidden shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5 bg-white">
                 {activities.length === 0 ? (
                     <div className="py-40 flex flex-col items-center justify-center">
                         <History size={64} className="text-gray-100 mb-6" />
@@ -129,7 +129,7 @@ const ActivityPage: React.FC = () => {
                     <div className="divide-y divide-gray-50 dark:divide-white/5">
                         {activities.map((activity) => (
                             <div key={activity.id} className="p-8 hover:bg-blue-50/20 transition-all flex items-start gap-8 group">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0 transition-transform group-hover:scale-105 ${getActionColor(activity.action)}`}>
+                                <div className={`w-14 h-14 rounded-none flex items-center justify-center border-2 shrink-0 transition-transform group-hover:scale-105 ${getActionColor(activity.action)}`}>
                                     {getActionIcon(activity.action)}
                                 </div>
 

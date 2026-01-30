@@ -129,7 +129,7 @@ const UsersPage: React.FC = () => {
 	return (
 		<div className="space-y-8 animate-in pb-20">
 			{/* Premium Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
 				<div className="relative z-10">
 					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
 						<UsersIcon className="text-[#1a73e8]" size={32} />
@@ -142,11 +142,11 @@ const UsersPage: React.FC = () => {
 
 				<div className="flex flex-wrap items-center gap-4 relative z-10">
 					<Link to="/roles">
-						<Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<Settings2 size={18} />}>{t('users.manage_roles')}</Button>
+						<Button variant="outline" className="rounded-none px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<Settings2 size={18} />}>{t('users.manage_roles')}</Button>
 					</Link>
 					<Button
 						variant="primary"
-						className="rounded-2xl px-8 py-4 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]"
+						className="rounded-none px-8 py-4 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]"
 						leftIcon={<Plus size={20} />}
 						onClick={() => setShowAdd(true)}
 					>
@@ -164,12 +164,12 @@ const UsersPage: React.FC = () => {
 						placeholder={t('users.search_placeholder')}
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
+						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
 					/>
 				</div>
-				<div className="flex bg-white dark:bg-[#1a1c1e] p-2 rounded-[1.5rem] shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
-					<button onClick={() => setViewMode('grid')} className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white' : 'text-[#5f6368]'}`}><LayoutGrid size={16} /> {t('common.grid')}</button>
-					<button onClick={() => setViewMode('list')} className={`px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white' : 'text-[#5f6368]'}`}><List size={16} /> {t('common.list')}</button>
+				<div className="flex bg-white dark:bg-[#1a1c1e] p-2 rounded-none shadow-xl shadow-black/5 border border-[#f1f3f4] dark:border-white/5">
+					<button onClick={() => setViewMode('grid')} className={`px-5 py-2.5 rounded-none transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'grid' ? 'bg-[#1a73e8] text-white' : 'text-[#5f6368]'}`}><LayoutGrid size={16} /> {t('common.grid')}</button>
+					<button onClick={() => setViewMode('list')} className={`px-5 py-2.5 rounded-none transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${viewMode === 'list' ? 'bg-[#1a73e8] text-white' : 'text-[#5f6368]'}`}><List size={16} /> {t('common.list')}</button>
 				</div>
 			</div>
 
@@ -177,14 +177,14 @@ const UsersPage: React.FC = () => {
 			{viewMode === 'grid' ? (
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 					{users.map(user => (
-						<Card key={user.id} className={`group p-8 rounded-[2.5rem] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white ${!user.active ? 'opacity-60 grayscale' : ''}`}>
+						<Card key={user.id} className={`group p-8 rounded-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white ${!user.active ? 'opacity-60 grayscale' : ''}`}>
 							<div className="flex justify-between items-start mb-6">
-								<div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg ${user.role === 'Admin' ? 'bg-blue-50 text-blue-600 shadow-blue-500/10' : user.role === 'Technician' ? 'bg-amber-50 text-amber-600 shadow-amber-500/10' : 'bg-emerald-50 text-emerald-600 shadow-emerald-500/10'}`}>
+								<div className={`w-16 h-16 rounded-none flex items-center justify-center font-black text-2xl shadow-lg ${user.role === 'Admin' ? 'bg-blue-50 text-blue-600 shadow-blue-500/10' : user.role === 'Technician' ? 'bg-amber-50 text-amber-600 shadow-amber-500/10' : 'bg-emerald-50 text-emerald-600 shadow-emerald-500/10'}`}>
 									{user.fullName.charAt(0)}
 								</div>
 								<div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-									<button onClick={() => openEdit(user)} className="p-2.5 bg-gray-50 text-gray-500 rounded-xl hover:bg-blue-50 hover:text-blue-600"><Edit2 size={16} /></button>
-									{user.role !== 'Admin' && <button onClick={() => handleDelete(user)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100"><Trash2 size={16} /></button>}
+									<button onClick={() => openEdit(user)} className="p-2.5 bg-gray-50 text-gray-500 rounded-none hover:bg-blue-50 hover:text-blue-600"><Edit2 size={16} /></button>
+									{user.role !== 'Admin' && <button onClick={() => handleDelete(user)} className="p-2.5 bg-red-50 text-red-600 rounded-none hover:bg-red-100"><Trash2 size={16} /></button>}
 								</div>
 							</div>
 
@@ -207,7 +207,7 @@ const UsersPage: React.FC = () => {
 					))}
 				</div>
 			) : (
-				<div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5">
+				<div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
 					<div className="overflow-x-auto">
 						<table className="w-full text-left">
 							<thead>
@@ -223,7 +223,7 @@ const UsersPage: React.FC = () => {
 									<tr key={user.id} className={`hover:bg-blue-50/20 transition-colors group ${!user.active ? 'opacity-40' : ''}`}>
 										<td className="px-8 py-6">
 											<div className="flex items-center gap-4">
-												<div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${user.role === 'Admin' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500 shadow-sm'}`}>
+												<div className={`w-10 h-10 rounded-none flex items-center justify-center font-black text-xs ${user.role === 'Admin' ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-500 shadow-sm'}`}>
 													{user.fullName.charAt(0)}
 												</div>
 												<div>
@@ -237,7 +237,7 @@ const UsersPage: React.FC = () => {
 										</td>
 										<td className="px-8 py-6">
 											<div className="flex items-center gap-2">
-												<div className={`w-2 h-2 rounded-full ${user.active ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+												<div className={`w-2 h-2 rounded-none ${user.active ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
 												<span className={`text-[10px] font-black uppercase tracking-widest ${user.active ? 'text-emerald-600' : 'text-red-600'}`}>
 													{user.active ? t('users.status.synced') : t('users.status.no_access')}
 												</span>
@@ -245,8 +245,8 @@ const UsersPage: React.FC = () => {
 										</td>
 										<td className="px-8 py-6 text-right">
 											<div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-												<button onClick={() => openEdit(user)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100"><Edit2 size={16} /></button>
-												{user.role !== 'Admin' && <button onClick={() => handleDelete(user)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100"><Trash2 size={16} /></button>}
+												<button onClick={() => openEdit(user)} className="p-2.5 bg-blue-50 text-blue-600 rounded-none hover:bg-blue-100"><Edit2 size={16} /></button>
+												{user.role !== 'Admin' && <button onClick={() => handleDelete(user)} className="p-2.5 bg-red-50 text-red-600 rounded-none hover:bg-red-100"><Trash2 size={16} /></button>}
 											</div>
 										</td>
 									</tr>
@@ -264,7 +264,7 @@ const UsersPage: React.FC = () => {
 				title={editingUser ? t('users.edit') : t('users.new')}
 				subtitle={t('users.security_registry')}
 				size="2xl"
-				footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={closeModal}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSave}>{t('common.save')}</Button></div>}
+				footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-none px-8" onClick={closeModal}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-none px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSave}>{t('common.save')}</Button></div>}
 			>
 				<form onSubmit={handleSave} className="space-y-8 py-6">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">

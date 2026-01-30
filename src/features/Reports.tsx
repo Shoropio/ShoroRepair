@@ -102,7 +102,7 @@ const Reports: React.FC = () => {
 	return (
 		<div className="space-y-6 lg:space-y-8 animate-in pb-12 lg:pb-20">
 			{/* High-Fidelity Header */}
-			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-3xl shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-6 lg:p-8 rounded-none shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
 				<div>
 					<h1 className="text-2xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
 						<Activity className="text-[#1a73e8]" size={28} />
@@ -113,8 +113,8 @@ const Reports: React.FC = () => {
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-2 lg:gap-3">
-					<Button variant="outline" className="rounded-xl px-4 lg:px-6 py-2.5 font-bold uppercase text-[10px] tracking-widest border-gray-200" onClick={() => exportPDF()} leftIcon={<Printer size={16} />}>{t('reports.print_protocol')}</Button>
-					<Button variant="primary" className="rounded-xl px-6 lg:px-8 py-2.5 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]" onClick={() => exportPDF('download')} leftIcon={<Download size={18} />}>{t('reports.export_digital')}</Button>
+					<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2.5 font-bold uppercase text-[10px] tracking-widest border-gray-200" onClick={() => exportPDF()} leftIcon={<Printer size={16} />}>{t('reports.print_protocol')}</Button>
+					<Button variant="primary" className="rounded-none px-6 lg:px-8 py-2.5 shadow-lg shadow-blue-500/10 font-bold uppercase tracking-widest text-[10px]" onClick={() => exportPDF('download')} leftIcon={<Download size={18} />}>{t('reports.export_digital')}</Button>
 				</div>
 			</header>
 
@@ -126,9 +126,9 @@ const Reports: React.FC = () => {
 					{ label: t('reports.stats.avg_ticket'), value: data.stats.avgOrderValue, color: 'text-[#202124] dark:text-white', icon: Briefcase, desc: t('reports.stats.service_value') },
 					{ label: t('reports.stats.client_base'), value: data.stats.clientsCount, color: 'text-indigo-600', icon: Users, desc: t('reports.stats.active_portfolio'), isNumber: true }
 				].map((stat, i) => (
-					<Card key={i} className="p-5 lg:p-6 rounded-3xl border border-[#f1f3f4] dark:border-white/5 hover:shadow-xl transition-all group bg-white dark:bg-[#1a1c1e]">
+					<Card key={i} className="p-5 lg:p-6 rounded-none border border-[#f1f3f4] dark:border-white/5 hover:shadow-xl transition-all group bg-white dark:bg-[#1a1c1e]">
 						<div className="flex items-center justify-between mb-4">
-							<div className="p-2.5 bg-gray-50 dark:bg-white/5 rounded-xl group-hover:bg-blue-50 transition-colors">
+							<div className="p-2.5 bg-gray-50 dark:bg-white/5 rounded-none group-hover:bg-blue-50 transition-colors">
 								<stat.icon size={18} className="text-gray-400 group-hover:text-blue-600" />
 							</div>
 							<span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{stat.desc}</span>
@@ -143,7 +143,7 @@ const Reports: React.FC = () => {
 
 			<div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
 				{/* Revenue Evolution */}
-				<Card className="lg:col-span-8 p-6 lg:p-8 rounded-3xl border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#1a1c1e] shadow-xl shadow-black/5">
+				<Card className="lg:col-span-8 p-6 lg:p-8 rounded-none border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#1a1c1e] shadow-xl shadow-black/5">
 					<div className="flex items-center justify-between mb-8">
 						<div>
 							<h3 className="text-sm font-black uppercase tracking-widest text-[#202124] dark:text-white">{t('reports.revenue_evolution')}</h3>
@@ -165,7 +165,7 @@ const Reports: React.FC = () => {
 								<YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#9aa0a6' }} />
 								<Tooltip
 									contentStyle={{
-										borderRadius: '16px',
+										borderRadius: '0px',
 										border: 'none',
 										boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
 										fontSize: '11px',
@@ -180,7 +180,7 @@ const Reports: React.FC = () => {
 				</Card>
 
 				{/* Distribution or Mini Stats */}
-				<Card className="lg:col-span-4 p-6 lg:p-8 rounded-3xl border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#1a1c1e] shadow-xl shadow-black/5">
+				<Card className="lg:col-span-4 p-6 lg:p-8 rounded-none border-[#f1f3f4] dark:border-white/5 bg-white dark:bg-[#1a1c1e] shadow-xl shadow-black/5">
 					<div className="space-y-6">
 						<div>
 							<h3 className="text-sm font-black uppercase tracking-widest text-[#202124] dark:text-white">{t('reports.health_kpi')}</h3>
@@ -188,7 +188,7 @@ const Reports: React.FC = () => {
 						</div>
 
 						<div className="space-y-4">
-							<div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/20">
+							<div className="p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-none border border-emerald-100 dark:border-emerald-900/20">
 								<div className="flex items-center justify-between mb-2">
 									<p className="text-[10px] font-black text-emerald-600 uppercase">{t('reports.labor_margin')}</p>
 									<ArrowUpRight size={14} className="text-emerald-500" />
@@ -196,7 +196,7 @@ const Reports: React.FC = () => {
 								<p className="text-xl font-black text-emerald-800 dark:text-emerald-100">{((data.profit / (data.revenue || 1)) * 100).toFixed(1)}%</p>
 							</div>
 
-							<div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+							<div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-none border border-blue-100 dark:border-blue-900/20">
 								<div className="flex items-center justify-between mb-2">
 									<p className="text-[10px] font-black text-blue-600 uppercase">{t('reports.inventory_value')}</p>
 									<TrendingUp size={14} className="text-blue-500" />
@@ -204,7 +204,7 @@ const Reports: React.FC = () => {
 								<p className="text-xl font-black text-blue-800 dark:text-blue-100">{formatCurrency(data.stats.inventoryValue).split(',')[0]}</p>
 							</div>
 
-							<div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10">
+							<div className="p-4 bg-gray-50 dark:bg-white/5 rounded-none border border-gray-100 dark:border-white/10">
 								<div className="flex items-center justify-between mb-2">
 									<p className="text-[10px] font-black text-gray-500 uppercase">{t('reports.client_conversion')}</p>
 									<Badge size="xs" variant="slate">{t('common.active')}</Badge>
