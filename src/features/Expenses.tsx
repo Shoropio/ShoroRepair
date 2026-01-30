@@ -273,6 +273,7 @@ const Expenses: React.FC = () => {
                 title={t('expenses.new')}
                 subtitle={t('expenses.subtitle')}
                 size="2xl"
+                allowFullscreen={true}
                 footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-none px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-none px-12 shadow-xl shadow-red-500/20 font-black uppercase tracking-widest text-[11px] bg-[#ea4335] hover:bg-[#d93025]" onClick={handleSubmit}>{t('expenses.save')}</Button></div>}
             >
                 <form onSubmit={handleSubmit} className="space-y-8 py-6">

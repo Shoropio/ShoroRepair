@@ -653,6 +653,7 @@ const Orders: React.FC = () => {
         onClose={() => setShowModal(false)}
         title={t('orders.new')}
         size="2xl"
+        allowFullscreen={true}
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
@@ -690,6 +691,7 @@ const Orders: React.FC = () => {
         onClose={() => setShowDetailModal(null)}
         title={showDetailModal ? t('orders.workbench_title', { number: showDetailModal.orderNumber }) : ''}
         size="4xl"
+        allowFullscreen={true}
       >
         {showDetailModal && (
           <div className="grid grid-cols-1 lg:grid-cols-12 h-[calc(100vh-200px)] overflow-hidden">

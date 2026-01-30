@@ -264,6 +264,7 @@ const UsersPage: React.FC = () => {
 				title={editingUser ? t('users.edit') : t('users.new')}
 				subtitle={t('users.security_registry')}
 				size="2xl"
+				allowFullscreen={true}
 				footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" className="rounded-none px-8" onClick={closeModal}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-none px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSave}>{t('common.save')}</Button></div>}
 			>
 				<form onSubmit={handleSave} className="space-y-8 py-6">

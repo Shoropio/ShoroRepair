@@ -4,7 +4,8 @@ export enum OrderStatus {
     IN_REPAIR = 'En Reparación',
     AWAITING_PARTS = 'Esperando Repuesto',
     READY = 'Listo',
-    DELIVERED = 'Entregado'
+    DELIVERED = 'Entregado',
+    CANCELLED = 'Cancelado'
 }
 
 export enum Priority {

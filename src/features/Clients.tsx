@@ -286,6 +286,7 @@ const Clients: React.FC = () => {
         onClose={closeModal}
         title={editingClient ? t('clients.edit') : t('clients.new')}
         size="lg"
+        allowFullscreen={true}
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">

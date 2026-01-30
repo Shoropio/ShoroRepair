@@ -310,6 +310,7 @@ const Inventory: React.FC = () => {
         onClose={closeModal}
         title={editingPart ? t('inventory.update_component') : t('inventory.register_part')}
         size="lg"
+        allowFullscreen={true}
       >
         <form onSubmit={handleSave} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">

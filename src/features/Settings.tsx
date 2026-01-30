@@ -346,6 +346,7 @@ const Settings: React.FC = () => {
 				onClose={() => setShowBackupModal(false)}
 				title={t('settings.restore_console')}
 				size="xl"
+				allowFullscreen={true}
 				footer={<div className="flex gap-4 px-6 lg:px-8 pb-6"><Button variant="ghost" onClick={() => setShowBackupModal(false)}>{t('settings.abort')}</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={() => { }}>{t('settings.start')}</Button>}</div>}
 			>
 				{backupErrors.length ? (
