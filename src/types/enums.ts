@@ -32,3 +32,5 @@ export enum PaymentStatus {
     PENDING = 'Pendiente',
     PAID = 'Pagado'
 }
+
+export type UserRole = 'Admin' | 'Technician' | 'Receptionist';

@@ -19,7 +19,13 @@ import {
 	Activity,
 	Info,
 	ExternalLink,
-	AlertOctagon
+	AlertOctagon,
+	Shield,
+	Smartphone,
+	Cpu,
+	Zap,
+	Lock,
+	Settings as SettingsIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
@@ -43,20 +49,6 @@ import {
 } from '../utils/backup/backupUtils';
 import { compressImage } from '../services/upload.service';
 import { cleanAllDuplicates } from '../offline/conflict';
-import { generateDemoData } from '../lib/demoData';
-
-const SettingsSkeleton: React.FC = () => (
-	<div className="space-y-10 animate-in pb-10">
-		<div className="space-y-2">
-			<div className="h-8 w-64 bg-[#f1f3f4] dark:bg-[#2d2f31] rounded-none animate-pulse" />
-			<div className="h-4 w-48 bg-[#f1f3f4] dark:bg-[#2d2f31] rounded-none animate-pulse" />
-		</div>
-		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			<div className="bg-white dark:bg-[#1a1c1e] border border-[#dadce0] dark:border-[#3c4043] rounded-none h-96 animate-pulse" />
-			<div className="bg-white dark:bg-[#1a1c1e] border border-[#dadce0] dark:border-[#3c4043] rounded-none h-96 animate-pulse" />
-		</div>
-	</div>
-);
 
 const Settings: React.FC = () => {
 	const { t } = useTranslation();
@@ -64,15 +56,13 @@ const Settings: React.FC = () => {
 	const [company, setCompany] = useState<CompanySettings | null>(null);
 	const [profile, setProfile] = useState<Partial<AppUser>>({});
 	const [isLoading, setIsLoading] = useState(true);
-	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'cloud' | 'advanced'>('profile');
 
 	const [showBackupModal, setShowBackupModal] = useState(false);
 	const [backupPreview, setBackupPreview] = useState<BackupData | null>(null);
 	const [backupErrors, setBackupErrors] = useState<string[]>([]);
 	const [isRestoring, setIsRestoring] = useState(false);
 	const [backupSize, setBackupSize] = useState<string>('');
-	const [cloudBackups, setCloudBackups] = useState<any[]>([]);
-	const [isCloudLoading, setIsCloudLoading] = useState(false);
 
 	useEffect(() => {
 		const loadData = async () => {
@@ -84,59 +74,9 @@ const Settings: React.FC = () => {
 			setIsLoading(false);
 			const size = await getEstimatedBackupSize();
 			setBackupSize(size);
-			await refreshCloudList();
 		};
 		loadData();
 	}, [user]);
-
-	const refreshCloudList = async () => {
-		if (user?.role !== 'Admin') return;
-		setIsCloudLoading(true);
-		try {
-			const list = await listCloudBackups();
-			setCloudBackups(list);
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setIsCloudLoading(false);
-		}
-	};
-
-	const handleCloudBackup = async () => {
-		if (!googleAccessToken) return;
-
-		toast.promise(async () => {
-			const { uploadBackupToGoogleDrive } = await import('../utils/backup/backupUtils');
-			const success = await uploadBackupToGoogleDrive(googleAccessToken);
-			if (!success) throw new Error("No se pudo completar el respaldo");
-			return success;
-		}, {
-			loading: 'Subiendo a Google Drive...',
-			success: 'Sincronización completada',
-			error: (err) => `Error: ${err.message}`
-		});
-	};
-
-	const handleRestoreFromCloud = async (url: string) => {
-		if (!confirm("¿Restaurar este respaldo?")) return;
-		setIsRestoring(true);
-		try {
-			const data = await getBackupFromCloudUrl(url);
-			setBackupPreview(data);
-			setBackupErrors([]);
-			setShowBackupModal(true);
-		} catch (error) {
-			toast.error('Error al descargar');
-		} finally {
-			setIsRestoring(false);
-		}
-	};
-
-	const handleDeleteCloud = async (url: string) => {
-		if (!confirm("¿Eliminar permanentemente?")) return;
-		await deleteCloudBackup(url);
-		refreshCloudList();
-	};
 
 	const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -147,192 +87,232 @@ const Settings: React.FC = () => {
 			const { uploadImage } = await import('../services/upload.service');
 			const url = await uploadImage(compressed, path);
 			setCompany({ ...company, logo: url });
-			toast.success("Logo cargado");
+			toast.success("Logo actualizado en nube");
 		} catch (err) {
 			toast.error("Error al procesar logo");
 		}
 	};
 
-	const saveCompanySettings = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const saveCompanySettings = async (e?: React.FormEvent) => {
+		if (e) e.preventDefault();
 		if (!company || !company.id) return;
-		await db.settings.update(company.id, company);
+		await db.settings.update(company.id, { ...company, updatedAt: Date.now(), synced: 0 });
 		if (company.language) {
 			i18n.changeLanguage(company.language);
 		}
-		toast.success("Configuración guardada");
+		toast.success("Configuración global sincronizada");
 	};
 
 	const updateMyProfile = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!user || !profile.fullName || !profile.password) return;
 		const updatedUser = { ...user, fullName: profile.fullName, password: profile.password };
-		await db.users.update(user.id!, updatedUser);
+		await db.users.update(user.id!, { ...updatedUser, updatedAt: Date.now(), synced: 0 });
 		updateUser(updatedUser);
-		toast.success("Perfil actualizado");
+		toast.success("Perfil de operador actualizado");
 	};
 
-	const handleExportBackup = async () => {
-		await downloadBackup();
-	};
+	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">Cargando Preferencias...</div>;
 
-	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
-		try {
-			const data = await readBackupFile(file);
-			const validation = validateBackup(data);
-			if (!validation.valid) {
-				setBackupErrors(validation.errors);
-			} else {
-				setBackupPreview(data);
-				setBackupErrors([]);
-			}
-			setShowBackupModal(true);
-		} catch (error: any) {
-			toast.error('Error de lectura');
-		}
-	};
-
-	const handleRestoreBackup = async () => {
-		if (!backupPreview) return;
-		setIsRestoring(true);
-		try {
-			const result = await restoreBackup(backupPreview, { skipUsers: false });
-			if (result.success) {
-				toast.success('Restauración completada');
-				setShowBackupModal(false);
-				setTimeout(() => window.location.reload(), 1000);
-			}
-		} catch (error) {
-			toast.error('Error en restauración');
-		} finally {
-			setIsRestoring(false);
-		}
-	};
-
-	if (isLoading) return <SettingsSkeleton />;
+	const navItems = [
+		{ id: 'profile', label: 'Mi Perfil', icon: UserIcon },
+		{ id: 'company', label: 'Organización', icon: Shield, adminOnly: true },
+		{ id: 'cloud', label: 'Nube & AI', icon: Cloud, adminOnly: true },
+		{ id: 'advanced', label: 'Avanzado', icon: Database, adminOnly: true }
+	];
 
 	return (
 		<div className="space-y-10 animate-in pb-20">
-			<div>
-				<h1 className="text-2xl font-semibold text-[#202124] dark:text-white tracking-tight">{t('settings.title')}</h1>
-				<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-1">{t('settings.subtitle')}</p>
-			</div>
+			{/* Premium Settings Header */}
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+				<div className="relative z-10">
+					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+						<SettingsIcon className="text-[#1a73e8]" size={32} />
+						{t('settings.title')}
+					</h1>
+					<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
+						Configura la identidad de tu negocio, claves de IA y parámetros del sistema.
+					</p>
+				</div>
+				<div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1.5 rounded-[1.8rem] relative z-10 border border-gray-200 dark:border-white/5 shadow-inner">
+					{navItems.map(item => {
+						if (item.adminOnly && user?.role !== 'Admin') return null;
+						const Icon = item.icon;
+						return (
+							<button
+								key={item.id}
+								onClick={() => setActiveTab(item.id as any)}
+								className={`px-6 py-3 rounded-[1.3rem] text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-lg' : 'text-gray-500 hover:text-gray-700'}`}
+							>
+								<Icon size={16} />
+								<span className="hidden sm:inline">{item.label}</span>
+							</button>
+						);
+					})}
+				</div>
+			</header>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-				<Card header={<div className="flex items-center gap-2 font-bold text-sm text-[#3c4043] dark:text-white"><UserIcon size={16} className="text-[#1a73e8]" /> {t('settings.my_account')}</div>}>
-					<form onSubmit={updateMyProfile} className="space-y-6">
-						<Input label={t('settings.fields.full_name')} value={profile.fullName} onChange={v => setProfile({ ...profile, fullName: v.target.value })} autoComplete="name" />
-						<Input label={t('settings.fields.password')} type="password" value={profile.password} onChange={v => setProfile({ ...profile, password: v.target.value })} leftIcon={<Key size={16} />} autoComplete="new-password" />
-						<Button type="submit" variant="primary" className="w-full">{t('settings.save_profile')}</Button>
-					</form>
-				</Card>
-
-				{user?.role === 'Admin' && company && (
-					<Card header={<div className="flex items-center gap-2 font-bold text-sm text-[#3c4043] dark:text-white"><ImageIcon size={16} className="text-[#1a73e8]" /> {t('settings.company')}</div>}>
-						<form onSubmit={saveCompanySettings} className="space-y-6">
-							<div className="flex items-center gap-6 p-4 bg-[#f8f9fa] dark:bg-[#202124] rounded-none">
-								<div className="w-16 h-16 bg-white dark:bg-[#1a1c1e] rounded-none border border-[#dadce0] dark:border-[#3c4043] flex items-center justify-center overflow-hidden">
-									{company.logo ? <img src={company.logo} alt="Logo" className="w-full h-full object-contain" /> : <ImageIcon size={24} className="text-[#dadce0]" />}
-								</div>
-								<Button variant="outline" size="sm" onClick={() => document.getElementById('logo-upload')?.click()}>{t('settings.change_logo')}</Button>
-								<input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+			<div className="max-w-4xl mx-auto space-y-8">
+				{activeTab === 'profile' && (
+					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><UserIcon size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Identidad del Operador</h3><p className="text-xs text-gray-500 font-bold uppercase">Actualiza tus credenciales personales</p></div></div>}>
+						<form onSubmit={updateMyProfile} className="space-y-8">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+								<Input label="Nombre Completo" value={profile.fullName} onChange={v => setProfile({ ...profile, fullName: v.target.value })} />
+								<Input label="Contraseña Actualizada" type="password" value={profile.password} onChange={v => setProfile({ ...profile, password: v.target.value })} leftIcon={<Lock size={16} />} />
 							</div>
-							<Input label={t('settings.fields.business_name')} value={company.businessName} onChange={v => setCompany({ ...company, businessName: v.target.value })} />
-							<div className="grid grid-cols-2 gap-4">
-								<Input label={t('settings.fields.tax_id')} value={company.taxId} onChange={v => setCompany({ ...company, taxId: v.target.value })} />
-								<div className="flex flex-col space-y-1.5 leading-none">
-									<label className="text-xs font-semibold text-[#5f6368] ml-4">{t('settings.fields.color')}</label>
-									<input type="color" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="w-full h-10 rounded-none cursor-pointer bg-transparent border-none" />
-								</div>
+							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
+								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Actualizar mi perfil</Button>
 							</div>
-							<Button type="submit" variant="primary" className="w-full">{t('settings.save_company')}</Button>
 						</form>
 					</Card>
 				)}
 
-				{user?.role === 'Admin' && company && (
-					<Card header={<div className="flex items-center gap-2 font-bold text-sm text-[#3c4043] dark:text-white"><Globe size={16} className="text-[#1a73e8]" /> {t('settings.language')}</div>}>
-						<div className="space-y-6">
-							<div className="flex flex-col space-y-1.5">
-								<label className="text-xs font-semibold text-[#5f6368] ml-4">{t('settings.select_language')}</label>
-								<Select value={company.language || 'es'} onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}>
-									<option value="es">Español (Costa Rica)</option>
-									<option value="en">English (Global)</option>
+				{activeTab === 'company' && company && (
+					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><Shield size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Estudio / Taller</h3><p className="text-xs text-gray-500 font-bold uppercase">Identidad corporativa y facturación</p></div></div>}>
+						<form onSubmit={saveCompanySettings} className="space-y-10">
+							<div className="flex flex-col md:flex-row items-center gap-10 p-8 bg-gray-50 dark:bg-white/5 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-white/10">
+								<div className="w-24 h-24 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] shadow-2xl border-4 border-white flex items-center justify-center overflow-hidden shrink-0">
+									{company.logo ? <img src={company.logo} alt="Logo" className="w-full h-full object-contain" /> : <ImageIcon size={40} className="text-gray-200" />}
+								</div>
+								<div className="space-y-4 text-center md:text-left">
+									<h4 className="font-black text-sm uppercase tracking-widest text-gray-700 dark:text-gray-300">Logo de la Empresa</h4>
+									<p className="text-[11px] text-gray-500 font-medium">Se recomienda una imagen cuadrada de fondo blanco o transparente (PNG/JPG).</p>
+									<Button variant="outline" size="sm" className="rounded-xl font-black uppercase text-[10px]" onClick={() => document.getElementById('logo-upload')?.click()}>Elegir nueva imagen</Button>
+									<input id="logo-upload" type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+								<Input label="Nombre Comercial" value={company.businessName} onChange={v => setCompany({ ...company, businessName: v.target.value })} />
+								<Input label="ID Tributaria / Cédula" value={company.taxId} onChange={v => setCompany({ ...company, taxId: v.target.value })} />
+								<Select label="Idioma del Sistema" value={company.language || 'es'} onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}>
+									<option value="es">Español (Latam)</option>
+									<option value="en">English (US)</option>
 								</Select>
-							</div>
-							<Button variant="primary" className="w-full" onClick={saveCompanySettings}>{t('common.save')}</Button>
-						</div>
-					</Card>
-				)}
-
-				{user?.role === 'Admin' && company && (
-					<Card className="lg:col-span-2" header={<div className="flex items-center gap-2 font-bold text-sm text-[#3c4043] dark:text-white"><Activity size={16} className="text-[#1a73e8]" /> {t('settings.cloud')}</div>}>
-						<form onSubmit={saveCompanySettings} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							<Input label="Firebase API Key" value={company.firebaseApiKey} onChange={e => setCompany({ ...company, firebaseApiKey: e.target.value })} placeholder="AIzaSy..." />
-							<Input label="Auth Domain" value={company.firebaseAuthDomain} onChange={e => setCompany({ ...company, firebaseAuthDomain: e.target.value })} placeholder="shororepair.firebaseapp.com" />
-							<Input label="Project ID" value={company.firebaseProjectId} onChange={e => setCompany({ ...company, firebaseProjectId: e.target.value })} placeholder="shororepair" />
-							<Input label="Storage Bucket" value={company.firebaseStorageBucket} onChange={e => setCompany({ ...company, firebaseStorageBucket: e.target.value })} placeholder="shororepair.appspot.com" />
-							<Input label="Messaging Sender ID" value={company.firebaseMessagingSenderId} onChange={e => setCompany({ ...company, firebaseMessagingSenderId: e.target.value })} placeholder="1234567890" />
-							<Input label="App ID" value={company.firebaseAppId} onChange={e => setCompany({ ...company, firebaseAppId: e.target.value })} placeholder="1:12345:web:abc" />
-							<Input label="Measurement ID (Firebase)" value={company.firebaseMeasurementId} onChange={e => setCompany({ ...company, firebaseMeasurementId: e.target.value })} placeholder="G-ABC123XYZ" />
-							<Input label="Google Analytics ID" value={company.googleAnalyticsId} onChange={e => setCompany({ ...company, googleAnalyticsId: e.target.value })} placeholder="UA-XXXXX-Y" />
-							<Input label="Gemini AI API Key" value={company.geminiApiKey} onChange={e => setCompany({ ...company, geminiApiKey: e.target.value })} placeholder="AIzaSy..." type="password" />
-							<div className="lg:col-span-3 space-y-4">
-								<div className="p-4 bg-[#fef7e0] dark:bg-[#fbbc04]/10 rounded-none border border-[#f9ab00]/20">
-									<h5 className="text-xs font-bold text-[#f9ab00] flex items-center gap-2 mb-2 uppercase tracking-wide">
-										<Info size={14} className="inline mr-1 -mt-0.5" /> {t('settings.firebase_guide')}
-									</h5>
-									<ol className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] list-decimal ml-4 space-y-1">
-										<li>{t('settings.firebase_steps.step1')} <a href="https://console.firebase.google.com" target="_blank" className="text-[#1a73e8] underline">Firebase Console</a>.</li>
-										<li>{t('settings.firebase_steps.step2')} <b>Authentication</b> (Google Provider) y <b>Firestore Database</b>.</li>
-										<li>{t('settings.firebase_steps.step3')} <b>Web App</b> en la configuración del proyecto para obtener tus claves.</li>
-										<li>{t('settings.firebase_steps.step4')}</li>
-									</ol>
+								<div className="space-y-2">
+									<label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-4">Color de Marca</label>
+									<div className="flex items-center gap-4 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl h-12">
+										<div className="w-8 h-8 rounded-lg shadow-sm" style={{ backgroundColor: company.accentColor || '#1a73e8' }}></div>
+										<input type="text" value={company.accentColor || '#1a73e8'} onChange={v => setCompany({ ...company, accentColor: v.target.value })} className="flex-1 bg-transparent border-none text-xs font-black uppercase tracking-tighter text-gray-700 outline-none" />
+									</div>
 								</div>
-								<Button type="submit" variant="primary" className="w-full">{t('settings.sync_cloud')}</Button>
-								<p className="text-[10px] text-[#5f6368] mt-3 text-center italic">{t('settings.restart_required')}</p>
+							</div>
+							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
+								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Guardar Organización</Button>
 							</div>
 						</form>
 					</Card>
 				)}
 
-				{user?.role === 'Admin' && (
-					<div className="pt-20">
-						<div className="flex items-center gap-3 mb-6 p-4 bg-red-50 dark:bg-red-900/10 rounded-none border border-red-100 dark:border-red-900/20">
-							<AlertOctagon className="text-red-500" size={24} />
-							<div>
-								<h2 className="text-lg font-bold text-red-600 dark:text-red-400 uppercase tracking-tighter">{t('settings.danger_zone')}</h2>
-								<p className="text-xs text-red-500/70 font-medium">{t('settings.danger_zone_desc', 'Estas acciones son irreversibles y afectarán permanentemente tu base de datos.')}</p>
+				{activeTab === 'cloud' && company && (
+					<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-amber-50 text-amber-600 rounded-2xl"><Cloud size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Servicios Cloud & AI</h3><p className="text-xs text-gray-500 font-bold uppercase">Gemini AI y Sincronización Firebase</p></div></div>}>
+						<form onSubmit={saveCompanySettings} className="space-y-10">
+							<div className="p-8 bg-blue-50/50 dark:bg-blue-900/5 rounded-[2rem] border border-blue-100 dark:border-blue-900/20 space-y-4">
+								<div className="flex items-center gap-3 text-[#1a73e8]">
+									<Sparkles size={20} />
+									<h4 className="font-black text-sm uppercase tracking-widest">Inteligencia Artificial (Google Gemini)</h4>
+								</div>
+								<p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
+									Activa el asistente técnico de reparaciones ingresando tu API Key de Google AI Studio. Esto habilita diagnósticos automáticos y sugerencias de reparación.
+								</p>
+								<Input label="Google Gemini API Key" type="password" value={company.geminiApiKey} onChange={e => setCompany({ ...company, geminiApiKey: e.target.value })} placeholder="Ingresa tu clave de AI Studio..." leftIcon={<Key size={16} />} />
+								<a href="https://aistudio.google.com/app/apikey" target="_blank" className="inline-flex items-center gap-2 text-[10px] font-black text-[#1a73e8] uppercase hover:underline">
+									Obtener mi API Key <ExternalLink size={12} />
+								</a>
 							</div>
-						</div>
 
-						<Card className="border-red-100 dark:border-red-900/20 overflow-hidden" header={<div className="flex items-center gap-2 font-bold text-sm text-red-600"><AlertTriangle size={16} /> {t('settings.critical_data')}</div>}>
-							<div className="divide-y divide-red-50 dark:divide-red-900/10">
-								<div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+							<div className="space-y-6">
+								<div className="flex items-center gap-3 text-gray-600">
+									<Database size={20} />
+									<h4 className="font-black text-sm uppercase tracking-widest">Infraestructura Firebase</h4>
+								</div>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<Input label="Project ID" value={company.firebaseProjectId} onChange={e => setCompany({ ...company, firebaseProjectId: e.target.value })} />
+									<Input label="App ID" value={company.firebaseAppId} onChange={e => setCompany({ ...company, firebaseAppId: e.target.value })} />
+									<Input label="API Key" type="password" value={company.firebaseApiKey} onChange={e => setCompany({ ...company, firebaseApiKey: e.target.value })} />
+									<Input label="Storage Bucket" value={company.firebaseStorageBucket} onChange={e => setCompany({ ...company, firebaseStorageBucket: e.target.value })} />
+								</div>
+							</div>
+
+							<div className="pt-4 border-t border-gray-100 dark:border-white/5 flex justify-end">
+								<Button type="submit" variant="primary" className="rounded-2xl px-10 py-4 shadow-lg shadow-blue-500/10 font-black uppercase tracking-widest text-[11px]">Sincronizar Servicios</Button>
+							</div>
+						</form>
+					</Card>
+				)}
+
+				{activeTab === 'advanced' && (
+					<div className="space-y-8">
+						<Card className="p-10 rounded-[3rem] shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5" header={<div className="flex items-center gap-4 mb-8"><div className="p-3 bg-red-50 text-red-600 rounded-2xl"><Zap size={24} /></div><div><h3 className="text-xl font-black text-[#202124] dark:text-white uppercase tracking-tight">Zona de Mantenimiento</h3><p className="text-xs text-gray-500 font-bold uppercase">Herramientas críticas del sistema</p></div></div>}>
+							<div className="space-y-6">
+								<div className="flex items-center justify-between p-6 bg-gray-50 dark:bg-white/5 rounded-[2rem] border border-gray-100 dark:border-white/10">
 									<div className="space-y-1">
-										<p className="font-bold text-[#202124] dark:text-white text-sm">{t('settings.factory_reset')}</p>
-										<p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">{t('settings.factory_reset_desc')}</p>
+										<p className="font-black text-sm uppercase text-gray-700 dark:text-white">Respaldo Manual del Sistema</p>
+										<p className="text-[11px] font-bold text-gray-500 uppercase tracking-tighter">Tamaño estimado: {backupSize}</p>
 									</div>
-									<Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={async () => { if (confirm("🚨 ATENCIÓN: Se borrarán TODOS los datos locales. ¿Deseas continuar?")) { if (confirm("⚠️ ¿REALMENTE ESTÁS SEGURO? Esta acción es irreversible.")) { await db.delete(); localStorage.clear(); window.location.href = '/'; } } }}>Factory Reset</Button>
+									<Button variant="outline" className="rounded-xl px-6 font-black uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>Exportar SQLITE/JSON</Button>
+								</div>
+
+								<div className="flex items-center justify-between p-6 bg-red-50/50 dark:bg-red-900/5 rounded-[2rem] border border-red-100 dark:border-red-900/20">
+									<div className="space-y-1">
+										<p className="font-black text-sm uppercase text-red-600">Restablecimiento Maestro</p>
+										<p className="text-[11px] font-bold text-red-400 uppercase tracking-tighter">Esto eliminará absolutamente todo de forma local</p>
+									</div>
+									<Button variant="outline" className="rounded-xl px-6 font-black uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
+										if (confirm("🚨 ATENCIÓN: Se borrarán TODOS los datos locales. ¿Deseas continuar?")) {
+											if (confirm("⚠️ ¿REALMENTE ESTÁS SEGURO? Esta acción es irreversible.")) {
+												await db.delete();
+												localStorage.clear();
+												window.location.href = '/';
+											}
+										}
+									}}>Factory Reset</Button>
 								</div>
 							</div>
 						</Card>
+
+						<div className="p-8 bg-amber-50 dark:bg-amber-900/5 rounded-[2.5rem] border border-amber-100 dark:border-amber-900/20 flex gap-4">
+							<AlertTriangle size={24} className="text-amber-500 shrink-0" />
+							<div className="space-y-1">
+								<h4 className="font-black text-xs uppercase text-amber-700 tracking-widest">Aviso de Seguridad</h4>
+								<p className="text-[10px] font-medium text-amber-700/80 leading-relaxed uppercase">
+									Los cambios realizados en los servicios Cloud requieren el reinicio completo de la aplicación para que las nuevas claves de seguridad sean inyectadas en el entorno técnico.
+								</p>
+							</div>
+						</div>
 					</div>
 				)}
-
 			</div>
 
-			<Modal isOpen={showBackupModal} onClose={() => setShowBackupModal(false)} title="Restauración" footer={<><Button variant="ghost" onClick={() => setShowBackupModal(false)}>Cerrar</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={handleRestoreBackup}>Restaurar</Button>}</>}>
-				{backupErrors.length ? <div className="bg-[#fce8e6] p-4 rounded-none text-xs text-[#ea4335]">{t('settings.errors')}: {backupErrors.join(', ')}</div> : backupPreview && (
-					<div className="space-y-4">
-						<div className="p-4 bg-[#e8f0fe] rounded-none flex items-center gap-3"><CheckCircle2 className="text-[#1a73e8]" size={20} /><p className="text-sm font-bold text-[#1a73e8]">{t('settings.valid_file')}</p></div>
-						<p className="text-xs text-[#f9ab00] font-bold p-3 bg-[#fef7e0] rounded-none">{t('settings.restore_warning')}</p>
+			<Modal
+				isOpen={showBackupModal}
+				onClose={() => setShowBackupModal(false)}
+				title="Consola de Restauración"
+				size="xl"
+				footer={<div className="flex gap-4 px-8 pb-6"><Button variant="ghost" onClick={() => setShowBackupModal(false)}>Abortar</Button>{backupPreview && !backupErrors.length && <Button variant="primary" onClick={() => { }}>Iniciar Restauración</Button>}</div>}
+			>
+				{backupErrors.length ? (
+					<div className="p-6 bg-red-50 text-red-600 rounded-2xl flex gap-3 items-center">
+						<AlertTriangle size={20} />
+						<p className="text-xs font-black uppercase tracking-widest">Archivo Inválido: {backupErrors[0]}</p>
+					</div>
+				) : backupPreview && (
+					<div className="space-y-6">
+						<div className="p-6 bg-blue-50 text-[#1a73e8] rounded-2xl flex gap-3 items-center">
+							<CheckCircle2 size={24} />
+							<div>
+								<p className="text-sm font-black uppercase tracking-widest leading-none">Cápsula de Datos Detectada</p>
+								<p className="text-[10px] font-bold opacity-70">Timestamp: {formatBackupDate(backupPreview.timestamp)}</p>
+							</div>
+						</div>
+						<div className="p-6 border-2 border-dashed border-amber-200 bg-amber-50/50 rounded-2xl text-amber-700">
+							<p className="text-xs font-bold leading-relaxed uppercase">
+								Se procederá a sobrescribir la base de datos actual. Todos los registros locales actuales se perderán en favor de este respaldo.
+							</p>
+						</div>
 					</div>
 				)}
 			</Modal>
-
 		</div>
 	);
 };

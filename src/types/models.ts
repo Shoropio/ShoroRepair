@@ -1,8 +1,8 @@
-import { OrderStatus, Priority, DeviceType, PaymentMethod, PaymentStatus } from './enums';
-import { UserRole } from './auth';
+import { OrderStatus, Priority, DeviceType, PaymentMethod, PaymentStatus, UserRole } from './enums';
 
 export interface SyncEntity {
     syncId?: string;
+    createdAt?: number;
     updatedAt?: number;
     synced?: number;
     deleted?: number;

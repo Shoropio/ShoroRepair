@@ -32,7 +32,16 @@ import {
   Trash2,
   ShieldCheck,
   ChevronDown,
-  Edit2
+  Edit2,
+  LayoutGrid,
+  List,
+  Clock,
+  ExternalLink,
+  CheckCircle2,
+  AlertCircle,
+  MoreVertical,
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { handlePrint } from '../utils/print/printUtils';
@@ -53,9 +62,10 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#202124';
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
   }, []);
 
   const getPos = (e: any) => {
@@ -82,7 +92,7 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
 
   const draw = (e: any) => {
     if (!isDrawing) return;
-    e.preventDefault();
+    e.preventDefault(); // Prevent scrolling while signing
     const { x, y } = getPos(e);
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
@@ -108,13 +118,13 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
   };
 
   return (
-    <div className="space-y-2">
-      <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+    <div className="space-y-3">
+      <div className="border-2 border-dashed border-[#dadce0] dark:border-[#3c4043] bg-white dark:bg-[#1a1c1e] rounded-2xl overflow-hidden shadow-inner">
         <canvas
           ref={canvasRef}
-          width={400}
-          height={150}
-          className="w-full h-[120px] cursor-crosshair touch-none"
+          width={500}
+          height={200}
+          className="w-full h-[150px] cursor-crosshair touch-none"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -124,7 +134,7 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
           onTouchEnd={stopDrawing}
         />
       </div>
-      <button type="button" onClick={clear} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline">Limpiar firma</button>
+      <button type="button" onClick={clear} className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:underline px-4">Limpiar firma</button>
     </div>
   );
 };
@@ -136,6 +146,7 @@ const Orders: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState<ServiceOrder | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const orders = useLiveQuery(async () => {
@@ -217,9 +228,12 @@ const Orders: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.clientId || !formData.brand || !formData.model) return;
+    if (!formData.clientId || !formData.brand || !formData.model) {
+      toast.error("Complete los campos obligatorios");
+      return;
+    }
 
-    const toastId = toast.loading('Guardando orden localmente...');
+    const toastId = toast.loading('Registrando ingreso técnico...');
 
     try {
       const settings = (await db.settings.toArray())[0];
@@ -235,7 +249,7 @@ const Orders: React.FC = () => {
         logs: [{
           timestamp: Date.now(),
           status: OrderStatus.RECEIVED,
-          note: 'Orden recibida (Modo Local)'
+          note: 'Orden recibida en laboratorio'
         }],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -260,7 +274,7 @@ const Orders: React.FC = () => {
         issueDescription: ''
       });
 
-      toast.success("Orden guardada localmente", { id: toastId });
+      toast.success("Orden registrada con éxito", { id: toastId });
     } catch (err) {
       console.error("Error creating order", err);
       toast.error("Error al registrar la orden", { id: toastId });
@@ -269,7 +283,7 @@ const Orders: React.FC = () => {
 
   const handleDeleteOrder = async (order: ServiceOrder) => {
     if (!order.id) return;
-    if (confirm(`¿Estás seguro de eliminar permanentemente la orden ${order.orderNumber}? Esta acción no se puede deshacer y devolverá los repuestos al inventario.`)) {
+    if (confirm(`¿Estás seguro de eliminar permanentemente la orden ${order.orderNumber}?`)) {
       try {
         if (order.parts && order.parts.length > 0) {
           for (const part of order.parts) {
@@ -279,8 +293,9 @@ const Orders: React.FC = () => {
             }
           }
         }
-        await db.orders.delete(order.id);
-        toast.success("Orden eliminada y repuestos devueltos");
+        await db.orders.update(order.id, { deleted: 1, synced: 0 });
+        toast.success("Orden eliminada del sistema");
+        setShowDetailModal(null);
       } catch (err) {
         toast.error("Error al eliminar la orden");
       }
@@ -314,11 +329,11 @@ const Orders: React.FC = () => {
 
     const cleanPhone = client.phone.replace(/\D/g, '');
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
-    toast.info("Abriendo WhatsApp y registrando notificación...");
+    toast.info("Redirigiendo a WhatsApp...");
   };
 
   const updateOrder = async (order: ServiceOrder) => {
-    const toastId = toast.loading('Guardando cambios localmente...');
+    const toastId = toast.loading('Actualizando expediente técnico...');
     try {
       let invoiceNumber = order.invoiceNumber;
       if ((order.status === OrderStatus.READY || order.status === OrderStatus.DELIVERED) && !invoiceNumber) {
@@ -351,7 +366,7 @@ const Orders: React.FC = () => {
         const part = await db.inventory.get(partId);
         if (part) {
           const newQuantity = part.quantity - change;
-          if (newQuantity < 0) throw new Error(`Inventario insuficiente para: ${part.name}`);
+          if (newQuantity < 0) throw new Error(`Stock insuficiente para: ${part.name}`);
           await db.inventory.update(partId, { quantity: newQuantity });
         }
       }
@@ -362,7 +377,7 @@ const Orders: React.FC = () => {
           timestamp: Date.now(),
           status: order.status,
           technicianId: order.technicianId,
-          note: `Estado cambiado a ${order.status}`
+          note: `Expediente actualizado a estado: ${order.status}`
         });
       }
 
@@ -388,255 +403,383 @@ const Orders: React.FC = () => {
 
       await db.orders.update(order.id!, updatedLocal);
       setShowDetailModal(null);
-      toast.success("Trabajo actualizado localmente", { id: toastId });
+      toast.success("Expediente técnico sincronizado", { id: toastId });
     } catch (err: any) {
       console.error("Error updating order", err);
-      toast.error(err.message || "Error al actualizar la orden", { id: toastId });
+      toast.error(err.message || "Error al actualizar", { id: toastId });
     }
   };
 
   const addPartToOrder = async (order: ServiceOrder, partId: number) => {
     const invPart = await db.inventory.get(partId);
     if (!invPart || invPart.quantity <= 0) {
-      alert("No hay existencias de este repuesto.");
+      toast.error("Sin stock disponible");
       return;
     }
     const newPart = { partId, name: invPart.name, quantity: 1, price: invPart.price };
-    const updatedOrder = { ...order, parts: [...order.parts, newPart] };
+    const updatedOrder = { ...order, parts: [...(order.parts || []), newPart] };
+
     const partsTotal = updatedOrder.parts.reduce((acc, p) => acc + (p.price * p.quantity), 0);
     const subtotal = (updatedOrder.laborCost || 0) + partsTotal;
     const tax = subtotal * (updatedOrder.taxRate / 100);
     updatedOrder.total = subtotal + tax;
+
     setShowDetailModal(updatedOrder);
-    toast.info("Repuesto añadido (Guardar para confirmar)");
+    toast.info("Repuesto vinculado al expediente");
   };
 
   if (!orders || !clients || !technicians || !inventory) {
-    return <TableSkeleton columns={5} rows={8} title="Órdenes de Servicio" />;
+    return <TableSkeleton columns={5} rows={8} title="Service Center" />;
   }
 
   return (
-    <div className="space-y-6 animate-in">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-[#202124] dark:text-white tracking-tight">{t('orders.title')}</h1>
-            <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-1">{t('orders.subtitle')}</p>
+    <div className="space-y-8 animate-in pb-20">
+      {/* Header section with Stats or controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-[#1a1c1e] p-8 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
+        <div>
+          <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+            <Wrench className="text-[#1a73e8]" size={28} />
+            {t('orders.title')}
+          </h1>
+          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">
+            {orders.length} órdenes registradas • <span className="text-emerald-600 font-bold">{orders.filter(o => o.status === OrderStatus.READY).length} listos</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-[#f1f3f4] dark:bg-white/5 p-1 rounded-2xl">
+            <button onClick={() => setViewMode('list')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-[#5f6368]'}`}><List size={18} /></button>
+            <button onClick={() => setViewMode('grid')} className={`p-2.5 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-[#5f6368]'}`}><LayoutGrid size={18} /></button>
           </div>
           {hasPermission('canEditOrders') && (
-            <Button variant="primary" leftIcon={<Plus size={18} />} onClick={() => setShowModal(true)}>
+            <Button variant="primary" className="rounded-2xl px-6 py-4 shadow-lg shadow-blue-500/20 font-bold" leftIcon={<Plus size={18} />} onClick={() => setShowModal(true)}>
               {t('orders.new')}
             </Button>
           )}
         </div>
+      </div>
 
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6]" size={18} />
-            <input
-              type="text"
-              placeholder="Número de orden, marca o modelo..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-6 py-3 bg-[#f1f3f4] dark:bg-[#2d2f31] border-none rounded-none outline-none focus:bg-white dark:focus:bg-[#1a1c1e] shadow-sm focus:ring-2 focus:ring-[#1a73e8]/20 transition-all placeholder:text-[#5f6368]"
-            />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {['all', OrderStatus.RECEIVED, OrderStatus.IN_REPAIR, OrderStatus.READY].map(s => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`px-4 py-2 rounded-none text-xs font-bold whitespace-nowrap transition-all border ${filterStatus === s
-                  ? 'bg-[#1a73e8] text-white border-transparent'
-                  : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] dark:text-[#9aa0a6] border-[#dadce0] dark:border-[#3c4043] hover:bg-[#f8f9fa] dark:hover:bg-white/5'
-                  }`}
-              >
-                {s === 'all' ? t('common.all') : s}
-              </button>
-            ))}
-          </div>
+      {/* Controls Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-4 bg-white dark:bg-[#1a1c1e] p-4 rounded-3xl border border-[#f1f3f4] dark:border-white/5 shadow-sm">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5f6368] dark:text-[#9aa0a6] group-focus-within:text-[#1a73e8] transition-colors" size={20} />
+          <input
+            type="text"
+            placeholder="Buscar por #Orden, Marca, Modelo o Cliente..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-6 py-3.5 bg-[#f1f3f4] dark:bg-white/5 rounded-2xl outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
+          />
+        </div>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          {['all', OrderStatus.RECEIVED, OrderStatus.IN_REPAIR, OrderStatus.READY, OrderStatus.DELIVERED].map(s => (
+            <button
+              key={s}
+              onClick={() => setFilterStatus(s)}
+              className={`px-6 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
+                ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
+                : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30'
+                }`}
+            >
+              {s === 'all' ? t('common.all') : s}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-[#3c4043] rounded-none overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-[#f1f3f4] dark:border-[#3c4043] bg-[#f8f9fa] dark:bg-[#202124]">
-                <th className="px-6 py-4 text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider">{t('orders.table.service_client')}</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider">{t('orders.table.device')}</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider">{t('orders.table.status')}</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider text-right">{t('orders.table.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#f1f3f4] dark:divide-[#3c4043]">
-              {orders.map(order => {
-                const client = clients?.find(c => c.id === order.clientId);
-                return (
-                  <tr key={order.id} className="hover:bg-[#f8f9fa] dark:hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-[#e8f0fe] text-[#1a73e8] rounded-none mt-1">
-                          <FileText size={18} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-[#202124] dark:text-white uppercase tracking-tight">#{order.orderNumber}</p>
-                          <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-medium">{client?.name || 'Cliente sin nombre'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <Smartphone size={14} className="text-[#5f6368] dark:text-[#9aa0a6]" />
-                        <p className="text-xs font-semibold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[150px]">{order.brand} {order.model}</p>
-                      </div>
-                      <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] mt-1 font-medium italic">{formatDate(order.createdAt)}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col gap-1.5">
-                        <Badge
-                          variant={order.status === OrderStatus.READY ? 'success' : (order.status === OrderStatus.IN_REPAIR || order.status === OrderStatus.DIAGNOSTIC) ? 'warning' : 'slate'}
-                          size="xs"
-                        >
-                          {order.status}
-                        </Badge>
-                        {order.priority === Priority.HIGH && (
-                          <span className="flex items-center gap-1 text-[9px] font-bold text-[#ea4335] uppercase"><Zap size={10} /> Prioridad Alta</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5 text-right">
-                      <div className="flex justify-end gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => setShowDetailModal(order)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all"><Edit2 size={16} /></button>
-                        <button onClick={async () => {
-                          toast.info("Generando comprobante...");
-                          generateInvoice(order, 'print');
-                        }} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all"><Printer size={16} /></button>
-                        <button onClick={async () => {
-                          toast.info("Generando comprobante...");
-                          generateInvoice(order, 'download');
-                        }} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all"><Download size={16} /></button>
-                        <button onClick={() => generateEntryTicket(order)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all" title="Ticket de Ingreso"><FileText size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Orders Table/Grid */}
+      {orders.length === 0 ? (
+        <div className="py-24 flex flex-col items-center justify-center bg-white dark:bg-[#1a1c1e] rounded-[3rem] border-2 border-dashed border-[#dadce0] dark:border-white/10">
+          <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/10 rounded-3xl flex items-center justify-center text-blue-200 mb-6 drop-shadow-sm">
+            <Wrench size={48} />
+          </div>
+          <h3 className="text-xl font-bold text-[#202124] dark:text-white uppercase tracking-tighter">Sin movimientos registrados</h3>
+          <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">Utiliza el botón de nueva recepción para empezar.</p>
         </div>
-      </div>
-
-      <Modal
-        isOpen={!!showDetailModal}
-        onClose={() => setShowDetailModal(null)}
-        title={showDetailModal ? `Workbench #${showDetailModal.orderNumber}` : 'Workbench'}
-        subtitle="Terminal de Reparación Avanzada"
-        size="4xl"
-        allowFullscreen={true}
-      >
-        {showDetailModal && (
-          <div className="flex-1 overflow-y-auto p-8 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div className="lg:col-span-12 space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="space-y-8">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-[#1a73e8] uppercase tracking-wide">
-                      <Zap size={14} /> <span>Estado del Proceso</span>
+      ) : viewMode === 'list' ? (
+        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
+                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
+                  <th className="px-8 py-5 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
+                {orders.map(order => {
+                  const client = clients?.find(c => c.id === order.clientId);
+                  return (
+                    <tr key={order.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="shrink-0 w-12 h-12 bg-[#1a73e8] text-white rounded-2xl flex items-center justify-center font-black text-xs shadow-lg shadow-blue-500/10 group-hover:scale-105 transition-transform">
+                            #{order.orderNumber.slice(-4)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-black text-[#202124] dark:text-white uppercase tracking-tight truncate">{order.orderNumber}</p>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <User size={12} className="text-[#1a73e8]" />
+                              <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] font-bold truncate max-w-[140px]">{client?.name || 'S/N'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <Smartphone size={14} className="text-[#1a73e8]" />
+                            <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-[#5f6368] font-bold uppercase tracking-wider">
+                            <Calendar size={12} /> {formatDate(order.createdAt)}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col gap-2">
+                          <Badge
+                            variant={order.status === OrderStatus.READY ? 'success' : (order.status === OrderStatus.IN_REPAIR || order.status === OrderStatus.DIAGNOSTIC) ? 'warning' : 'brand'}
+                            size="xs"
+                            className="w-fit"
+                          >
+                            {order.status}
+                          </Badge>
+                          {order.priority === Priority.HIGH && (
+                            <span className="flex items-center gap-1 text-[9px] font-black text-red-500 uppercase animate-pulse"><Zap size={10} fill="currentColor" /> Prioridad Crítica</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex justify-end gap-1.5 opacity-20 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setShowDetailModal(order)} className="p-2.5 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-xl hover:bg-blue-100 transition-colors" title="Gestionar Expediente"><Edit2 size={16} /></button>
+                          <button onClick={() => generateInvoice(order, 'print')} className="p-2.5 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-xl hover:bg-gray-100 transition-colors"><Printer size={16} /></button>
+                          <button onClick={() => generateEntryTicket(order)} className="p-2.5 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-xl hover:bg-gray-100 transition-colors" title="Ticket de Ingreso"><FileText size={16} /></button>
+                          <button onClick={() => notifyWhatsApp(order)} className="p-2.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-xl hover:bg-emerald-100 transition-colors"><MessageSquare size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {orders.map(order => {
+            const client = clients?.find(c => c.id === order.clientId);
+            return (
+              <Card key={order.id} className="p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 rounded-[2rem] group border-[#f1f3f4] dark:border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black text-xs">
+                      {order.brand.charAt(0)}
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {Object.values(OrderStatus).map(s => (
-                        <button
-                          key={s}
-                          onClick={() => setShowDetailModal({ ...showDetailModal, status: s })}
-                          className={`px-4 py-2.5 rounded-none text-[10px] font-bold uppercase tracking-wide border transition-all ${showDetailModal.status === s
-                            ? 'bg-[#1a73e8] text-white border-transparent'
-                            : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] dark:text-[#9aa0a6] border-[#dadce0] dark:border-[#3c4043] hover:bg-[#f8f9fa] dark:hover:bg-white/5'
-                            }`}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                    <div>
+                      <h4 className="font-bold text-sm tracking-tight">#{order.orderNumber}</h4>
+                      <p className="text-[10px] text-[#5f6368] font-bold uppercase">{client?.name || 'Cliente'}</p>
                     </div>
                   </div>
+                  <Badge variant={order.status === OrderStatus.READY ? 'success' : 'brand'} size="xs">{order.status.split(' ')[0]}</Badge>
+                </div>
 
-                  <div className="space-y-4">
-                    <Select
-                      label="Técnico Responsable"
-                      value={showDetailModal.technicianId || ''}
-                      onChange={e => setShowDetailModal({ ...showDetailModal, technicianId: parseInt(e.target.value) || undefined })}
-                      leftIcon={<User size={14} />}
-                    >
-                      <option value="">Sin Asignar</option>
-                      {technicians?.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
-                    </Select>
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center gap-2">
+                    < स्मार्टफोन size={16} className="text-[#1a73e8]" />
+                    <p className="text-sm font-black text-[#202124] dark:text-white truncate">{order.brand} {order.model}</p>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2 text-xs font-bold text-[#1a73e8] uppercase tracking-wide">
-                      <FileText size={14} /> <span>Diagnóstico Técnico</span>
-                    </div>
-                    <textarea
-                      className="w-full p-6 bg-[#f8f9fa] dark:bg-neutral-800/50 dark:text-white border-none rounded-none focus:bg-white focus:ring-2 focus:ring-[#1a73e8]/20 outline-none transition-all text-sm font-medium min-h-[120px]"
-                      placeholder="Describe los hallazgos técnicos aquí..."
-                      value={showDetailModal.technicalDiagnosis || ''}
-                      onChange={e => setShowDetailModal({ ...showDetailModal, technicalDiagnosis: e.target.value })}
-                    />
+                  <div className="flex items-center justify-between text-[11px] font-bold text-[#5f6368]">
+                    <div className="flex items-center gap-1.5"><Clock size={12} /> {formatDate(order.createdAt)}</div>
+                    <div className="flex items-center gap-1.5 text-emerald-600"><DollarSign size={12} /> {formatCurrency(order.total)}</div>
                   </div>
                 </div>
 
-                <div className="space-y-6">
-                  <Card variant="tonal" className="p-6 bg-[#e8f0fe] dark:bg-[#1a73e8]/5">
-                    <h3 className="font-bold text-[#1a73e8] text-sm uppercase mb-4 flex items-center gap-2">
-                      <Package size={18} /> Resumen de Costos
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#5f6368] dark:text-[#9aa0a6] font-medium">Mano de Obra</span>
-                        <input
-                          type="number"
-                          className="w-24 text-right bg-white dark:bg-neutral-800 border-none rounded-none p-2 text-sm font-bold"
-                          value={showDetailModal.laborCost}
-                          onChange={e => {
-                            const val = parseFloat(e.target.value) || 0;
-                            const pts = showDetailModal.parts.reduce((a, p) => a + (p.price * p.quantity), 0);
-                            const sub = val + pts;
-                            setShowDetailModal({ ...showDetailModal, laborCost: val, total: sub * (1 + showDetailModal.taxRate / 100) });
-                          }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#5f6368] dark:text-[#9aa0a6] font-medium">Partes / Repuestos</span>
-                        <span className="font-bold">{formatCurrency((showDetailModal.parts || []).reduce((a, p) => a + (p.price * p.quantity), 0))}</span>
-                      </div>
-                      <div className="pt-4 border-t border-[#1a73e8]/10 flex justify-between items-end">
-                        <span className="text-xs font-bold text-[#1a73e8] uppercase">Inversión Total</span>
-                        <span className="text-3xl font-bold text-[#1a73e8]">{formatCurrency(showDetailModal.total)}</span>
-                      </div>
-                    </div>
-                  </Card>
+                <div className="grid grid-cols-2 gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
+                  <Button variant="tonal" size="sm" className="rounded-xl font-bold uppercase text-[9px]" onClick={() => setShowDetailModal(order)}>Workbench</Button>
+                  <Button variant="ghost" size="sm" className="rounded-xl font-bold uppercase text-[9px]" onClick={() => notifyWhatsApp(order)}>Notificar</Button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-                  <Button variant="primary" className="w-full py-4 text-xs font-bold uppercase tracking-widest" onClick={() => updateOrder(showDetailModal)}>Actualizar Expediente</Button>
-
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1" onClick={() => {
-                        toast.info("Generando comprobante...");
-                        generateInvoice(showDetailModal, 'print');
-                      }} leftIcon={<Printer size={16} />}>Imprimir</Button>
-                      <Button variant="outline" className="flex-1" onClick={() => {
-                        toast.info("Generando comprobante...");
-                        generateInvoice(showDetailModal, 'download');
-                      }} leftIcon={<Download size={16} />}>Descargar</Button>
+      {/* Workbench Modal (Order Detail) */}
+      <Modal
+        isOpen={!!showDetailModal}
+        onClose={() => setShowDetailModal(null)}
+        title={showDetailModal ? `Workcenter #${showDetailModal.orderNumber}` : 'Workcenter'}
+        subtitle="Laboratorio de Reparación ShoroRepair"
+        size="5xl"
+        allowFullscreen={true}
+      >
+        {showDetailModal && (
+          <div className="flex flex-col h-full space-y-8 animate-in pb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              {/* Technical Workspace */}
+              <div className="lg:col-span-8 space-y-10">
+                {/* Workflow Progress */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                      <Activity size={16} /> <span>Flujo del Dispositivo</span>
                     </div>
-                    <button
-                      onClick={() => notifyWhatsApp(showDetailModal)}
-                      className="w-full py-3 bg-[#25d366]/10 text-[#128c7e] dark:bg-[#25d366]/5 dark:text-[#25d366] rounded-none text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#25d366]/20 transition-all border border-[#25d366]/20"
-                    >
-                      <MessageSquare size={16} /> Notificar por WhatsApp
-                    </button>
+                    <Badge variant="brand" size="xs">Estado: {showDetailModal.status}</Badge>
                   </div>
-                  <Button variant="ghost" className="w-full text-[#ea4335] hover:bg-[#fce8e6]" onClick={() => handleDeleteOrder(showDetailModal)}>Eliminar Orden</Button>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                    {Object.values(OrderStatus).map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setShowDetailModal({ ...showDetailModal, status: s })}
+                        className={`px-3 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-wider border-2 transition-all ${showDetailModal.status === s
+                          ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
+                          : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30 flex flex-col items-center gap-1.5'
+                          }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Technical Log */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                      <FileText size={16} /> <span>Bitácora de Laboratorio</span>
+                    </div>
+                    <Select
+                      className="w-48 h-10 text-[10px] font-bold"
+                      value={showDetailModal.technicianId || ''}
+                      onChange={e => setShowDetailModal({ ...showDetailModal, technicianId: parseInt(e.target.value) || undefined })}
+                    >
+                      <option value="">Técnico Responsable</option>
+                      {technicians?.map(t => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                    </Select>
+                  </div>
+                  <div className="relative group">
+                    <textarea
+                      className="w-full p-8 bg-[#f8f9fa] dark:bg-white/5 dark:text-white border-2 border-transparent focus:border-[#1a73e8]/30 rounded-[2rem] focus:bg-white outline-none transition-all text-sm font-medium min-h-[180px] leading-relaxed shadow-inner"
+                      placeholder="Ingresa diagnósticos, mediciones y pasos de reparación..."
+                      value={showDetailModal.technicalDiagnosis || ''}
+                      onChange={e => setShowDetailModal({ ...showDetailModal, technicalDiagnosis: e.target.value })}
+                    />
+                    <div className="absolute top-4 right-4 flex gap-2">
+                      <Badge variant="slate" size="xs" className="opacity-50 group-focus-within:opacity-100">Autosave Active</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Parts & Components */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                      <Package size={16} /> <span>Gestión de Repuestos</span>
+                    </div>
+                    <Select
+                      className="w-64 h-10 text-[10px] font-bold"
+                      onChange={(e) => {
+                        const id = parseInt(e.target.value);
+                        if (id) addPartToOrder(showDetailModal, id);
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="">+ Vincular Repuesto</option>
+                      {inventory?.map(i => <option key={i.id} value={i.id}>{i.name} (₡{i.price})</option>)}
+                    </Select>
+                  </div>
+
+                  {(showDetailModal.parts || []).length === 0 ? (
+                    <div className="p-10 border-2 border-dashed border-[#f1f3f4] dark:border-white/5 rounded-[2rem] text-center">
+                      <p className="text-xs font-bold text-gray-400 uppercase">Sin repuestos instalados</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {showDetailModal.parts.map((p, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white dark:bg-white/5 border border-[#f1f3f4] dark:border-white/10 rounded-2xl">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">{p.quantity}x</div>
+                            <span className="text-sm font-bold text-[#3c4043] dark:text-white">{p.name}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm font-black text-[#1a73e8]">{formatCurrency(p.price * p.quantity)}</span>
+                            <button
+                              onClick={() => {
+                                const newParts = showDetailModal.parts?.filter((_, i) => i !== idx);
+                                setShowDetailModal({ ...showDetailModal, parts: newParts || [] });
+                              }}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Sidebar */}
+              <div className="lg:col-span-4 space-y-6">
+                <Card variant="tonal" className="p-8 bg-[#1a73e8] text-white rounded-[2.5rem] shadow-2xl shadow-blue-500/30 overflow-hidden relative">
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                  <h3 className="font-black text-blue-100 text-[10px] uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <DollarSign size={14} /> Liquidación Económica
+                  </h3>
+                  <div className="space-y-6 relative z-10">
+                    <div className="flex justify-between items-center group">
+                      <span className="text-blue-100 text-sm font-bold flex items-center gap-2">Mano de Obra <Edit2 size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" /></span>
+                      <input
+                        type="number"
+                        className="w-28 text-right bg-white/10 hover:bg-white/20 transition-all border-none rounded-xl p-2 text-md font-black text-white outline-none"
+                        value={showDetailModal.laborCost}
+                        onChange={e => {
+                          const val = parseFloat(e.target.value) || 0;
+                          const pts = (showDetailModal.parts || []).reduce((a, p) => a + (p.price * p.quantity), 0);
+                          const sub = val + pts;
+                          setShowDetailModal({ ...showDetailModal, laborCost: val, total: sub * (1 + (showDetailModal.taxRate || 15) / 100) });
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-blue-100 text-sm font-bold">Repuestos</span>
+                      <span className="font-black text-md">{formatCurrency((showDetailModal.parts || []).reduce((a, p) => a + (p.price * p.quantity), 0))}</span>
+                    </div>
+                    <div className="pt-6 border-t border-white/20 space-y-1">
+                      <div className="flex justify-between items-center text-xs font-black text-blue-200 uppercase tracking-widest">
+                        <span>Importe Total</span>
+                        <span>INC. IVA</span>
+                      </div>
+                      <h2 className="text-5xl font-black tracking-tighter drop-shadow-lg">{formatCurrency(showDetailModal.total).split(',')[0]}</h2>
+                    </div>
+                  </div>
+                </Card>
+
+                <div className="space-y-3">
+                  <Button variant="primary" className="w-full py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-500/10" leftIcon={<Save size={20} />} onClick={() => updateOrder(showDetailModal)}>Sincronizar Expediente</Button>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outline" className="rounded-2xl py-4 h-auto flex flex-col items-center gap-2 font-bold text-[10px] uppercase border-[#f1f3f4] dark:border-white/10" onClick={() => generateInvoice(showDetailModal, 'print')}>
+                      <Printer size={20} className="text-[#1a73e8]" />
+                      <span>Factura</span>
+                    </Button>
+                    <Button variant="outline" className="rounded-2xl py-4 h-auto flex flex-col items-center gap-2 font-bold text-[10px] uppercase border-[#f1f3f4] dark:border-white/10" onClick={() => generateEntryTicket(showDetailModal)}>
+                      <FileText size={20} className="text-[#1a73e8]" />
+                      <span>Ticket</span>
+                    </Button>
+                  </div>
+
+                  <button
+                    onClick={() => notifyWhatsApp(showDetailModal)}
+                    className="w-full py-4 bg-[#25d366] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-[#128c7e] transition-all shadow-lg shadow-emerald-500/10"
+                  >
+                    <MessageSquare size={18} /> Enviar Actualización WA
+                  </button>
+
+                  <Button variant="ghost" className="w-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-2xl mt-4 font-bold uppercase text-[9px] tracking-widest" onClick={() => handleDeleteOrder(showDetailModal)}>Eliminar Registro Permanentemente</Button>
                 </div>
               </div>
             </div>
@@ -644,26 +787,26 @@ const Orders: React.FC = () => {
         )}
       </Modal>
 
+      {/* New Order Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={t('orders.new')}
-        subtitle={t('orders.new_subtitle')}
-        size="4xl"
+        subtitle="Registro de Ingreso a Laboratorio ShoroRepair"
+        size="5xl"
         allowFullscreen={true}
-        footer={<>
-          <Button variant="ghost" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
-          <Button variant="primary" onClick={handleSubmit}>{t('orders.formalize')}</Button>
-        </>}
+        footer={<div className="flex gap-3 px-8 pb-6"><Button variant="ghost" className="rounded-2xl px-8" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button><Button variant="primary" className="rounded-2xl px-12 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={handleSubmit}>{t('orders.formalize')}</Button></div>}
       >
-        <form onSubmit={handleSubmit} className="space-y-8 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#1a73e8] uppercase tracking-wider">
-                <Smartphone size={16} /> Datos del Equipo
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col space-y-1.5">
+        <form onSubmit={handleSubmit} className="space-y-12 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Column 1: Equipment & Client */}
+            <div className="lg:col-span-12 xl:col-span-7 space-y-10">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                  <Smartphone size={18} /> <span>Anatomía del Equipo</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Select
                     label={t('orders.fields.client')}
                     required
@@ -672,8 +815,6 @@ const Orders: React.FC = () => {
                     <option value="">{t('orders.fields.select_client')}</option>
                     {clients?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </Select>
-                </div>
-                <div className="flex flex-col space-y-1.5">
                   <Select
                     label={t('orders.fields.device_type')}
                     required
@@ -683,14 +824,10 @@ const Orders: React.FC = () => {
                     {Object.values(DeviceType).map(t => <option key={t} value={t}>{t}</option>)}
                   </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label={t('orders.fields.brand')} required placeholder="Ej: Apple" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
-                <Input label={t('orders.fields.model')} required placeholder="Ej: iPhone 15" value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label={t('orders.fields.serial')} placeholder="Opcional" value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
-                <div className="flex flex-col space-y-1.5">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Input label={t('orders.fields.brand')} required placeholder="Apple, Samsung..." value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
+                  <Input label={t('orders.fields.model')} required placeholder="iPhone 15 Pro..." value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} />
                   <Select
                     label="Prioridad"
                     value={formData.priority}
@@ -699,55 +836,73 @@ const Orders: React.FC = () => {
                     {Object.values(Priority).map(p => <option key={p} value={p}>{p}</option>)}
                   </Select>
                 </div>
+                <Input label={t('orders.fields.serial')} placeholder="IMEI o S/N..." value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left block">{t('orders.fields.issue')}</label>
+
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                  <AlertCircle size={18} /> <span>Falla Reportada</span>
+                </div>
                 <textarea
                   required
-                  className="w-full p-6 bg-[#f8f9fa] dark:bg-neutral-800 rounded-none focus:bg-white focus:ring-2 focus:ring-[#1a73e8]/20 outline-none text-sm min-h-[120px] transition-all"
-                  placeholder="Describe la falla detalladamente..."
+                  className="w-full p-8 bg-[#f8f9fa] dark:bg-white/5 dark:text-white border-2 border-transparent focus:border-[#1a73e8]/30 rounded-[2rem] focus:bg-white outline-none transition-all text-sm font-medium min-h-[160px] leading-relaxed shadow-inner"
+                  placeholder="Describe el problema técnico reportado por el cliente..."
                   value={formData.issueDescription}
                   onChange={e => setFormData({ ...formData, issueDescription: e.target.value })}
                 />
               </div>
             </div>
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#1a73e8] uppercase tracking-wider">
-                <Camera size={16} /> Registro y Consentimiento
-              </div>
-              <div className="space-y-3">
-                <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left block">Fotografías de Recepción</label>
-                <div className="flex flex-wrap gap-3 p-4 bg-[#f8f9fa] dark:bg-neutral-800 rounded-none min-h-[100px]">
-                  {formData.photos?.map((p, i) => (
-                    <div key={i} className="relative group w-20 h-20 bg-white rounded-none overflow-hidden shadow-sm border border-neutral-200">
-                      <img src={p} alt="Evidencia" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removePhoto(i, true)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => document.getElementById('new-order-photos')?.click()}
-                    className="w-20 h-20 rounded-none border-2 border-dashed border-[#dadce0] hover:border-[#1a73e8] hover:bg-[#e8f0fe] transition-all flex flex-col items-center justify-center text-[#5f6368] hover:text-[#1a73e8]"
-                  >
-                    <Plus size={20} />
-                    <span className="text-[10px] font-bold mt-1 uppercase">Añadir</span>
-                  </button>
-                  <input id="new-order-photos" type="file" multiple className="hidden" accept="image/*" onChange={e => handleFileChange(e, true)} />
+
+            {/* Column 2: Evidence & Legal */}
+            <div className="lg:col-span-12 xl:col-span-5 space-y-10">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                    <Camera size={18} /> <span>Evidencia Visual</span>
+                  </div>
+                  <Badge variant="slate" size="xs">Opcional</Badge>
+                </div>
+                <div className="p-6 bg-[#f8f9fa] dark:bg-white/5 rounded-[2rem] border-2 border-dashed border-[#dadce0] dark:border-white/10 group hover:border-[#1a73e8]/30 transition-colors">
+                  <div className="flex flex-wrap gap-4 min-h-[100px] items-center justify-center">
+                    {formData.photos?.map((p, i) => (
+                      <div key={i} className="relative group/photo w-24 h-24 rounded-2xl overflow-hidden shadow-md border-4 border-white">
+                        <img src={p} alt="Evidencia" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => removePhoto(i, true)} className="absolute inset-0 bg-red-500/80 text-white opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
+                          <Trash2 size={24} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('new-order-photos')?.click()}
+                      className="w-24 h-24 rounded-2xl bg-white dark:bg-white/5 border-2 border-[#dadce0] dark:border-white/10 hover:border-[#1a73e8] hover:text-[#1a73e8] transition-all flex flex-col items-center justify-center text-[#5f6368] shadow-sm active:scale-95"
+                    >
+                      <Plus size={32} strokeWidth={1} />
+                      <span className="text-[9px] font-black uppercase mt-1 tracking-widest">Subir</span>
+                    </button>
+                    <input id="new-order-photos" type="file" multiple className="hidden" accept="image/*" onChange={e => handleFileChange(e, true)} />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-3">
-                <label className="text-xs font-semibold text-[#5f6368] ml-4 text-left block">Firma del Cliente</label>
-                <div className="bg-[#f8f9fa] dark:bg-neutral-800 p-1 rounded-none border border-[#dadce0] dark:border-neutral-700 overflow-hidden">
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-xs font-black text-[#1a73e8] uppercase tracking-[0.2em]">
+                    <ShieldCheck size={18} /> <span>Autorización Legal</span>
+                  </div>
+                  <Badge variant="brand" size="xs">Certificado</Badge>
+                </div>
+                <div className="bg-[#f8f9fa] dark:bg-[#111] p-1 rounded-[2rem] border border-[#dadce0] dark:border-white/5 shadow-inner">
                   <SignaturePad
                     onSave={(url) => setFormData(prev => ({ ...prev, customerSignature: url }))}
                     onClear={() => setFormData(prev => ({ ...prev, customerSignature: '' }))}
                   />
                 </div>
-                <p className="text-[10px] text-[#5f6368] px-4 font-medium leading-tight">
-                  Al firmar, el cliente acepta los términos de servicio, diagnóstico preventivo y políticas de garantía de ShoroRepair.
-                </p>
+                <div className="p-6 bg-amber-50 dark:bg-amber-900/5 rounded-2xl border border-amber-100 dark:border-amber-900/20">
+                  <p className="text-[10px] text-amber-700 dark:text-amber-500/80 font-bold leading-relaxed">
+                    Al estampar su firma aquí, el cliente confirma la veracidad de los datos suministrados y acepta las políticas de diagnóstico técnico, pérdida de garantía original del fabricante y tiempos estipulados de retiro para el ShoroRepair Center.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

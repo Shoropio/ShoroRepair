@@ -2,8 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { TrendingUp, FileDown, Calendar, Download, Printer, BarChart } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
+import { TrendingUp, FileDown, Calendar, Download, Printer, BarChart as BarChartIcon, DollarSign, Users, Briefcase, ChevronRight, Activity } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { handlePrint } from '../utils/print/printUtils';
@@ -14,29 +14,6 @@ import { formatCurrency } from '../utils/format/formatUtils';
 import { Card, Button, SkeletonChart, SkeletonStatCard, Badge } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
-
-const ReportsSkeleton: React.FC = () => (
-	<div className="space-y-10 animate-in">
-		<div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-			<div className="space-y-2">
-				<div className="h-8 w-64 bg-[#f1f3f4] dark:bg-[#2d2f31] rounded-none animate-pulse" />
-				<div className="h-4 w-48 bg-[#f1f3f4] dark:bg-[#2d2f31] rounded-none animate-pulse" />
-			</div>
-			<div className="h-10 w-40 bg-[#f1f3f4] dark:bg-[#2d2f31] rounded-none animate-pulse" />
-		</div>
-
-		<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-			<SkeletonStatCard />
-			<SkeletonStatCard />
-			<SkeletonStatCard />
-		</div>
-
-		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			<div className="bg-[#f8f9fa] dark:bg-[#202124] rounded-none h-80 animate-pulse" />
-			<div className="bg-[#f8f9fa] dark:bg-[#202124] rounded-none h-80 animate-pulse" />
-		</div>
-	</div>
-);
 
 const Reports: React.FC = () => {
 	const { t } = useTranslation();
@@ -109,49 +86,49 @@ const Reports: React.FC = () => {
 		const settings = (await db.settings.toArray())[0];
 		const doc = new jsPDF() as any;
 
-		doc.setFillColor(15, 23, 42); // Header
-		doc.rect(0, 0, 210, 40, 'F');
+		doc.setFillColor(26, 115, 232);
+		doc.rect(0, 0, 210, 45, 'F');
 
 		doc.setTextColor(255, 255, 255);
-		doc.setFontSize(22);
+		doc.setFontSize(24);
 		doc.setFont('helvetica', 'bold');
-		doc.text(t('reports.pdf_title').toUpperCase(), 15, 25);
+		doc.text("REPORTE EJECUTIVO", 15, 28);
 		doc.setFontSize(10);
-		doc.text(settings?.businessName || 'ShoroRepair', 15, 32);
-		doc.text(`${t('reports.generated')} ${new Date().toLocaleString()}`, 160, 32);
+		doc.text(settings?.businessName || 'ShoroRepair Business Intelligence', 15, 36);
+		doc.text(`${new Date().toLocaleString()}`, 160, 36);
 
-		let y = 55;
-		doc.setTextColor(15, 23, 42);
-		doc.setFontSize(14);
-		doc.text(t('reports.financial_summary'), 15, y);
-		doc.setDrawColor(59, 130, 246);
-		doc.line(15, y + 2, 70, y + 2);
+		let y = 60;
+		doc.setTextColor(32, 33, 36);
+		doc.setFontSize(16);
+		doc.text("Consolidado Financiero", 15, y);
+		doc.setDrawColor(26, 115, 232);
+		doc.line(15, y + 2, 80, y + 2);
 
 		const financialRows = [
-			[t('reports.total_revenue').toUpperCase(), formatCurrency(data.revenue)],
-			[t('reports.expenses').toUpperCase(), formatCurrency(data.expenses)],
-			[t('reports.profit').toUpperCase(), formatCurrency(data.profit)],
-			[t('reports.avg_ticket').toUpperCase(), formatCurrency(data.stats.avgOrderValue)]
+			["FACTURACIÓN BRUTA", formatCurrency(data.revenue)],
+			["COSTOS & GASTOS", formatCurrency(data.expenses)],
+			["MARGEN OPERATIVO", formatCurrency(data.profit)],
+			["TICKET PROMEDIO", formatCurrency(data.stats.avgOrderValue)]
 		];
 
 		doc.autoTable({
 			startY: y + 8,
 			margin: { left: 15 },
 			body: financialRows,
-			theme: 'grid',
-			styles: { cellPadding: 5, fontSize: 10 },
+			theme: 'striped',
+			styles: { cellPadding: 6, fontSize: 11 },
 			columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
 		});
 
-		y = (doc as any).lastAutoTable.finalY + 20;
+		y = (doc as any).lastAutoTable.finalY + 25;
 
-		doc.text(t('reports.operating_stats'), 15, y);
-		doc.line(15, y + 2, 70, y + 2);
+		doc.text("Métricas Operativas", 15, y);
+		doc.line(15, y + 2, 80, y + 2);
 
 		const operationalRows = [
-			[t('reports.total_orders').toUpperCase(), data.totalCount],
-			[t('reports.unique_clients').toUpperCase(), data.stats.clientsCount],
-			[t('reports.top_technician').toUpperCase(), data.topTechs[0]?.name || 'N/A']
+			["ÓRDENES CREADAS", data.totalCount],
+			["CLIENTES ÚNICOS", data.stats.clientsCount],
+			["LIDER TÉCNICO", data.topTechs[0]?.name || 'N/A']
 		];
 
 		doc.autoTable({
@@ -159,130 +136,94 @@ const Reports: React.FC = () => {
 			margin: { left: 15 },
 			body: operationalRows,
 			theme: 'plain',
-			styles: { cellPadding: 5, fontSize: 10 },
+			styles: { cellPadding: 6, fontSize: 11 },
 			columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } }
 		});
 
 		if (action === 'download') {
-			doc.save('Reporte_General_ShoroRepair.pdf');
-			toast.success(t('messages.downloaded'));
+			doc.save('BI_Report_ShoroRepair.pdf');
+			toast.success("Descarga iniciada");
 		} else {
-			toast.info("Generando vista previa del reporte...");
-			await handlePrint(doc, 'Reporte_General_ShoroRepair.pdf');
+			await handlePrint(doc, 'BI_Report_ShoroRepair.pdf');
 		}
 	};
 
-	const exportCSV = async () => {
-		if (!data) return;
-		const orders = await db.orders.toArray();
+	const COLORS = ['#1a73e8', '#34a853', '#fbbc04', '#ea4335', '#a142f4'];
 
-		const headers = ['Orden', 'Fecha', 'Cliente ID', 'Equipo', 'Total', 'Estado'];
-		const rows = orders.map(o => [
-			o.orderNumber,
-			new Date(o.createdAt).toLocaleDateString(),
-			o.clientId,
-			`${o.brand} ${o.model}`,
-			o.total,
-			o.status
-		]);
+	if (!data) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">Compilando Estadísticas...</div>;
 
-		const csvContent = [
-			headers.join(','),
-			...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
-		].join('\n');
-
-		if ((window as any).__TAURI__) {
-			try {
-				const filePath = await save({
-					defaultPath: `reporte_ordenes_${new Date().toISOString().split("T")[0]}.csv`,
-					filters: [{ name: "CSV", extensions: ["csv"] }]
-				});
-
-				if (!filePath) return;
-
-				await writeTextFile(filePath, csvContent);
-				toast.success(t('messages.saved'));
-				return;
-			} catch (error) {
-				console.error("Error saving CSV via Tauri:", error);
-				toast.error("Error al guardar el reporte");
-			}
-		}
-
-		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.setAttribute('download', `reporte_ordenes_${new Date().toISOString().split("T")[0]}.csv`);
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		toast.success(t('messages.downloaded'));
-	};
-
-	const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
-
-	if (!data) return <ReportsSkeleton />;
-
-	if (!hasPermission('canViewReports')) {
-		return <Navigate to="/" replace />;
-	}
+	if (!hasPermission('canViewReports')) return <Navigate to="/" replace />;
 
 	return (
-		<div className="space-y-10 animate-in">
-			<div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+		<div className="space-y-8 animate-in pb-20">
+			{/* High-Fidelity Header */}
+			<header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5">
 				<div>
-					<h1 className="text-2xl font-semibold text-[#202124] dark:text-white tracking-tight">{t('reports.title')}</h1>
-					<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-1">{t('reports.subtitle')}</p>
+					<h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+						<Activity className="text-[#1a73e8]" size={32} />
+						Inteligencia de Negocio
+					</h1>
+					<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
+						Analítica avanzada de ingresos, rendimiento técnico y crecimiento de cartera.
+					</p>
 				</div>
-				<div className="flex gap-2">
-					<Button variant="outline" size="sm" onClick={exportCSV} leftIcon={<FileDown size={18} />}>{t('reports.export_csv')}</Button>
-					<Button variant="outline" size="sm" onClick={() => exportPDF('print')} leftIcon={<Printer size={18} />}>Imprimir</Button>
-					<Button variant="primary" size="sm" onClick={() => exportPDF('download')} leftIcon={<Download size={18} />}>{t('reports.generate_pdf')}</Button>
+				<div className="flex flex-wrap gap-3">
+					<Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" onClick={exportPDF} leftIcon={<Printer size={18} />}>Protocolo Impreso</Button>
+					<Button variant="primary" className="rounded-2xl px-8 py-4 shadow-lg shadow-blue-500/20 font-black uppercase tracking-widest text-[11px]" onClick={() => exportPDF('download')} leftIcon={<Download size={20} />}>Exportar Digital</Button>
 				</div>
+			</header>
+
+			{/* Premium Stat Cards */}
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				{[
+					{ label: 'Utilidad Neta', value: data.profit, color: 'text-emerald-600', icon: TrendingUp, desc: 'Balance Final' },
+					{ label: 'Ingreso Bruto', value: data.revenue, color: 'text-[#1a73e8]', icon: DollarSign, desc: 'Facturación Total' },
+					{ label: 'Ticket Promedio', value: data.stats.avgOrderValue, color: 'text-gray-900', icon: Briefcase, desc: 'Valor por Servicio' },
+					{ label: 'Base Clientes', value: data.stats.clientsCount, color: 'text-indigo-600', icon: Users, desc: 'Cartera de Activos', isNumber: true }
+				].map((stat, i) => (
+					<Card key={i} className="p-8 rounded-[2rem] border-[#f1f3f4] dark:border-white/5 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
+						<div className="flex items-center justify-between mb-6">
+							<div className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl group-hover:bg-blue-50 transition-colors">
+								<stat.icon size={20} className="text-gray-400 group-hover:text-blue-600" />
+							</div>
+							<span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.desc}</span>
+						</div>
+						<h3 className={`text-3xl font-black tracking-tighter ${stat.color} mb-1`}>
+							{stat.isNumber ? stat.value : formatCurrency(stat.value).split(',')[0]}
+						</h3>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">{stat.label}</p>
+					</Card>
+				))}
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<Card variant="tonal" className="p-6">
-					<p className="text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">{t('reports.operating_profit')}</p>
-					<h3 className="text-2xl font-semibold text-[#1e8e3e]">{formatCurrency(data.profit)}</h3>
-					<p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-1 italic">{t('reports.operating_profit_desc')}</p>
-				</Card>
-				<Card variant="tonal" className="p-6">
-					<p className="text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">{t('reports.total_revenue')}</p>
-					<h3 className="text-2xl font-semibold text-[#1a73e8] dark:text-[#8ab4f8]">{formatCurrency(data.revenue)}</h3>
-					<p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-1 italic">{t('reports.revenue_desc')}</p>
-				</Card>
-				<Card variant="tonal" className="p-6">
-					<p className="text-[11px] font-bold text-[#5f6368] dark:text-[#9aa0a6] uppercase tracking-wider mb-2">{t('reports.avg_ticket')}</p>
-					<h3 className="text-2xl font-semibold text-[#3c4043] dark:text-white">{formatCurrency(data.stats.avgOrderValue)}</h3>
-					<p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-1 italic">{t('reports.avg_ticket_desc')}</p>
-				</Card>
-			</div>
-
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<Card
-					header={<h3 className="text-sm font-bold text-[#3c4043] dark:text-white">{t('reports.revenue_trend')}</h3>}
-				>
-					<div className="h-72">
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+				{/* Revenue Evolution */}
+				<Card className="lg:col-span-8 p-10 rounded-[3rem] shadow-2xl shadow-black/5" header={<div className="flex items-center justify-between mb-10"><h3 className="text-lg font-black text-[#202124] dark:text-white uppercase tracking-tight">Evolución Semestral</h3><Badge variant="brand" size="xs">Tendencia Positiva</Badge></div>}>
+					<div className="h-80">
 						<ResponsiveContainer width="100%" height="100%">
-							<LineChart data={data.monthlyRevenue}>
+							<AreaChart data={data.monthlyRevenue}>
+								<defs>
+									<linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="5%" stopColor="#1a73e8" stopOpacity={0.1} />
+										<stop offset="95%" stopColor="#1a73e8" stopOpacity={0} />
+									</linearGradient>
+								</defs>
 								<CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f3f4" />
-								<XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#5f6368', fontSize: 11 }} />
-								<YAxis axisLine={false} tickLine={false} tick={{ fill: '#5f6368', fontSize: 11 }} />
+								<XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#5f6368', fontSize: 10, fontWeight: 'bold' }} />
+								<YAxis axisLine={false} tickLine={false} tick={{ fill: '#5f6368', fontSize: 10, fontWeight: 'bold' }} />
 								<Tooltip
-									contentStyle={{ border: 'none', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+									contentStyle={{ background: '#fff', borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+									itemStyle={{ fontSize: '12px', fontWeight: 'bold', color: '#1a73e8' }}
 								/>
-								<Line type="monotone" dataKey="revenue" stroke="#1a73e8" strokeWidth={3} dot={{ fill: '#1a73e8', r: 4 }} activeDot={{ r: 6 }} />
-							</LineChart>
+								<Area type="monotone" dataKey="revenue" stroke="#1a73e8" strokeWidth={4} fillOpacity={1} fill="url(#colorRev)" />
+							</AreaChart>
 						</ResponsiveContainer>
 					</div>
 				</Card>
 
-				<Card
-					header={<h3 className="text-sm font-bold text-[#3c4043] dark:text-white">{t('reports.category_dist')}</h3>}
-				>
-					<div className="h-72">
+				{/* Device Dist */}
+				<Card className="lg:col-span-4 p-10 rounded-[3rem] shadow-2xl shadow-black/5" header={<div className="mb-8"><h3 className="text-lg font-black text-[#202124] dark:text-white uppercase tracking-tight">Mix de Equipos</h3><p className="text-[10px] text-gray-400 font-bold uppercase">Distribución por categoría</p></div>}>
+					<div className="h-60">
 						<ResponsiveContainer width="100%" height="100%">
 							<PieChart>
 								<Pie
@@ -290,55 +231,49 @@ const Reports: React.FC = () => {
 									cx="50%"
 									cy="50%"
 									innerRadius={60}
-									outerRadius={100}
-									paddingAngle={5}
+									outerRadius={80}
+									paddingAngle={8}
 									dataKey="value"
 								>
 									{data.deviceData.map((_, index) => (
-										<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+										<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={10} />
 									))}
 								</Pie>
 								<Tooltip />
-								<Legend iconType="circle" />
 							</PieChart>
 						</ResponsiveContainer>
 					</div>
+					<div className="mt-8 space-y-3">
+						{data.deviceData.slice(0, 3).map((item, i) => (
+							<div key={i} className="flex items-center justify-between text-xs font-bold uppercase text-gray-600">
+								<div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }}></div> {item.name}</div>
+								<span>{item.value}</span>
+							</div>
+						))}
+					</div>
 				</Card>
 
-				<Card
-					className="lg:col-span-2"
-					header={<h3 className="text-sm font-bold text-[#3c4043] dark:text-white">{t('reports.tech_productivity')}</h3>}
-				>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+				{/* Tech Leaderboard */}
+				<Card className="lg:col-span-12 p-10 rounded-[3rem] shadow-2xl shadow-black/5" header={<h3 className="text-lg font-black text-[#202124] dark:text-white uppercase tracking-tight mb-8">Performance del Equipo Técnico</h3>}>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
 						{data.topTechs.map((tech, idx) => (
-							<div key={idx} className="bg-[#f8f9fa] dark:bg-[#2d2f31] p-5 rounded-none text-center space-y-2">
-								<div className="w-10 h-10 bg-white dark:bg-[#1a1c1e] rounded-none mx-auto flex items-center justify-center font-bold text-[#1a73e8]">
+							<div key={idx} className="bg-gray-50 dark:bg-white/5 p-8 rounded-[2rem] text-center space-y-4 hover:shadow-xl transition-all group">
+								<div className="w-20 h-20 bg-white dark:bg-[#1a1c1e] rounded-[1.5rem] mx-auto flex items-center justify-center font-black text-2xl text-[#1a73e8] shadow-lg shadow-blue-500/5 group-hover:scale-110 transition-transform">
 									{tech.name.charAt(0)}
 								</div>
-								<p className="text-sm font-semibold truncate text-[#202124] dark:text-white">{tech.name}</p>
-								<Badge variant="brand" size="xs">{tech.value} Órdenes</Badge>
+								<div>
+									<p className="text-sm font-black text-[#202124] dark:text-white uppercase truncate">{tech.name}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Nivel: Senior</p>
+								</div>
+								<Badge variant="brand" size="xs" className="px-5 py-1.5">{tech.value} Servicios</Badge>
 							</div>
 						))}
 						{data.topTechs.length === 0 && (
-							<div className="col-span-full py-10 text-center text-sm text-[#5f6368] italic">No hay suficientes datos técnicos aún.</div>
+							<div className="col-span-full py-20 text-center text-sm font-bold text-gray-400 uppercase tracking-widest">Sin data técnica consolidada.</div>
 						)}
 					</div>
 				</Card>
 			</div>
-
-			<Card variant="tonal" className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-				<div className="space-y-2 text-center md:text-left">
-					<h2 className="text-2xl font-semibold text-[#202124] dark:text-white tracking-tight">{t('reports.summary')}</h2>
-					<p className="text-[#5f6368] dark:text-[#9aa0a6] text-sm max-w-md">
-						{t('reports.summary_text', { count: data.totalCount })}
-					</p>
-				</div>
-				<div className="flex-shrink-0">
-					<Button variant="primary" onClick={exportCSV} leftIcon={<Download size={18} />}>
-						{t('reports.download_csv')}
-					</Button>
-				</div>
-			</Card>
 		</div>
 	);
 };

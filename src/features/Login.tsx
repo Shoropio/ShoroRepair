@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Lock, User, ShieldCheck, ArrowRight, Smartphone, Cpu, Key, Globe, Sparkles } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Input, Button, Card } from '../components';
 
@@ -28,15 +28,14 @@ const Login: React.FC = () => {
 		try {
 			const success = await login(username, password);
 			if (success) {
-				toast.success(t('dashboard.welcome'));
+				toast.success("Autenticación Exitosa");
 				navigate('/');
 			} else {
 				setError(t('login.error'));
-				toast.error(t('messages.error'));
+				toast.error("Credenciales no válidas");
 			}
 		} catch (err: any) {
-			console.error("Login error detail:", err);
-			setError('Error de conexión');
+			setError('Fallo Crítico de Conexión');
 		} finally {
 			setIsLoading(false);
 		}
@@ -48,58 +47,64 @@ const Login: React.FC = () => {
 		try {
 			const success = await loginWithGoogle();
 			if (success) {
-				toast.success('Acceso concedido con Google');
+				toast.success('Identidad Google Sincronizada');
 				navigate('/');
 			} else {
-				setError('No se pudo iniciar sesión con Google o cuenta inactiva');
+				setError('Asociación fallida o cuenta desvinculada');
 			}
 		} catch (err) {
-			setError('Error de autenticación con Google');
+			setError('Fallo de protocolo Google Auth');
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	return (
-		<div className="min-h-screen w-full flex items-center justify-center p-4 bg-white dark:bg-[#1a1c1e]">
-			<div className="w-full max-w-[448px] space-y-8 animate-in">
-				{/* Minimalist Logo Header */}
-				<div className="text-center space-y-4">
-					<div className="inline-flex items-center justify-center w-12 h-12 bg-[#1a73e8] text-white rounded-none shadow-lg">
-						<ShieldCheck size={28} strokeWidth={2.5} />
+		<div className="min-h-screen w-full flex items-center justify-center p-6 bg-gray-50 dark:bg-[#121416] relative overflow-hidden">
+			{/* Dynamic Background */}
+			<div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]"></div>
+			<div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px]"></div>
+
+			<div className="w-full max-w-[480px] space-y-10 relative z-10 animate-in fade-in zoom-in duration-700">
+				{/* Branding Section */}
+				<div className="text-center space-y-6">
+					<div className="inline-flex items-center justify-center w-20 h-20 bg-white dark:bg-[#1a1c1e] text-[#1a73e8] rounded-[2rem] shadow-2xl shadow-blue-500/10 border-4 border-white dark:border-white/5 transform transition-transform hover:scale-110">
+						<ShieldCheck size={40} strokeWidth={2} />
 					</div>
-					<div className="space-y-1">
-						<h1 className="text-3xl font-semibold text-[#202124] dark:text-white tracking-tight">{t('login.title')}</h1>
-						<p className="text-sm text-[#5f6368] dark:text-[#9aa0a6]">{t('login.subtitle')}</p>
+					<div className="space-y-2">
+						<h1 className="text-4xl font-black text-[#202124] dark:text-white tracking-tighter uppercase leading-none">ShoroRepair</h1>
+						<p className="text-[10px] font-black text-gray-400 dark:text-[#9aa0a6] uppercase tracking-[0.4em] opacity-80">Enterprise Management System</p>
 					</div>
 				</div>
 
-				<Card variant="outlined" className="p-10 rounded-none">
-					<form onSubmit={handleLogin} className="space-y-6">
+				<Card className="p-12 rounded-[3rem] shadow-2xl shadow-black/5 border-none bg-white dark:bg-[#1a1c1e]">
+					<form onSubmit={handleLogin} className="space-y-8">
 						{error && (
-							<div className="bg-[#fce8e6] text-[#c5221f] p-4 rounded-none text-xs font-semibold text-center border border-[#f5b7b1]">
+							<div className="bg-red-50 text-red-600 p-5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-red-100 animate-in shake">
 								{error}
 							</div>
 						)}
 
-						<div className="space-y-4">
+						<div className="space-y-6">
 							<Input
-								label={t('login.username')}
-								leftIcon={<User size={18} />}
+								label="Identificador de Operador"
+								leftIcon={<User size={20} className="text-gray-400" />}
 								value={username}
 								onChange={e => setUsername(e.target.value)}
-								placeholder={t('login.username_placeholder')}
+								placeholder="usuario_admin"
 								autoComplete="username"
+								className="h-14 rounded-2xl"
 							/>
 
 							<Input
-								label={t('login.password')}
+								label="Firma de Seguridad"
 								type="password"
-								leftIcon={<Lock size={18} />}
+								leftIcon={<Key size={20} className="text-gray-400" />}
 								value={password}
 								onChange={e => setPassword(e.target.value)}
-								placeholder={t('login.password_placeholder')}
+								placeholder="••••••••"
 								autoComplete="current-password"
+								className="h-14 rounded-2xl"
 							/>
 						</div>
 
@@ -107,17 +112,24 @@ const Login: React.FC = () => {
 							<Button
 								type="submit"
 								variant="primary"
-								className="w-full py-3 text-sm font-semibold"
+								className="w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-blue-500/20"
 								isLoading={isLoading}
+								rightIcon={<ArrowRight size={20} />}
 							>
-								{t('login.next')}
+								Acceder al Sistema
 							</Button>
+
+							<div className="relative flex items-center py-4">
+								<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
+								<span className="flex-shrink-0 mx-6 text-[9px] font-black text-gray-300 uppercase tracking-widest">Social Multi-Factor</span>
+								<div className="flex-grow border-t border-gray-100 dark:border-white/5"></div>
+							</div>
 
 							<button
 								type="button"
 								onClick={handleGoogleLogin}
 								disabled={isLoading}
-								className="w-full py-3 bg-white dark:bg-transparent border border-[#dadce0] dark:border-[#3c4043] hover:bg-[#f8f9fa] dark:hover:bg-white/5 text-[#3c4043] dark:text-[#e2e2e6] flex items-center justify-center gap-3 transition-colors rounded-none text-sm font-semibold"
+								className="w-full h-16 bg-white dark:bg-transparent border-2 border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 text-[#3c4043] dark:text-[#e2e2e6] flex items-center justify-center gap-4 transition-all rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest shadow-sm"
 							>
 								<svg className="w-5 h-5" viewBox="0 0 24 24">
 									<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -125,18 +137,20 @@ const Login: React.FC = () => {
 									<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
 									<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
 								</svg>
-								{t('login.google_signin')}
+								Ingresar vía Google Cloud
 							</button>
 						</div>
 					</form>
 				</Card>
 
-				<div className="text-center">
-					<p className="text-xs text-[#5f6368] dark:text-[#9aa0a6]">
-						{t('login.footer')}
+				<div className="text-center space-y-2">
+					<p className="text-[10px] font-bold text-gray-400 dark:text-[#9aa0a6] uppercase tracking-widest flex items-center justify-center gap-2">
+						<Lock size={12} className="text-blue-500" />
+						Punto de Acceso Autorizado ShoroRepair
 					</p>
 				</div>
 			</div>
+			<Toaster position="top-center" richColors />
 		</div>
 	);
 };

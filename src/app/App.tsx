@@ -54,7 +54,7 @@ import { db } from '../offline/db';
 const AppContent: React.FC = () => {
   const { t } = useTranslation();
   const { user, logout, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('theme');
     if (saved !== null) return saved === 'dark';
@@ -167,10 +167,10 @@ const AppContent: React.FC = () => {
 
       {/* Google Style Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-white dark:bg-[#1a1c1e] border-r border-[#f1f3f4] dark:border-[#3c4043]
-        transform transition-transform duration-300 ease-[cubic-bezier(0.4, 0, 0.2, 1)]
-        lg:translate-x-0 lg:static
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#1a1c1e] border-r border-[#f1f3f4] dark:border-[#3c4043]
+        transition-all duration-300 ease-[cubic-bezier(0.4, 0, 0.2, 1)]
+        lg:static overflow-hidden shrink-0
+        ${sidebarOpen ? 'translate-x-0 w-72 border-r' : '-translate-x-full w-0 border-none lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
           {/* Logo Section */}
@@ -229,7 +229,7 @@ const AppContent: React.FC = () => {
         {/* Top bar */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-[#f1f3f4] dark:border-[#3c4043]">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden p-2 text-[#5f6368] hover:bg-[#f1f3f4] rounded-none">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-full transition-all">
               <Menu size={20} />
             </button>
             <div className="relative group hidden sm:block">

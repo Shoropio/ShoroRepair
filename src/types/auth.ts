@@ -1,4 +1,4 @@
-export type UserRole = 'Admin' | 'Technician' | 'Receptionist';
+import { UserRole } from './enums';
 
 export interface RolePermissions {
     canViewReports: boolean;

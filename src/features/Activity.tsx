@@ -2,8 +2,23 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
-import { Activity, User, FileText, Trash2, Edit, Plus, Clock } from 'lucide-react';
-import { Card, Badge } from '../components';
+import {
+    Activity as ActivityIcon,
+    User,
+    FileText,
+    Trash2,
+    Edit,
+    Plus,
+    Clock,
+    Cpu,
+    Fingerprint,
+    History,
+    ShieldCheck,
+    RefreshCw,
+    Search,
+    Filter
+} from 'lucide-react';
+import { Card, Badge, Button } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 
@@ -22,22 +37,22 @@ const ActivityPage: React.FC = () => {
         return await query.limit(100).toArray();
     }, [filter]);
 
-    if (!hasPermission('canViewReports')) {
-        return <Navigate to="/" replace />;
-    }
+    if (!hasPermission('canViewReports')) return <Navigate to="/" replace />;
 
     const getActionIcon = (action: string) => {
-        if (action.includes('crear') || action.includes('agreg')) return <Plus size={14} />;
-        if (action.includes('editar') || action.includes('actualiz')) return <Edit size={14} />;
-        if (action.includes('elimin')) return <Trash2 size={14} />;
-        return <Activity size={14} />;
+        const a = action.toLowerCase();
+        if (a.includes('crear') || a.includes('agreg')) return <Plus size={16} />;
+        if (a.includes('editar') || a.includes('actualiz')) return <Edit size={16} />;
+        if (a.includes('elimin')) return <Trash2 size={16} />;
+        return <ActivityIcon size={16} />;
     };
 
     const getActionColor = (action: string) => {
-        if (action.includes('crear') || action.includes('agreg')) return 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20';
-        if (action.includes('editar') || action.includes('actualiz')) return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
-        if (action.includes('elimin')) return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-        return 'text-slate-600 bg-slate-50 dark:bg-slate-900/20';
+        const a = action.toLowerCase();
+        if (a.includes('crear') || a.includes('agreg')) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+        if (a.includes('editar') || a.includes('actualiz')) return 'bg-blue-50 text-blue-600 border-blue-100';
+        if (a.includes('elimin')) return 'bg-red-50 text-red-600 border-red-100';
+        return 'bg-gray-50 text-gray-500 border-gray-100';
     };
 
     const getEntityBadge = (entity: string) => {
@@ -52,88 +67,99 @@ const ActivityPage: React.FC = () => {
         return colors[entity] || 'slate';
     };
 
+    if (!activities) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">Leyendo Caja Negra...</div>;
+
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-2">
-                        <Activity size={28} className="text-brand-600" />
-                        {t('activity.title')}
+        <div className="space-y-8 animate-in pb-20">
+            {/* Premium Header */}
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 bg-white dark:bg-[#1a1c1e] p-10 rounded-[2.5rem] shadow-xl shadow-blue-500/5 border border-[#f1f3f4] dark:border-white/5 relative overflow-hidden">
+                <div className="relative z-10">
+                    <h1 className="text-3xl font-bold text-[#202124] dark:text-white tracking-tight flex items-center gap-3">
+                        <Fingerprint className="text-[#1a73e8]" size={32} />
+                        Historial de Auditoría
                     </h1>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                        {t('activity.subtitle')}
+                    <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium max-w-md">
+                        Trazabilidad completa de operaciones técnicas, movimientos de caja y cambios estructurales.
                     </p>
                 </div>
+                <div className="flex gap-4 relative z-10">
+                    <div className="flex gap-8 border-r border-gray-100 pr-8">
+                        <div className="text-center">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Registros</p>
+                            <p className="text-2xl font-black text-[#1a73e8]">{activities.length}</p>
+                        </div>
+                    </div>
+                    <Button variant="outline" className="rounded-2xl px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>Frecuencia Real</Button>
+                </div>
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-3xl opacity-30"></div>
+            </header>
+
+            {/* Filter Chips */}
+            <div className="flex flex-wrap gap-3">
+                {[
+                    { id: 'all', label: 'Todo el Sistema', icon: History },
+                    { id: 'order', label: 'Taller Orders', icon: Cpu },
+                    { id: 'client', label: 'Cartera Clientes', icon: User },
+                    { id: 'user', label: 'Control Personal', icon: ShieldCheck },
+                    { id: 'inventory', label: 'Almacén Stock', icon: FileText },
+                    { id: 'expense', label: 'Libro Contable', icon: Trash2 }
+                ].map(f => {
+                    const Icon = f.icon;
+                    return (
+                        <button
+                            key={f.id}
+                            onClick={() => setFilter(f.id)}
+                            className={`px-6 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/5 flex items-center gap-2 border-2 ${filter === f.id ? 'bg-[#1a73e8] text-white border-transparent' : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] border-transparent hover:border-blue-100'}`}
+                        >
+                            <Icon size={14} />
+                            {f.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-                {['all', 'order', 'client', 'user', 'inventory', 'expense'].map(f => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={`px-4 py-2 text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${filter === f
-                            ? 'bg-brand-600 text-white'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                            }`}
-                    >
-                        {f === 'all' ? t('activity.filters.all') : f === 'order' ? t('activity.filters.orders') : f === 'client' ? t('activity.filters.clients') : f === 'user' ? t('activity.filters.users') : f === 'inventory' ? t('activity.filters.inventory') : t('activity.filters.expenses')}
-                    </button>
-                ))}
-            </div>
-
-            {/* Activity Timeline */}
-            <Card>
-                {!activities || activities.length === 0 ? (
-                    <div className="text-center py-16">
-                        <Activity size={48} className="mx-auto text-slate-300 mb-4" />
-                        <h3 className="text-lg font-bold text-slate-600 dark:text-slate-300">{t('activity.empty')}</h3>
-                        <p className="text-sm text-slate-400 mt-2">{t('activity.empty_subtitle')}</p>
+            {/* Audit Timeline */}
+            <Card className="p-0 rounded-[3rem] overflow-hidden shadow-2xl shadow-black/5 border-[#f1f3f4] dark:border-white/5 bg-white">
+                {activities.length === 0 ? (
+                    <div className="py-40 flex flex-col items-center justify-center">
+                        <History size={64} className="text-gray-100 mb-6" />
+                        <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest">Memoria Despejada</h3>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {activities.map((activity, index) => (
-                            <div
-                                key={activity.id}
-                                className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-start gap-4"
-                            >
-                                {/* Icon */}
-                                <div className={`w-10 h-10 rounded-none flex items-center justify-center shrink-0 ${getActionColor(activity.action)}`}>
+                    <div className="divide-y divide-gray-50 dark:divide-white/5">
+                        {activities.map((activity) => (
+                            <div key={activity.id} className="p-8 hover:bg-blue-50/20 transition-all flex items-start gap-8 group">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0 transition-transform group-hover:scale-105 ${getActionColor(activity.action)}`}>
                                     {getActionIcon(activity.action)}
                                 </div>
 
-                                {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-4 mb-1">
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold text-slate-800 dark:text-white">
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                                        <div className="space-y-1">
+                                            <p className="text-base font-black text-[#202124] dark:text-white uppercase tracking-tight leading-none">
                                                 {activity.action}
                                             </p>
-                                            {activity.details && (
-                                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                    {activity.details}
-                                                </p>
-                                            )}
+                                            <div className="flex items-center gap-3">
+                                                <Badge variant={getEntityBadge(activity.entity) as any} size="xs" className="px-3 py-0.5 font-black uppercase tracking-widest shadow-sm">
+                                                    {activity.entity}
+                                                </Badge>
+                                                {activity.details && (
+                                                    <span className="text-xs font-medium text-gray-500 truncate max-w-md">
+                                                        {activity.details}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                        <Badge variant={getEntityBadge(activity.entity) as any}>
-                                            {activity.entity}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-[10px] text-slate-400 font-medium">
-                                        <span className="flex items-center gap-1">
-                                            <User size={10} />
-                                            {activity.userName}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={10} />
-                                            {new Date(activity.timestamp).toLocaleString('es', {
-                                                day: '2-digit',
-                                                month: 'short',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                        </span>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <div className="flex items-center gap-2 text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                                                <User size={12} />
+                                                Auth: {activity.userName}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                                                <Clock size={12} />
+                                                {new Date(activity.timestamp).toLocaleString('es-CR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
