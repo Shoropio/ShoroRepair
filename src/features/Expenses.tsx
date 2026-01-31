@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
-import { Modal, Button, Input, Card, Badge, TableSkeleton, Select } from '../components';
+import { Modal, Button, Input, Card, Badge, TableSkeleton, Select, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 
@@ -34,6 +34,8 @@ const Expenses: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
         return (localStorage.getItem('expenses_view_mode') as 'grid' | 'list') || 'grid';
     });
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 12;
 
     const [formData, setFormData] = useState<Partial<Expense>>({
         description: '',
@@ -85,6 +87,12 @@ const Expenses: React.FC = () => {
             avg: total / (expenses.length || 1)
         };
     }, [expenses]);
+
+    const paginatedExpenses = useMemo(() => {
+        if (!expenses) return [];
+        const from = (currentPage - 1) * itemsPerPage;
+        return expenses.slice(from, from + itemsPerPage);
+    }, [expenses, currentPage]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -163,7 +171,7 @@ const Expenses: React.FC = () => {
                         type="text"
                         placeholder={t('expenses.search_placeholder') || "Search..."}
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                         className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-red-500/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
                     />
                 </div>
@@ -193,37 +201,39 @@ const Expenses: React.FC = () => {
                     <p className="text-sm text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">{t('expenses.empty_subtitle')}</p>
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {expenses.map(e => (
-                        <Card key={e.id} className="group p-8 rounded-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white">
-                            <div className="flex justify-between items-start mb-8">
-                                <div className="p-4 bg-red-50 text-[#ea4335] rounded-none shadow-sm group-hover:bg-red-100 transition-colors">
-                                    <Tag size={24} />
+                <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                        {paginatedExpenses.map(e => (
+                            <Card key={e.id} className="group p-8 rounded-none transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 relative overflow-hidden border-[#f1f3f4] dark:border-white/5 bg-white">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="p-4 bg-red-50 text-[#ea4335] rounded-none shadow-sm group-hover:bg-red-100 transition-colors">
+                                        <Tag size={24} />
+                                    </div>
+                                    <button onClick={() => deleteExpense(e.id!)} className="p-3 bg-red-50/50 text-red-600 rounded-none opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"><Trash2 size={16} /></button>
                                 </div>
-                                <button onClick={() => deleteExpense(e.id!)} className="p-3 bg-red-50/50 text-red-600 rounded-none opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"><Trash2 size={16} /></button>
-                            </div>
 
-                            <div className="space-y-1 mb-8">
-                                <h3 className="font-black text-xl text-[#202124] dark:text-white tracking-tight truncate uppercase leading-none">{e.description}</h3>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="slate" size="xs" className="px-3 py-1 font-black opacity-60 uppercase">{getCategoryLabel(e.category)}</Badge>
-                                    <Badge variant="brand" size="xs" className="px-3 py-1 font-black uppercase bg-gray-100 text-gray-500">{getPaymentMethodLabel(e.paymentMethod)}</Badge>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center justify-between p-6 bg-red-50/30 rounded-none border border-dashed border-red-100">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">{t('expenses.fields.amount')}</span>
-                                    <span className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(e.amount).split(',')[0]}</span>
-                                </div>
-                                <div className="text-right">
-                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
-                                        <Calendar size={14} /> {formatDate(e.date)}
+                                <div className="space-y-1 mb-8">
+                                    <h3 className="font-black text-xl text-[#202124] dark:text-white tracking-tight truncate uppercase leading-none">{e.description}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="slate" size="xs" className="px-3 py-1 font-black opacity-60 uppercase">{getCategoryLabel(e.category)}</Badge>
+                                        <Badge variant="brand" size="xs" className="px-3 py-1 font-black uppercase bg-gray-100 text-gray-500">{getPaymentMethodLabel(e.paymentMethod)}</Badge>
                                     </div>
                                 </div>
-                            </div>
-                        </Card>
-                    ))}
+
+                                <div className="flex items-center justify-between p-6 bg-red-50/30 rounded-none border border-dashed border-red-100">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">{t('expenses.fields.amount')}</span>
+                                        <span className="text-3xl font-black text-red-600 tracking-tighter">{formatCurrency(e.amount).split(',')[0]}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase">
+                                            <Calendar size={14} /> {formatDate(e.date)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
@@ -239,7 +249,7 @@ const Expenses: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
-                                {expenses.map(e => (
+                                {paginatedExpenses.map(e => (
                                     <tr key={e.id} className="hover:bg-red-50/20 transition-colors group">
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3 text-xs font-bold text-gray-400 uppercase">
@@ -265,6 +275,14 @@ const Expenses: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil((expenses?.length || 0) / itemsPerPage)}
+                onPageChange={setCurrentPage}
+                totalItems={expenses?.length || 0}
+                itemsPerPage={itemsPerPage}
+            />
 
             {/* MODAL EGRESO */}
             <Modal

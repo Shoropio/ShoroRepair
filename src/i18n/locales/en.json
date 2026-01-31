@@ -12,34 +12,17 @@
         "none": "None",
         "paid": "Paid",
         "pending": "Pending",
-        "add": "Add",
-        "new": "New",
-        "view": "View",
-        "close": "Close",
         "confirm": "Confirm",
         "name": "Name",
-        "description": "Description",
         "date": "Date",
-        "status": "Status",
         "active": "Active",
-        "inactive": "Inactive",
-        "yes": "Yes",
         "no": "No",
         "total": "Total",
-        "subtotal": "Subtotal",
-        "tax": "Tax",
-        "price": "Price",
-        "quantity": "Quantity",
         "download": "Download",
         "print": "Print",
         "update": "Update",
-        "create": "Create",
-        "filter": "Filter",
-        "export": "Export",
-        "import": "Import",
         "back": "Back",
         "next": "Next",
-        "previous": "Previous",
         "finish": "Finish",
         "clear": "Clear",
         "discard": "Discard",
@@ -57,7 +40,11 @@
         "offline": "Offline",
         "synced": "Synced",
         "sync_now": "Sync now",
-        "reset": "Reset"
+        "reset": "Reset",
+        "showing": "Showing",
+        "of": "of",
+        "results": "results",
+        "page": "Page"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -76,16 +63,13 @@
         "administration": "Administration"
     },
     "dashboard": {
-        "title": "Dashboard",
-        "subtitle": "Overview of your business performance",
         "welcome": "Welcome",
         "active_repairs": "You have {{count}} active repairs waiting for your technical attention today.",
         "stats": {
             "active_orders": "Active Services",
             "pending": "Pending",
             "delivered_today": "To Deliver",
-            "revenue_month": "Revenue",
-            "pending_payments": "Pending Payments"
+            "revenue_month": "Revenue"
         },
         "workshop_status": "Workshop Status",
         "recent_entries": "Recent Entries",
@@ -103,9 +87,7 @@
     },
     "orders": {
         "title": "Service Center",
-        "subtitle": "Comprehensive management of repairs and warranties",
         "new": "New Reception",
-        "new_subtitle": "Device intake for lab",
         "formalize": "Formalize intake",
         "update_record": "Update record",
         "delete_order": "Delete service",
@@ -153,11 +135,7 @@
             "service_client": "Service / client",
             "device": "Device",
             "status": "Status",
-            "actions": "Actions",
-            "order_number": "Order number",
             "date": "Date",
-            "client": "Client",
-            "technician": "Technician",
             "component": "Component",
             "quantity": "Qty.",
             "amount": "Amount"
@@ -175,19 +153,15 @@
             "model": "Model",
             "serial": "Serial / IMEI",
             "issue": "Failure description",
-            "issue_placeholder": "Detail the problem reported by the client...",
             "name_placeholder": "e.g. John Doe",
             "username_placeholder": "e.g. jdoe_tech",
             "accessories": "Accessories included",
-            "accessories_placeholder": "E.g.: Charger, case, headphones...",
             "photos": "Photographic evidence",
             "add_photos": "Add photos",
             "no_photos": "No photos registered",
-            "status": "State",
             "assigned_tech": "Assigned technician",
             "select_tech": "Select technician",
             "diagnosis": "Technical diagnosis",
-            "diagnosis_placeholder": "Write detailed diagnosis...",
             "parts": "Used parts",
             "add_part": "Add part",
             "select_part": "Select part",
@@ -204,20 +178,14 @@
             "delivered": "Delivered",
             "cancelled": "Cancelled"
         },
-        "payment_status": {
-            "paid": "Paid",
-            "pending": "Pending"
-        },
         "notify_whatsapp": "Notify via WhatsApp",
-        "empty": "No services registered",
-        "empty_subtitle": "Create a new service to start"
+        "empty": "No services registered"
     },
     "clients": {
         "title": "Client Directory",
         "subtitle": "Management of contact base and technical history.",
         "new": "New client",
         "edit": "Edit client",
-        "save": "Save client",
         "stats": {
             "total": "Total Clients",
             "with_orders": "With Services",
@@ -232,7 +200,6 @@
             "phone": "Phone",
             "email": "Email",
             "address": "Address",
-            "notes": "Additional notes",
             "tax_id": "Tax ID / EIN"
         },
         "table": {
@@ -249,8 +216,6 @@
         "title": "Inventory Control",
         "subtitle": "Monitoring of components, parts and supplies of the central workshop.",
         "new": "Add part",
-        "edit": "Edit part",
-        "save": "Save part",
         "stock": "Stock",
         "critical": "Critical",
         "value": "Value",
@@ -262,50 +227,37 @@
         "unit_price": "Unit Price",
         "update_component": "Update Component",
         "register_part": "Register Part",
-        "label_tag": "SPARE PART LABEL",
         "print_all_tags": "Print All Tags",
         "print_all_qrs": "Print All QRs",
         "fields": {
-            "name": "Part name",
             "part_name": "Part / Spare Name",
             "part_name_placeholder": "E.g.: iPhone 13 OLED Screen",
             "sku": "SKU / Code",
             "sku_optional": "SKU / Code (Optional)",
             "sku_placeholder": "Generate automatically",
-            "quantity": "Quantity in stock",
             "initial_quantity": "Initial Quantity",
-            "price": "Unit price",
             "sale_price": "Sale Price",
             "min_stock": "Minimum stock",
-            "min_stock_alert": "Min Stock Alert",
-            "category": "Category"
+            "min_stock_alert": "Min Stock Alert"
         },
         "table": {
             "component": "Component",
             "sku": "SKU",
             "stock": "Stock",
-            "part": "Part",
             "price": "Price"
         },
-        "low_stock": "Low stock",
-        "out_of_stock": "Out of stock",
         "delete_confirm": "Are you sure you want to archive this component?",
-        "empty": "No parts in inventory",
-        "empty_subtitle": "Add your first part to start"
+        "empty": "No parts in inventory"
     },
     "expenses": {
         "title": "Expense Registry",
         "subtitle": "Operational expenditure control",
         "new": "New expense",
-        "edit": "Edit expense",
         "save": "Save expense",
         "fields": {
             "description": "Expense description",
             "category": "Category",
-            "amount": "Amount",
-            "date": "Date",
-            "payment_method": "Payment method",
-            "notes": "Additional notes"
+            "amount": "Amount"
         },
         "categories": {
             "rent": "Rent",
@@ -325,21 +277,17 @@
         "table": {
             "description": "Description",
             "category": "Category",
-            "amount": "Amount",
-            "date": "Date",
-            "actions": "Actions"
+            "amount": "Amount"
         },
         "delete_confirm": "Delete this expense?",
         "empty": "No expenses registered",
-        "empty_subtitle": "Register your first expense to start"
+        "empty_subtitle": "Register your first expense to start",
+        "search_placeholder": "Search by description or category..."
     },
     "users": {
-        "title": "Personnel Management",
         "subtitle": "Workshop access and profiles control",
         "new": "New member",
         "edit": "Edit profile",
-        "save": "Save user",
-        "view_permissions": "View permissions",
         "center": "Operators Center",
         "manage_roles": "Configure Roles",
         "search_placeholder": "Search by name or operator ID...",
@@ -356,8 +304,7 @@
             "username": "Username",
             "password": "Password",
             "new_password": "New password (Optional)",
-            "role": "Assigned role",
-            "status": "Status"
+            "role": "Assigned role"
         },
         "roles": {
             "admin": "Administrator",
@@ -367,65 +314,23 @@
         "status": {
             "active": "Enabled",
             "inactive": "Suspended",
-            "enabled": "Active",
-            "disabled": "Inactive",
             "synced": "Synced",
             "no_access": "No Access"
         },
         "table": {
-            "member": "Member",
-            "role": "Role",
             "status": "Status",
-            "actions": "Actions",
             "identity": "Operator Identity",
             "range": "Rank / Access"
         },
-        "delete_confirm": "Delete",
-        "empty": "No users registered"
+        "delete_confirm": "Delete"
     },
     "settings": {
         "title": "System Configuration",
         "subtitle": "Identity, security and backups management",
-        "my_account": "My account",
-        "save_profile": "Save profile",
         "company": "Corporate identity",
-        "save_company": "Save company",
-        "language": "Language and localization",
-        "select_language": "Select language",
         "cloud": "Cloud Infrastructure",
-        "sync_cloud": "Sync Cloud",
-        "database": "Database",
-        "backup": "Backup data",
         "restore": "Restore backup",
-        "danger_zone": "Danger zone",
         "factory_reset": "Factory reset",
-        "factory_reset_desc": "Deletes all local data (clients, services, parts) and logs out.",
-        "delete_all": "Delete all",
-        "clear_sync": "Clear sync cache",
-        "clear_sync_desc": "Forces a full Firebase re-scan on next launch.",
-        "clear_cache": "Clear sync",
-        "firebase_guide": "Quick setup guide",
-        "firebase_steps": {
-            "step1": "Create a project in",
-            "step2": "Enable",
-            "step3": "Create an",
-            "step4": "Copy values to the fields above and save changes."
-        },
-        "restart_required": "These changes require restarting the application so that Firebase initializes with the new ecosystem.",
-        "fields": {
-            "full_name": "Full name",
-            "password": "Password",
-            "business_name": "Business name",
-            "legal_name": "Legal name",
-            "tax_id": "Tax ID / EIN",
-            "address": "Fiscal address",
-            "phone": "Phone",
-            "email": "Email",
-            "invoice_prefix": "Invoice prefix",
-            "tax_rate": "Tax rate (%)",
-            "next_invoice": "Next invoice number",
-            "inactivity_timeout": "Inactivity timeout (minutes)"
-        },
         "tabs": {
             "profile": "My Profile",
             "organization": "Organization",
@@ -490,11 +395,6 @@
         "empty_title": "Purified Memory",
         "filters": {
             "all": "All",
-            "orders": "Services",
-            "clients": "Clients",
-            "users": "Users",
-            "inventory": "Inventory",
-            "expenses": "Expenses",
             "all_system": "Whole System",
             "workshop_orders": "Workshop Services",
             "client_portfolio": "Client Portfolio",
@@ -506,19 +406,6 @@
         "empty_subtitle": "System actions will appear here"
     },
     "roles": {
-        "title": "Roles and Permissions",
-        "subtitle": "Access settings by profile",
-        "permissions": {
-            "manage_orders": "Manage services",
-            "manage_clients": "Manage clients",
-            "manage_inventory": "Manage inventory",
-            "manage_users": "Manage personnel",
-            "view_reports": "View reports",
-            "manage_expenses": "Manage expenses",
-            "manage_settings": "Manage settings"
-        },
-        "save": "Save roles configuration",
-        "reset": "Restore defaults",
         "access_protocols": "Access Protocols",
         "access_subtitle": "Granular configuration of permissions and security hierarchies for technical staff.",
         "intel_biz": "Business Intelligence",
@@ -546,11 +433,7 @@
     },
     "reports": {
         "title": "Reports Center",
-        "subtitle": "Analysis and business metrics",
-        "period": "Period",
         "generate": "Generate report",
-        "export_pdf": "Export PDF",
-        "export_excel": "Export Excel",
         "compiling_stats": "Compiling Statistics...",
         "intelligence_title": "Business Intelligence",
         "intelligence_subtitle": "Advanced analysis of profitability, technical performance and growth.",
@@ -608,14 +491,8 @@
         }
     },
     "login": {
-        "title": "Log In",
-        "subtitle": "Use your ShoroRepair account to continue",
         "username": "Username",
         "username_placeholder": "Enter your username...",
-        "password": "Password",
-        "password_placeholder": "••••••••",
-        "next": "Next",
-        "google_signin": "Sign in with Google",
         "google_cloud_signin": "Enter via Google Cloud",
         "operator_id": "Operator Identifier",
         "security_signature": "Security Signature",
@@ -629,11 +506,9 @@
         "google_success": "Google Identity Synchronized",
         "google_error": "Association failed or account not linked",
         "google_protocol_error": "Google Auth protocol failure",
-        "critical_conn_error": "Critical Connection Failure",
-        "footer": "© 2026 ShoroRepair Systems • Privacy & Terms • © 2026 Shoropio Corporation"
+        "critical_conn_error": "Critical Connection Failure"
     },
     "messages": {
-        "success": "Successful operation",
         "error": "An error occurred",
         "saved": "Saved correctly",
         "deleted": "Deleted correctly",
@@ -643,12 +518,12 @@
         "printing_queue": "Sending to print queue...",
         "printing_failed": "Technical failure in printing",
         "confirm_delete": "Are you sure you want to delete this item?",
-        "no_data": "No data available",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "notifications_enabled": "Notifications enabled successfully",
+        "notifications_blocked": "Notifications blocked by browser",
+        "notifications_active": "Notifications are already active"
     },
     "ai": {
-        "title": "AI Diagnostic Tool",
-        "subtitle": "Analysis assisted by artificial intelligence",
         "assistant_title": "ShoroAI Technical Assistant",
         "assistant_subtitle": "Intelligent diagnostic engine based on Google Gemini for technical optimization.",
         "analysis_input": "Analysis Input",
@@ -667,14 +542,7 @@
         "model_pro": "Pro (Model Pro)",
         "results_panel": "Results Panel",
         "start_diagnostic_desc": "Start a diagnostic to see the applied intelligence",
-        "source": "Data source",
-        "link_order": "Link to order",
-        "custom_description": "Custom description",
-        "analyze": "Analyze with Gemini",
-        "result_title": "AI Diagnostic Report",
-        "save_to_order": "Save to order",
-        "copy": "Copy",
-        "disclaimer": "Results are suggestions. Please verify physically."
+        "analyze": "Analyze with Gemini"
     },
     "setup": {
         "title_step1": "Initiating Protocol",

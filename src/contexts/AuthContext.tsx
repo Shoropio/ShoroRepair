@@ -31,27 +31,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("AuthProvider: Initializing...");
 
         const restoreSession = async (firebaseUser?: any) => {
-            const storedUserId = localStorage.getItem('shoro_user_id');
-            if (storedUserId) {
-                try {
-                    const foundUser = await db.users.get(parseInt(storedUserId));
-                    if (foundUser) {
-                        console.log("AuthProvider: Restored session for", foundUser.fullName);
-                        setUser(foundUser);
-                        if (firebaseUser) syncManager.startSync();
-                    }
-                } catch (err) {
-                    console.error("AuthProvider: Error restoring session", err);
+            try {
+                const storedUserId = localStorage.getItem('shoro_user_id');
+                let foundUser = null;
+
+                if (storedUserId) {
+                    foundUser = await db.users.get(parseInt(storedUserId));
                 }
-            } else if (firebaseUser) {
-                // If no local storage but Firebase exists, we might need to find/create user
-                // (Already handled in login logic, but useful for persistence between different Firebase states)
-                syncManager.startSync();
-            } else {
+
+                // If local ID didn't work but we have Firebase, try matching by UID
+                if (!foundUser && firebaseUser) {
+                    foundUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
+                    if (foundUser) {
+                        localStorage.setItem('shoro_user_id', foundUser.id!.toString());
+                    }
+                }
+
+                if (foundUser) {
+                    console.log("AuthProvider: Restored session for", foundUser.fullName);
+                    setUser(foundUser);
+                    if (firebaseUser) syncManager.startSync();
+                } else {
+                    setUser(null);
+                    syncManager.stopSync();
+                }
+            } catch (err) {
+                console.error("AuthProvider: Error restoring session", err);
                 setUser(null);
-                syncManager.stopSync();
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
         let unsubscribe = () => { };
@@ -84,7 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const INACTIVITY_LIMIT = timeoutMinutes * 60 * 1000;
 
             timeoutId = setTimeout(() => {
-                if (localStorage.getItem('shoro_user_id')) {
+                const storedUserId = localStorage.getItem('shoro_user_id');
+                if (storedUserId) {
                     console.log(`AuthProvider: Inactivity timeout reached (${timeoutMinutes} min). Logging out...`);
                     logout();
                 }
@@ -134,10 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return true;
             }
 
-            // If local auth fails, try Firebase (for cloud users ONLY if not 'admin')
-            // ... (Firebase Auth logic continues below)
-            console.log("AuthContext: Attempting Firebase Sign In...");
-            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
+            // If local auth fails (or doesn't exist), try Firebase for cloud support
+            // but ONLY if the input looks like an email.
+            if (!usernameOrEmail.includes('@')) {
+                console.log("AuthContext: Username login failed and no @ found, skipping Firebase.");
+                return false;
+            }
+
+            console.log("AuthContext: Attempting Firebase Sign In for", usernameOrEmail);
+            await setPersistence(auth, browserLocalPersistence);
             const userCredential = await signInWithEmailAndPassword(auth, usernameOrEmail, pass);
             const firebaseUser = userCredential.user;
 
@@ -207,9 +222,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // BUT, if they try to login directly with Google relying on email match, 'admin' != 'davis@...'.
 
             if (!foundUser) {
-                // If NO users exist at all (unlikely due to db.ts), make this one Admin
+                // If NO users exist OR only the default admin exists, make this one Admin
                 const count = await db.users.count();
-                const role = count === 0 ? 'Admin' : 'Technician';
+                const defaultAdmin = await db.users.where('username').equals('admin').first();
+                const role = (count === 0 || (count === 1 && defaultAdmin)) ? 'Admin' : 'Technician';
 
                 const newUserId = await db.users.add({
                     username: email,

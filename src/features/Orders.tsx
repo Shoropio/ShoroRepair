@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
@@ -48,7 +48,7 @@ import { handlePrint } from '../utils/print/printUtils';
 import { generateEntryTicket, generateInvoice } from '../utils/print/invoiceUtils';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { useDebounce } from '../hooks/useDebounce';
-import { TableSkeleton, Button, Input, Badge, Card, Modal, Select } from '../components';
+import { TableSkeleton, Button, Input, Badge, Card, Modal, Select, Pagination } from '../components';
 import { uploadImage, compressImage } from '../services/upload.service';
 import { usePermissions } from '../hooks/usePermissions';
 
@@ -156,6 +156,8 @@ const Orders: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const getStatusLabel = (status: string) => {
@@ -210,6 +212,13 @@ const Orders: React.FC = () => {
   const clients = useLiveQuery(() => db.clients.toArray());
   const technicians = useLiveQuery(() => db.users.where('role').equals('Technician').toArray());
   const inventory = useLiveQuery(() => db.inventory.toArray());
+
+  const paginatedOrders = useMemo(() => {
+    if (!orders) return [];
+    const from = (currentPage - 1) * itemsPerPage;
+    const to = from + itemsPerPage;
+    return orders.slice(from, to);
+  }, [orders, currentPage]);
 
   const [formData, setFormData] = useState<Partial<ServiceOrder>>({
     deviceType: DeviceType.PHONE,
@@ -507,7 +516,7 @@ const Orders: React.FC = () => {
             type="text"
             placeholder={t('orders.search_placeholder')}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full pl-12 pr-6 py-3 bg-[#f1f3f4] dark:bg-white/5 rounded-none outline-none focus:bg-white dark:focus:bg-[#1a1c1e] border-2 border-transparent focus:border-[#1a73e8]/20 transition-all text-sm font-medium"
           />
         </div>
@@ -515,7 +524,7 @@ const Orders: React.FC = () => {
           {['all', OrderStatus.RECEIVED, OrderStatus.IN_REPAIR, OrderStatus.READY, OrderStatus.DELIVERED].map(s => (
             <button
               key={s}
-              onClick={() => setFilterStatus(s)}
+              onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
               className={`px-4 lg:px-5 py-2 rounded-none text-[10px] font-bold uppercase tracking-widest whitespace-nowrap transition-all border-2 ${filterStatus === s
                 ? 'bg-[#1a73e8] text-white border-transparent shadow-lg shadow-blue-500/20'
                 : 'bg-white dark:bg-white/5 text-[#5f6368] dark:text-[#9aa0a6] border-[#f1f3f4] dark:border-white/10 hover:border-[#1a73e8]/30'
@@ -536,115 +545,127 @@ const Orders: React.FC = () => {
           <h3 className="text-lg font-bold text-[#202124] dark:text-white uppercase tracking-tighter">{t('orders.empty_movements')}</h3>
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2 font-medium">{t('orders.empty_movements_subtitle')}</p>
         </div>
-      ) : viewMode === 'list' ? (
-        <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.date')}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
-                {orders.map(order => {
-                  const client = clients?.find(c => c.id === order.clientId);
-                  return (
-                    <tr key={order.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="shrink-0 w-10 h-10 bg-[#1a73e8] text-white rounded-none flex items-center justify-center font-black text-[10px] shadow-lg shadow-blue-500/10 transition-transform">
-                            #{order.orderNumber.slice(-4)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate">{order.orderNumber}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <User size={10} className="text-[#1a73e8]" />
-                              <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold truncate max-w-[140px] uppercase tracking-tight">{client?.name || t('common.none')}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Smartphone size={14} className="text-[#1a73e8]" />
-                          <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold uppercase tracking-wider">
-                          <Calendar size={12} className="text-[#1a73e8]" /> {formatDate(order.createdAt)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
-                          <Badge
-                            variant={order.status === OrderStatus.READY ? 'success' : (order.status === OrderStatus.IN_REPAIR || order.status === OrderStatus.DIAGNOSTIC) ? 'warning' : 'brand'}
-                            size="xs"
-                            className="w-fit scale-90 origin-left"
-                          >
-                            {getStatusLabel(order.status)}
-                          </Badge>
-                          {order.priority === Priority.HIGH && (
-                            <span className="flex items-center gap-1 text-[9px] font-black text-red-500 uppercase animate-pulse"><Zap size={10} fill="currentColor" /> {t('orders.priority_critical')}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setShowDetailModal(order)} className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-none hover:bg-blue-100 transition-colors" title={t('orders.manage_file')}><Edit2 size={14} /></button>
-                          <button onClick={() => generateInvoice(order, 'print')} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors"><Printer size={14} /></button>
-                          <button onClick={() => generateEntryTicket(order)} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors" title={t('orders.entry_ticket')}><FileText size={14} /></button>
-                          <button onClick={() => notifyWhatsApp(order)} className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-none hover:bg-emerald-100 transition-colors"><MessageSquare size={14} /></button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {orders.map(order => {
-            const client = clients?.find(c => c.id === order.clientId);
-            return (
-              <Card key={order.id} className="p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-none group border border-[#f1f3f4] dark:border-white/5">
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-none flex items-center justify-center font-black text-xs">
-                      {order.brand.charAt(0)}
+        <div className="space-y-6">
+          {viewMode === 'list' ? (
+            <div className="bg-white dark:bg-[#1a1c1e] border border-[#f1f3f4] dark:border-white/5 rounded-none overflow-hidden shadow-2xl shadow-black/5">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-[#f8f9fa] dark:bg-white/[0.02] border-b border-[#f1f3f4] dark:border-white/5">
+                      <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.service_client')}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.device')}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.date')}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">{t('orders.table.status')}</th>
+                      <th className="px-6 py-4 text-[10px] font-bold text-[#5f6368] uppercase tracking-widest text-right">{t('common.actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
+                    {paginatedOrders.map(order => {
+                      const client = clients?.find(c => c.id === order.clientId);
+                      return (
+                        <tr key={order.id} className="hover:bg-blue-50/30 dark:hover:bg-blue-900/5 transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="shrink-0 w-10 h-10 bg-[#1a73e8] text-white rounded-none flex items-center justify-center font-black text-[10px] shadow-lg shadow-blue-500/10 transition-transform">
+                                #{order.orderNumber.slice(-4)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate">{order.orderNumber}</p>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <User size={10} className="text-[#1a73e8]" />
+                                  <p className="text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold truncate max-w-[140px] uppercase tracking-tight">{client?.name || t('common.none')}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <Smartphone size={14} className="text-[#1a73e8]" />
+                              <p className="text-sm font-bold text-[#3c4043] dark:text-[#bdc1c6] truncate max-w-[180px]">{order.brand} {order.model}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2 text-[10px] text-[#5f6368] dark:text-[#9aa0a6] font-bold uppercase tracking-wider">
+                              <Calendar size={12} className="text-[#1a73e8]" /> {formatDate(order.createdAt)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1.5">
+                              <Badge
+                                variant={order.status === OrderStatus.READY ? 'success' : (order.status === OrderStatus.IN_REPAIR || order.status === OrderStatus.DIAGNOSTIC) ? 'warning' : 'brand'}
+                                size="xs"
+                                className="w-fit scale-90 origin-left"
+                              >
+                                {getStatusLabel(order.status)}
+                              </Badge>
+                              {order.priority === Priority.HIGH && (
+                                <span className="flex items-center gap-1 text-[9px] font-black text-red-500 uppercase animate-pulse"><Zap size={10} fill="currentColor" /> {t('orders.priority_critical')}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-1.5 opacity-25 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => setShowDetailModal(order)} className="p-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 rounded-none hover:bg-blue-100 transition-colors" title={t('orders.manage_file')}><Edit2 size={14} /></button>
+                              <button onClick={() => generateInvoice(order, 'print')} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors"><Printer size={14} /></button>
+                              <button onClick={() => generateEntryTicket(order)} className="p-2 bg-gray-50 text-gray-600 dark:bg-white/5 rounded-none hover:bg-gray-100 transition-colors" title={t('orders.entry_ticket')}><FileText size={14} /></button>
+                              <button onClick={() => notifyWhatsApp(order)} className="p-2 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 rounded-none hover:bg-emerald-100 transition-colors"><MessageSquare size={14} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedOrders.map(order => {
+                const client = clients?.find(c => c.id === order.clientId);
+                return (
+                  <Card key={order.id} className="p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 rounded-none group border border-[#f1f3f4] dark:border-white/5">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-none flex items-center justify-center font-black text-xs">
+                          {order.brand.charAt(0)}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm tracking-tight text-[#202124] dark:text-white uppercase">#{order.orderNumber.slice(-6)}</h4>
+                          <p className="text-[10px] text-[#5f6368] font-black uppercase tracking-tight">{client?.name || t('orders.fields.client')}</p>
+                        </div>
+                      </div>
+                      <Badge variant={order.status === OrderStatus.READY ? 'success' : 'brand'} size="xs" className="scale-90">{getStatusLabel(order.status)}</Badge>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-sm tracking-tight text-[#202124] dark:text-white uppercase">#{order.orderNumber.slice(-6)}</h4>
-                      <p className="text-[10px] text-[#5f6368] font-black uppercase tracking-tight">{client?.name || t('orders.fields.client')}</p>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center gap-2">
+                        <Smartphone size={14} className="text-[#1a73e8]" />
+                        <p className="text-sm font-bold text-[#202124] dark:text-white truncate uppercase tracking-tight">{order.brand} {order.model}</p>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">
+                        <div className="flex items-center gap-1.5"><Clock size={12} /> {formatDate(order.createdAt)}</div>
+                        <div className="flex items-center gap-1.5 text-emerald-600 font-black tracking-tighter"><DollarSign size={12} /> {formatCurrency(order.total)}</div>
+                      </div>
                     </div>
-                  </div>
-                  <Badge variant={order.status === OrderStatus.READY ? 'success' : 'brand'} size="xs" className="scale-90">{getStatusLabel(order.status)}</Badge>
-                </div>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2">
-                    <Smartphone size={14} className="text-[#1a73e8]" />
-                    <p className="text-sm font-bold text-[#202124] dark:text-white truncate uppercase tracking-tight">{order.brand} {order.model}</p>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#5f6368] uppercase tracking-widest">
-                    <div className="flex items-center gap-1.5"><Clock size={12} /> {formatDate(order.createdAt)}</div>
-                    <div className="flex items-center gap-1.5 text-emerald-600 font-black tracking-tighter"><DollarSign size={12} /> {formatCurrency(order.total)}</div>
-                  </div>
-                </div>
+                    <div className="flex gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
+                      <Button variant="outline" size="sm" className="flex-1 rounded-none text-[10px] font-bold uppercase py-2" onClick={() => setShowDetailModal(order)}>{t('orders.manage_file')}</Button>
+                      <Button variant="outline" size="sm" className="rounded-none p-2" onClick={() => notifyWhatsApp(order)}><MessageSquare size={14} /></Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
 
-                <div className="flex gap-2 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
-                  <Button variant="outline" size="sm" className="flex-1 rounded-none text-[10px] font-bold uppercase py-2" onClick={() => setShowDetailModal(order)}>{t('orders.manage_file')}</Button>
-                  <Button variant="outline" size="sm" className="rounded-none p-2" onClick={() => notifyWhatsApp(order)}><MessageSquare size={14} /></Button>
-                </div>
-              </Card>
-            );
-          })}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil((orders?.length || 0) / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={orders?.length || 0}
+            itemsPerPage={itemsPerPage}
+          />
         </div>
       )}
 

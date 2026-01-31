@@ -12,34 +12,17 @@
         "none": "Ninguno",
         "paid": "Pagado",
         "pending": "Pendiente",
-        "add": "Agregar",
-        "new": "Nuevo",
-        "view": "Ver",
-        "close": "Cerrar",
         "confirm": "Confirmar",
         "name": "Nombre",
-        "description": "Descripción",
         "date": "Fecha",
-        "status": "Estado",
         "active": "Activo",
-        "inactive": "Inactivo",
-        "yes": "Sí",
         "no": "No",
         "total": "Total",
-        "subtotal": "Subtotal",
-        "tax": "Impuesto",
-        "price": "Precio",
-        "quantity": "Cantidad",
         "download": "Descargar",
         "print": "Imprimir",
         "update": "Actualizar",
-        "create": "Crear",
-        "filter": "Filtrar",
-        "export": "Exportar",
-        "import": "Importar",
         "back": "Volver",
         "next": "Siguiente",
-        "previous": "Anterior",
         "finish": "Finalizar",
         "clear": "Limpiar",
         "discard": "Descartar",
@@ -57,7 +40,11 @@
         "offline": "Desconectado",
         "synced": "Sincronizado",
         "sync_now": "Sincronizar ahora",
-        "reset": "Restablecer"
+        "reset": "Restablecer",
+        "showing": "Mostrando",
+        "of": "de",
+        "results": "resultados",
+        "page": "Página"
     },
     "nav": {
         "dashboard": "Panel de control",
@@ -76,16 +63,13 @@
         "administration": "Administración"
     },
     "dashboard": {
-        "title": "Panel de control",
-        "subtitle": "Resumen del rendimiento de su negocio",
         "welcome": "Bienvenido",
         "active_repairs": "Tienes {{count}} reparaciones activas esperando tu atención técnica hoy.",
         "stats": {
             "active_orders": "Servicios activos",
             "pending": "Pendientes",
             "delivered_today": "Por entregar",
-            "revenue_month": "Ingresos",
-            "pending_payments": "Pagos pendientes"
+            "revenue_month": "Ingresos"
         },
         "workshop_status": "Estado del taller",
         "recent_entries": "Entradas recientes",
@@ -103,9 +87,7 @@
     },
     "orders": {
         "title": "Centro de Servicio",
-        "subtitle": "Gestión integral de reparaciones y garantías",
         "new": "Nueva Recepción",
-        "new_subtitle": "Ingreso de equipo al laboratorio",
         "formalize": "Formalizar ingreso",
         "update_record": "Actualizar registro",
         "delete_order": "Eliminar servicio",
@@ -153,11 +135,7 @@
             "service_client": "Servicio / cliente",
             "device": "Dispositivo",
             "status": "Estado",
-            "actions": "Acciones",
-            "order_number": "Número de orden",
             "date": "Fecha",
-            "client": "Cliente",
-            "technician": "Técnico",
             "component": "Componente",
             "quantity": "Cant.",
             "amount": "Monto"
@@ -175,19 +153,15 @@
             "model": "Modelo",
             "serial": "Serie / IMEI",
             "issue": "Descripción de la falla",
-            "issue_placeholder": "Detalle el problema reportado por el cliente...",
             "name_placeholder": "Ej: Jorge Murillo",
             "username_placeholder": "Ej: jmurillo_tech",
             "accessories": "Accesorios incluidos",
-            "accessories_placeholder": "Ej: Cargador, funda, auriculares...",
             "photos": "Evidencia fotográfica",
             "add_photos": "Agregar fotos",
             "no_photos": "Sin fotos registradas",
-            "status": "Estado",
             "assigned_tech": "Técnico asignado",
             "select_tech": "Seleccionar técnico",
             "diagnosis": "Diagnóstico técnico",
-            "diagnosis_placeholder": "Escriba el diagnóstico detallado...",
             "parts": "Repuestos utilizados",
             "add_part": "Agregar repuesto",
             "select_part": "Seleccionar repuesto",
@@ -204,20 +178,14 @@
             "delivered": "Entregado",
             "cancelled": "Cancelado"
         },
-        "payment_status": {
-            "paid": "Pagado",
-            "pending": "Pendiente"
-        },
         "notify_whatsapp": "Notificar por WhatsApp",
-        "empty": "No hay servicios registrados",
-        "empty_subtitle": "Cree un nuevo servicio para comenzar"
+        "empty": "No hay servicios registrados"
     },
     "clients": {
         "title": "Directorio de Clientes",
         "subtitle": "Gestión de base de contactos y antecedentes técnicos.",
         "new": "Nuevo cliente",
         "edit": "Editar cliente",
-        "save": "Guardar cliente",
         "stats": {
             "total": "Total Clientes",
             "with_orders": "Con Servicios",
@@ -232,7 +200,6 @@
             "phone": "Teléfono",
             "email": "Correo electrónico",
             "address": "Dirección",
-            "notes": "Notas adicionales",
             "tax_id": "ID Fiscal / Cédula"
         },
         "table": {
@@ -249,8 +216,6 @@
         "title": "Control de Inventario",
         "subtitle": "Monitoreo de componentes, repuestos y consumibles del taller central.",
         "new": "Agregar repuesto",
-        "edit": "Editar repuesto",
-        "save": "Guardar repuesto",
         "stock": "Existencias",
         "critical": "Crítico",
         "value": "Valor",
@@ -262,50 +227,37 @@
         "unit_price": "Precio Unitario",
         "update_component": "Actualizar Componente",
         "register_part": "Registrar Pieza",
-        "label_tag": "ETIQUETA DE REPUESTO",
         "print_all_tags": "Imprimir Todo Etiquetas",
         "print_all_qrs": "Imprimir Todo QRs",
         "fields": {
-            "name": "Nombre del repuesto",
             "part_name": "Nombre de la Pieza / Repuesto",
             "part_name_placeholder": "Ej: Pantalla OLED iPhone 13",
             "sku": "SKU / Código",
             "sku_optional": "SKU / Código (Opcional)",
             "sku_placeholder": "Generar automáticamente",
-            "quantity": "Cantidad en stock",
             "initial_quantity": "Cantidad Inicial",
-            "price": "Precio unitario",
             "sale_price": "Precio de Venta",
             "min_stock": "Stock mínimo",
-            "min_stock_alert": "Alerta de Stock Mínimo",
-            "category": "Categoría"
+            "min_stock_alert": "Alerta de Stock Mínimo"
         },
         "table": {
             "component": "Componente",
             "sku": "SKU",
             "stock": "Stock",
-            "part": "Pieza",
             "price": "Precio"
         },
-        "low_stock": "Bajo stock",
-        "out_of_stock": "Sin stock",
         "delete_confirm": "¿Está seguro de archivar este componente?",
-        "empty": "Sin repuestos en inventario",
-        "empty_subtitle": "Agregue su primer repuesto para comenzar"
+        "empty": "Sin repuestos en inventario"
     },
     "expenses": {
         "title": "Registro de Gastos",
         "subtitle": "Control de egresos operativos",
         "new": "Nuevo gasto",
-        "edit": "Editar gasto",
         "save": "Guardar gasto",
         "fields": {
             "description": "Descripción del gasto",
             "category": "Categoría",
-            "amount": "Monto",
-            "date": "Fecha",
-            "payment_method": "Método de pago",
-            "notes": "Notas adicionales"
+            "amount": "Monto"
         },
         "categories": {
             "rent": "Alquiler",
@@ -325,21 +277,17 @@
         "table": {
             "description": "Descripción",
             "category": "Categoría",
-            "amount": "Monto",
-            "date": "Fecha",
-            "actions": "Acciones"
+            "amount": "Monto"
         },
         "delete_confirm": "¿Eliminar este gasto?",
         "empty": "No hay gastos registrados",
-        "empty_subtitle": "Registre su primer gasto para comenzar"
+        "empty_subtitle": "Registre su primer gasto para comenzar",
+        "search_placeholder": "Buscar por descripción o categoría..."
     },
     "users": {
-        "title": "Gestión de Personal",
         "subtitle": "Control de accesos y perfiles del taller",
         "new": "Nuevo miembro",
         "edit": "Editar perfil",
-        "save": "Guardar usuario",
-        "view_permissions": "Ver permisos",
         "center": "Centro de Operadores",
         "manage_roles": "Configurar Roles",
         "search_placeholder": "Buscar por nombre o identificador de operador...",
@@ -356,8 +304,7 @@
             "username": "Nombre de usuario",
             "password": "Contraseña",
             "new_password": "Nueva contraseña (Opcional)",
-            "role": "Rol asignado",
-            "status": "Estado"
+            "role": "Rol asignado"
         },
         "roles": {
             "admin": "Administrador",
@@ -367,65 +314,23 @@
         "status": {
             "active": "Habilitado",
             "inactive": "Suspendido",
-            "enabled": "Activo",
-            "disabled": "Inactivo",
             "synced": "Sincronizado",
             "no_access": "Sin Acceso"
         },
         "table": {
-            "member": "Miembro",
-            "role": "Rol",
             "status": "Estado",
-            "actions": "Acciones",
             "identity": "Identidad del Operador",
             "range": "Rango / Acceso"
         },
-        "delete_confirm": "Eliminar",
-        "empty": "No hay usuarios registrados"
+        "delete_confirm": "Eliminar"
     },
     "settings": {
         "title": "Configuración del Sistema",
         "subtitle": "Gestión de identidad, seguridad y respaldos",
-        "my_account": "Mi cuenta",
-        "save_profile": "Guardar perfil",
         "company": "Identidad corporativa",
-        "save_company": "Guardar empresa",
-        "language": "Idioma y localización",
-        "select_language": "Seleccionar idioma",
         "cloud": "Infraestructura Cloud",
-        "sync_cloud": "Sincronizar Cloud",
-        "database": "Base de datos",
-        "backup": "Respaldar datos",
         "restore": "Restaurar respaldo",
-        "danger_zone": "Zona de peligro",
         "factory_reset": "Restablecimiento de fábrica",
-        "factory_reset_desc": "Elimina todos los datos locales (clientes, servicios, piezas) y cierra la sesión.",
-        "delete_all": "Eliminar todo",
-        "clear_sync": "Limpiar caché de sincronización",
-        "clear_sync_desc": "Fuerza un re-escaneo completo de Firebase en el próximo inicio.",
-        "clear_cache": "Limpiar sincronización",
-        "firebase_guide": "Guía de configuración rápida",
-        "firebase_steps": {
-            "step1": "Cree un proyecto en",
-            "step2": "Habilite",
-            "step3": "Cree una",
-            "step4": "Copie los valores a los campos de arriba y guarde los cambios."
-        },
-        "restart_required": "Estos cambios requieren reiniciar la aplicación para que Firebase se inicialice con el nuevo ecosistema.",
-        "fields": {
-            "full_name": "Nombre completo",
-            "password": "Contraseña",
-            "business_name": "Nombre del negocio",
-            "legal_name": "Razón social",
-            "tax_id": "ID Fiscal / Cédula",
-            "address": "Dirección fiscal",
-            "phone": "Teléfono",
-            "email": "Correo electrónico",
-            "invoice_prefix": "Prefijo de factura",
-            "tax_rate": "Tasa de impuesto (%)",
-            "next_invoice": "Siguiente número de factura",
-            "inactivity_timeout": "Tiempo de inactividad (minutos)"
-        },
         "tabs": {
             "profile": "Mi Perfil",
             "organization": "Organización",
@@ -490,11 +395,6 @@
         "empty_title": "Memoria Purificada",
         "filters": {
             "all": "Todo",
-            "orders": "Servicios",
-            "clients": "Clientes",
-            "users": "Usuarios",
-            "inventory": "Inventario",
-            "expenses": "Gastos",
             "all_system": "Todo el Sistema",
             "workshop_orders": "Servicios de Taller",
             "client_portfolio": "Cartera de Clientes",
@@ -506,19 +406,6 @@
         "empty_subtitle": "Las acciones del sistema aparecerán aquí"
     },
     "roles": {
-        "title": "Roles y Permisos",
-        "subtitle": "Configuración de accesos por perfil",
-        "permissions": {
-            "manage_orders": "Gestionar servicios",
-            "manage_clients": "Gestionar clientes",
-            "manage_inventory": "Gestionar inventario",
-            "manage_users": "Gestionar personal",
-            "view_reports": "Ver reportes",
-            "manage_expenses": "Gestionar gastos",
-            "manage_settings": "Gestionar ajustes"
-        },
-        "save": "Guardar configuración de roles",
-        "reset": "Restaurar por defecto",
         "access_protocols": "Protocolos de Acceso",
         "access_subtitle": "Configuración granular de permisos y jerarquías de seguridad para el personal técnico.",
         "intel_biz": "Inteligencia de Negocio",
@@ -546,11 +433,7 @@
     },
     "reports": {
         "title": "Centro de Reportes",
-        "subtitle": "Análisis y métricas de negocio",
-        "period": "Periodo",
         "generate": "Generar reporte",
-        "export_pdf": "Exportar PDF",
-        "export_excel": "Exportar Excel",
         "compiling_stats": "Compilando Estadísticas...",
         "intelligence_title": "Inteligencia de Negocio",
         "intelligence_subtitle": "Análisis avanzado de rentabilidad, rendimiento técnico y crecimiento.",
@@ -608,14 +491,8 @@
         }
     },
     "login": {
-        "title": "Iniciar Sesión",
-        "subtitle": "Usa tu cuenta de ShoroRepair para continuar",
         "username": "Usuario",
         "username_placeholder": "Ingresa tu usuario...",
-        "password": "Contraseña",
-        "password_placeholder": "••••••••",
-        "next": "Siguiente",
-        "google_signin": "Conectar con Google",
         "google_cloud_signin": "Conectar con Google Cloud",
         "operator_id": "Nombre de usuario",
         "security_signature": "Contraseña",
@@ -629,11 +506,9 @@
         "google_success": "Identidad Google Sincronizada",
         "google_error": "Fallo de asociación o cuenta no vinculada",
         "google_protocol_error": "Fallo en protocolo Google Auth",
-        "critical_conn_error": "Fallo Crítico de Conexión",
-        "footer": "© 2026 ShoroRepair Systems • Privacidad y Términos • © 2026 Shoropio Corporation"
+        "critical_conn_error": "Fallo Crítico de Conexión"
     },
     "messages": {
-        "success": "Operación exitosa",
         "error": "Ha ocurrido un error",
         "saved": "Guardado correctamente",
         "deleted": "Eliminado correctamente",
@@ -643,12 +518,12 @@
         "printing_queue": "Enviando a cola de impresión...",
         "printing_failed": "Fallo técnico en impresión",
         "confirm_delete": "¿Está seguro de eliminar este elemento?",
-        "no_data": "Sin datos disponibles",
-        "loading": "Cargando..."
+        "loading": "Cargando...",
+        "notifications_enabled": "Notificaciones habilitadas correctamente",
+        "notifications_blocked": "Notificaciones bloqueadas por el navegador",
+        "notifications_active": "Las notificaciones ya están activas"
     },
     "ai": {
-        "title": "Herramienta de Diagnóstico IA",
-        "subtitle": "Análisis asistido por inteligencia artificial",
         "assistant_title": "ShoroAI Asistente Técnico",
         "assistant_subtitle": "Motor de diagnóstico inteligente basado en Google Gemini para optimización técnica.",
         "analysis_input": "Entrada de Análisis",
@@ -667,14 +542,7 @@
         "model_pro": "Pro (Preciso)",
         "results_panel": "Panel de Resultados",
         "start_diagnostic_desc": "Inicia un diagnóstico para ver la inteligencia aplicada",
-        "source": "Origen de datos",
-        "link_order": "Vincular a orden",
-        "custom_description": "Descripción personalizada",
-        "analyze": "Analizar con Gemini",
-        "result_title": "Reporte de Diagnóstico IA",
-        "save_to_order": "Guardar en orden",
-        "copy": "Copiar",
-        "disclaimer": "Los resultados son sugerencias. Por favor verifique físicamente."
+        "analyze": "Analizar con Gemini"
     },
     "setup": {
         "title_step1": "Iniciando Protocolo",

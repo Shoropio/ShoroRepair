@@ -15,7 +15,7 @@ initializeData().then(() => {
   root.render(
     <React.StrictMode>
       <AuthProvider>
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" richColors closeButton />
         <App />
       </AuthProvider>
     </React.StrictMode>

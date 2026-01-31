@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
@@ -18,7 +18,7 @@ import {
     Search,
     Filter
 } from 'lucide-react';
-import { Card, Badge, Button } from '../components';
+import { Card, Badge, Button, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 
@@ -26,16 +26,24 @@ const ActivityPage: React.FC = () => {
     const { t } = useTranslation();
     const { hasPermission } = usePermissions();
     const [filter, setFilter] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
 
     const activities = useLiveQuery(async () => {
         let query = db.activity_logs.orderBy('timestamp').reverse();
 
         if (filter !== 'all') {
-            return await query.filter(a => a.entity === filter).limit(100).toArray();
+            return await query.filter(a => a.entity === filter).limit(500).toArray();
         }
 
-        return await query.limit(100).toArray();
+        return await query.limit(500).toArray();
     }, [filter]);
+
+    const paginatedActivities = useMemo(() => {
+        if (!activities) return [];
+        const from = (currentPage - 1) * itemsPerPage;
+        return activities.slice(from, from + itemsPerPage);
+    }, [activities, currentPage]);
 
     if (!hasPermission('canViewReports')) return <Navigate to="/" replace />;
 
@@ -108,7 +116,7 @@ const ActivityPage: React.FC = () => {
                     return (
                         <button
                             key={f.id}
-                            onClick={() => setFilter(f.id)}
+                            onClick={() => { setFilter(f.id); setCurrentPage(1); }}
                             className={`px-6 py-3.5 rounded-none text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/5 flex items-center gap-2 border-2 ${filter === f.id ? 'bg-[#1a73e8] text-white border-transparent' : 'bg-white dark:bg-[#1a1c1e] text-[#5f6368] border-transparent hover:border-blue-100'}`}
                         >
                             <Icon size={14} />
@@ -127,7 +135,7 @@ const ActivityPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-50 dark:divide-white/5">
-                        {activities.map((activity) => (
+                        {paginatedActivities.map((activity) => (
                             <div key={activity.id} className="p-8 hover:bg-blue-50/20 transition-all flex items-start gap-8 group">
                                 <div className={`w-14 h-14 rounded-none flex items-center justify-center border-2 shrink-0 transition-transform group-hover:scale-105 ${getActionColor(activity.action)}`}>
                                     {getActionIcon(activity.action)}
@@ -167,6 +175,14 @@ const ActivityPage: React.FC = () => {
                     </div>
                 )}
             </Card>
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil((activities?.length || 0) / itemsPerPage)}
+                onPageChange={setCurrentPage}
+                totalItems={activities?.length || 0}
+                itemsPerPage={itemsPerPage}
+            />
         </div>
     );
 };

@@ -25,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { generateInvoice } from '../utils/print/invoiceUtils';
-import { TableSkeleton, Button, Input, Card, Badge, Modal, Select } from '../components';
+import { TableSkeleton, Button, Input, Card, Badge, Modal, Select, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 
@@ -34,6 +34,8 @@ const Invoices: React.FC = () => {
 	const { hasPermission } = usePermissions();
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState('all');
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 15;
 
 	const invoices = useLiveQuery(async () => {
 		const orders = await db.orders
@@ -50,6 +52,12 @@ const Invoices: React.FC = () => {
 			return matchesSearch && matchesStatus;
 		});
 	}, [search, statusFilter]);
+
+	const paginatedInvoices = useMemo(() => {
+		if (!invoices) return [];
+		const from = (currentPage - 1) * itemsPerPage;
+		return invoices.slice(from, from + itemsPerPage);
+	}, [invoices, currentPage]);
 
 	const stats = useMemo(() => {
 		if (!invoices) return { total: 0, revenue: 0, pending: 0 };
@@ -117,7 +125,7 @@ const Invoices: React.FC = () => {
 						type="text"
 						placeholder={t('invoices.search_placeholder')}
 						value={search}
-						onChange={(e) => setSearch(e.target.value)}
+						onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
 						className="w-full pl-14 pr-6 py-4 bg-white dark:bg-[#1a1c1e] rounded-none outline-none border-2 border-transparent focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
 					/>
 				</div>
@@ -149,7 +157,7 @@ const Invoices: React.FC = () => {
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
-							{invoices.map(invoice => {
+							{paginatedInvoices.map(invoice => {
 								const client = clients?.find(c => c.id === invoice.clientId);
 								return (
 									<tr key={invoice.id} className="hover:bg-blue-50/30 transition-colors group">
@@ -200,7 +208,15 @@ const Invoices: React.FC = () => {
 					</div>
 				)}
 			</div>
-		</div>
+
+			<Pagination
+				currentPage={currentPage}
+				totalPages={Math.ceil((invoices?.length || 0) / itemsPerPage)}
+				onPageChange={setCurrentPage}
+				totalItems={invoices?.length || 0}
+				itemsPerPage={itemsPerPage}
+			/>
+		</div >
 	);
 };
 

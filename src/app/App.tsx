@@ -59,6 +59,7 @@ const AppContent: React.FC = () => {
     if (saved !== null) return saved === 'true';
     return window.innerWidth > 1024;
   });
+
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('theme');
     if (saved !== null) return saved === 'dark';
@@ -85,11 +86,9 @@ const AppContent: React.FC = () => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
-      console.log("Dark mode active");
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-      console.log("Light mode active");
     }
   }, [darkMode]);
 
@@ -100,7 +99,6 @@ const AppContent: React.FC = () => {
       document.documentElement.style.setProperty('--color-brand-500', accent);
     }
 
-    // Load saved language
     const loadLang = async () => {
       const settings = await db.settings.toArray();
       if (settings[0]?.language) {
@@ -110,18 +108,15 @@ const AppContent: React.FC = () => {
     loadLang();
   }, []);
 
-  // Check for initial setup
   useEffect(() => {
     const checkSetup = async () => {
       const userCount = await db.users.count();
       if (userCount === 0) {
         if (location.pathname !== '/setup') {
-          console.log("Redirecting to Setup (No users found)");
           navigate('/setup');
         }
       } else {
         if (location.pathname === '/setup') {
-          console.log("Setup blocked (Users exist)");
           navigate('/login');
         }
       }
@@ -142,7 +137,6 @@ const AppContent: React.FC = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/setup" element={<SetupPage />} />
-        {/* If we are at /setup, don't redirect to login immediately, let the useEffect handle it */}
         <Route path="*" element={location.pathname === '/setup' ? null : <Navigate to="/login" replace />} />
       </Routes>
     );
@@ -151,16 +145,17 @@ const AppContent: React.FC = () => {
   if (user && location.pathname === '/login') return <Navigate to="/" replace />;
 
   const NavItem: React.FC<{ to: string, icon: any, label: string, roles?: string[] }> = ({ to, icon: Icon, label, roles }) => {
-    const { user } = useAuth();
-    const location = useLocation();
     const isActive = location.pathname === to;
-
     if (roles && user && !roles.includes(user.role)) return null;
 
     return (
       <Link
         to={to}
-        onClick={() => setSidebarOpen(false)}
+        onClick={() => {
+          if (window.innerWidth < 1024) {
+            setSidebarOpen(false);
+          }
+        }}
         className={`
         flex items-center gap-3 px-4 py-2.5 rounded-none transition-all duration-200 group
         ${isActive
@@ -182,8 +177,6 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full bg-white dark:bg-[#1a1c1e] overflow-hidden">
-
-      {/* Google Style Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#1a1c1e] border-r border-[#f1f3f4] dark:border-[#3c4043]
         transition-all duration-300 ease-[cubic-bezier(0.4, 0, 0.2, 1)]
@@ -191,7 +184,6 @@ const AppContent: React.FC = () => {
         ${sidebarOpen ? 'translate-x-0 w-64 border-r' : '-translate-x-full w-0 border-none lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo Section */}
           <div className="h-16 flex items-center px-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-none bg-gradient-to-br from-[#1a73e8] to-[#1557b0] flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -204,7 +196,6 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto scrollbar-hide">
             <NavItem to="/" label={t('nav.dashboard')} icon={LayoutDashboard} />
             <NavItem to="/orders" label={t('nav.orders')} icon={ClipboardList} />
@@ -224,7 +215,6 @@ const AppContent: React.FC = () => {
             <NavItem to="/settings" label={t('nav.settings')} icon={SettingsIcon} roles={['Admin']} />
           </nav>
 
-          {/* Footer Navigation (User) */}
           <div className="p-4 mx-4 mb-4 rounded-none bg-[#f8f9fa] dark:bg-[#2d2f31]">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-none bg-[#1a73e8] flex items-center justify-center text-white font-semibold text-xs shadow-md">
@@ -242,9 +232,7 @@ const AppContent: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Top bar */}
         <header className="h-16 flex items-center justify-between px-6 border-b border-[#f1f3f4] dark:border-[#3c4043]">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-[#5f6368] dark:text-[#9aa0a6] hover:bg-[#f1f3f4] dark:hover:bg-white/5 rounded-none transition-all">
@@ -311,7 +299,6 @@ const AppContent: React.FC = () => {
           </div>
         </header>
 
-        {/* Content View */}
         <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1a1c1e] p-6 lg:p-8">
           <div className="max-w-7xl mx-auto page-transition">
             <Routes>

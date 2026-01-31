@@ -44,6 +44,7 @@ typings/
 # Vite / IDE
 .vite
 .vscode/
+.vs/
 .idea/
 *.suo
 *.ntvs*

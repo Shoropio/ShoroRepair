@@ -22,7 +22,7 @@ import {
   Hash
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Input, Card, Modal, Badge, TableSkeleton } from '../components';
+import { Button, Input, Card, Modal, Badge, TableSkeleton, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 
 const Clients: React.FC = () => {
@@ -32,6 +32,8 @@ const Clients: React.FC = () => {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -57,6 +59,12 @@ const Clients: React.FC = () => {
       withOrders: clients.length // Simplified for now
     };
   }, [clients]);
+
+  const paginatedClients = useMemo(() => {
+    if (!clients) return [];
+    const from = (currentPage - 1) * itemsPerPage;
+    return clients.slice(from, from + itemsPerPage);
+  }, [clients, currentPage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +198,7 @@ const Clients: React.FC = () => {
           type="text"
           placeholder={t('clients.search_placeholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
           className="w-full pl-12 pr-6 py-3.5 bg-white dark:bg-[#1a1c1e] border-2 border-transparent rounded-none outline-none focus:bg-white dark:focus:bg-[#1a1c1e] focus:border-[#1a73e8]/20 shadow-xl shadow-black/5 transition-all text-sm font-medium"
         />
       </div>
@@ -203,42 +211,44 @@ const Clients: React.FC = () => {
           <p className="text-xs text-[#5f6368] dark:text-[#9aa0a6] mt-2">{t('clients.empty_subtitle')}</p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clients.map(client => (
-            <Card key={client.id} className="p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group rounded-none border border-[#f1f3f4] dark:border-white/5 relative bg-white dark:bg-[#202124]">
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-[#1a73e8] rounded-none flex items-center justify-center font-black text-xs">
-                  {client.name.charAt(0).toUpperCase()}
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedClients.map(client => (
+              <Card key={client.id} className="p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group rounded-none border border-[#f1f3f4] dark:border-white/5 relative bg-white dark:bg-[#202124]">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-[#1a73e8] rounded-none flex items-center justify-center font-black text-xs">
+                    {client.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEdit(client)} className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-none hover:bg-blue-100 transition-colors"><Edit2 size={14} /></button>
+                    <button onClick={() => handleDelete(client.id!)} className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-none hover:bg-red-100 transition-colors"><Trash2 size={14} /></button>
+                  </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEdit(client)} className="p-2 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-none hover:bg-blue-100 transition-colors"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(client.id!)} className="p-2 bg-red-50 dark:bg-red-900/30 text-red-600 rounded-none hover:bg-red-100 transition-colors"><Trash2 size={14} /></button>
-                </div>
-              </div>
 
-              <div className="space-y-1 mb-6">
-                <h3 className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate">{client.name}</h3>
-                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{client.taxId || t('common.none')}</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                  <Phone size={14} className="text-[#1a73e8]" />
-                  <span className="font-bold">{client.phone}</span>
+                <div className="space-y-1 mb-6">
+                  <h3 className="text-sm font-bold text-[#202124] dark:text-white uppercase tracking-tight truncate">{client.name}</h3>
+                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{client.taxId || t('common.none')}</p>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                  <Mail size={14} className="text-[#1a73e8]" />
-                  <span className="truncate">{client.email || t('common.none')}</span>
-                </div>
-              </div>
 
-              <div className="mt-6 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
-                <button className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#1a73e8] hover:translate-x-1 transition-transform">
-                  {t('clients.history_btn')} <ChevronRight size={14} />
-                </button>
-              </div>
-            </Card>
-          ))}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                    <Phone size={14} className="text-[#1a73e8]" />
+                    <span className="font-bold">{client.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                    <Mail size={14} className="text-[#1a73e8]" />
+                    <span className="truncate">{client.email || t('common.none')}</span>
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-[#f1f3f4] dark:border-white/5">
+                  <button className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#1a73e8] hover:translate-x-1 transition-transform">
+                    {t('clients.history_btn')} <ChevronRight size={14} />
+                  </button>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       ) : (
         <Card className="rounded-none overflow-hidden border-[#f1f3f4] dark:border-white/5 shadow-2xl shadow-black/5 bg-white dark:bg-[#1a1c1e]">
@@ -253,7 +263,7 @@ const Clients: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f3f4] dark:divide-white/5">
-                {clients.map(client => (
+                {paginatedClients.map(client => (
                   <tr key={client.id} className="hover:bg-blue-50/20 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="font-bold uppercase text-xs">{client.name}</div>
@@ -279,6 +289,14 @@ const Clients: React.FC = () => {
           </div>
         </Card>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={Math.ceil((clients?.length || 0) / itemsPerPage)}
+        onPageChange={setCurrentPage}
+        totalItems={clients?.length || 0}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* Client Modal */}
       <Modal

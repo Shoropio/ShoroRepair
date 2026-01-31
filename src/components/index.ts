@@ -13,4 +13,5 @@ export {
 export { default as TableSkeleton } from './ui/TableSkeleton';
 export { default as Modal } from './ui/Modal';
 export { default as Select } from './ui/Select';
+export { default as Pagination } from './ui/Pagination';
 export { default as SyncStatusIndicator } from './shared/SyncStatusIndicator';
