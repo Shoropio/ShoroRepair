@@ -66,9 +66,14 @@ const AIDiagnostic: React.FC = () => {
 
             const content = result.text || "";
             setResult(content);
-            toast.success(t('ai.diagnostic_completed') || "AI Diagnostic Completed");
+            toast.success(t('ai.diagnostic_completed'));
         } catch (err: any) {
-            toast.error(`${t('messages.error')}: ${err.message}`);
+            console.error('AI Error:', err);
+            if (err.message?.includes('quota') || err.message?.includes('429')) {
+                toast.error(t('ai.quota_exceeded_error'));
+            } else {
+                toast.error(t('ai.generic_error'));
+            }
         } finally {
             setIsLoading(false);
         }

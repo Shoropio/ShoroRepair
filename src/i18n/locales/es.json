@@ -542,7 +542,10 @@
         "model_pro": "Pro (Preciso)",
         "results_panel": "Panel de Resultados",
         "start_diagnostic_desc": "Inicia un diagnóstico para ver la inteligencia aplicada",
-        "analyze": "Analizar con Gemini"
+        "analyze": "Analizar con Gemini",
+        "diagnostic_completed": "Diagnóstico IA Completado",
+        "quota_exceeded_error": "Límite de cuota excedido. Por favor, intenta de nuevo más tarde o verifica tu plan en Google AI Studio.",
+        "generic_error": "Error al conectar con el servicio de IA. Verifica tu conexión a internet y tu API Key."
     },
     "setup": {
         "title_step1": "Iniciando Protocolo",
