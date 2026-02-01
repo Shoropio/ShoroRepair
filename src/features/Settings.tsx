@@ -31,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { db } from '../offline/db';
 import { CompanySettings, AppUser } from '../types';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { Button, Input, Card, Modal, Badge, Select } from '../components';
 import {

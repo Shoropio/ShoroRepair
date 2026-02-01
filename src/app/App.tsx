@@ -44,7 +44,7 @@ import RolesPage from '../features/Roles';
 import AIDiagnostic from '../features/AIDiagnostic';
 import Login from '../features/Login';
 import SetupPage from '../features/Setup';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { SyncStatusIndicator } from '../components';
 import { useTranslation } from 'react-i18next';

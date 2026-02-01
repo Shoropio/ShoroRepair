@@ -20,17 +20,17 @@ import {
     Lightbulb
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { Button, Input, Card, Badge } from '../components';
 
 const AI_MODELS = [
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Veloz)' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro (Preciso)' }
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Veloz)' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Preciso)' }
 ];
 
 const AIDiagnostic: React.FC = () => {
     const { t } = useTranslation();
-    const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+    const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash');
     const [searchQuery, setSearchQuery] = useState('');
     const [customPrompt, setCustomPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -53,16 +53,18 @@ const AIDiagnostic: React.FC = () => {
 
         setIsLoading(true);
         try {
-            const genAI = new GoogleGenerativeAI(settings.geminiApiKey);
-            const model = genAI.getGenerativeModel({ model: selectedModel });
+            const genAI = new GoogleGenAI({ apiKey: settings.geminiApiKey });
 
             const prompt = order
                 ? `${t('orders.diagnosis_ai_instruction', { brand: order.brand, model: order.model, issue: order.issueDescription })}`
                 : customPrompt;
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const content = response.text();
+            const result = await genAI.models.generateContent({
+                model: selectedModel,
+                contents: prompt
+            });
+
+            const content = result.text || "";
             setResult(content);
             toast.success(t('ai.diagnostic_completed') || "AI Diagnostic Completed");
         } catch (err: any) {
@@ -92,7 +94,7 @@ const AIDiagnostic: React.FC = () => {
                             onClick={() => setSelectedModel(m.id)}
                             className={`px-4 lg:px-6 py-2 rounded-none text-[10px] font-black uppercase tracking-widest transition-all ${selectedModel === m.id ? 'bg-white dark:bg-[#1a1c1e] text-purple-600 shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                         >
-                            {m.id === 'gemini-1.5-flash' ? t('ai.model_flash') : t('ai.model_pro')}
+                            {m.id.includes('flash') ? t('ai.model_flash') : t('ai.model_pro')}
                         </button>
                     ))}
                 </div>

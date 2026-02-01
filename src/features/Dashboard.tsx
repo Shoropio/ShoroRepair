@@ -22,7 +22,7 @@ import {
 import { formatCurrency } from '../utils/format/formatUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, Badge, Button } from '../components';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { useTranslation } from 'react-i18next';
 

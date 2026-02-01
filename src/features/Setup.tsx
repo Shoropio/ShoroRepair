@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Card, Input, Button } from '../components';
 import { db } from '../offline/db';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { syncManager } from '../offline/sync';
 
