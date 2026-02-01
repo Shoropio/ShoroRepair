@@ -151,11 +151,6 @@ const AppContent: React.FC = () => {
     return (
       <Link
         to={to}
-        onClick={() => {
-          if (window.innerWidth < 1024) {
-            setSidebarOpen(false);
-          }
-        }}
         className={`
         flex items-center gap-3 px-4 py-2.5 rounded-none transition-all duration-200 group
         ${isActive

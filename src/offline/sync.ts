@@ -99,17 +99,49 @@ export class SyncManager {
 
         console.log('Starting sync...');
 
+        const startTime = Date.now();
+
         try {
             const userId = auth.currentUser.uid;
+
+            // Log sync start
+            await db.activity_logs.add({
+                userName: auth.currentUser.email || 'Sistema',
+                action: 'Sincronización Iniciada',
+                entity: 'sync',
+                details: `Sincronizando con Firebase (Usuario: ${auth.currentUser.email})`,
+                timestamp: startTime
+            });
 
             for (const tableInfo of TABLES_TO_SYNC) {
                 await this.syncTable(tableInfo.name, tableInfo.firestore, userId);
             }
 
             console.log('Sync completed successfully.');
+
+            // Log sync completion
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            await db.activity_logs.add({
+                userName: auth.currentUser.email || 'Sistema',
+                action: 'Sincronización Completada',
+                entity: 'sync',
+                details: `Sincronización exitosa en ${duration}s`,
+                timestamp: Date.now()
+            });
+
             this.updateStatus('idle');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Sync failed:', error);
+
+            // Log sync error
+            await db.activity_logs.add({
+                userName: auth.currentUser?.email || 'Sistema',
+                action: 'Error de Sincronización',
+                entity: 'sync',
+                details: `Error: ${error.message || 'Error desconocido'}`,
+                timestamp: Date.now()
+            });
+
             this.updateStatus('error');
         }
     }
@@ -136,53 +168,9 @@ export class SyncManager {
             // PUSH ALWAYS: Updload local version to Firebase as truth
             const { id, ...dataToPush } = item;
 
-            // --- SYNC BINARY ASSETS TO FIREBASE STORAGE ---
-            if (dexieTablename === 'orders') {
-                const orderData = dataToPush as any;
-
-                // 1. Upload Photos (Base64 -> Cloud URL)
-                if (orderData.photos && orderData.photos.length > 0) {
-                    const photoUrls = [];
-                    for (let i = 0; i < orderData.photos.length; i++) {
-                        const photo = orderData.photos[i];
-                        if (photo.startsWith('data:')) {
-                            const path = `users/${userId}/orders/${item.syncId}/photo_${i}.jpg`;
-                            try {
-                                const { uploadImage } = await import('../services/upload.service');
-                                const url = await uploadImage(photo, path);
-                                photoUrls.push(url);
-                            } catch (e) {
-                                console.error("Error uploading photo to storage", e);
-                                photoUrls.push(photo); // fallback to base64 if upload fails
-                            }
-                        } else {
-                            photoUrls.push(photo);
-                        }
-                    }
-                    orderData.photos = photoUrls;
-                }
-
-                // 2. Upload Signature
-                if (orderData.customerSignature && orderData.customerSignature.startsWith('data:')) {
-                    const path = `users/${userId}/orders/${item.syncId}/signature.png`;
-                    try {
-                        const { uploadImage } = await import('../services/upload.service');
-                        orderData.customerSignature = await uploadImage(orderData.customerSignature, path);
-                    } catch (e) {
-                        console.error("Error uploading signature to storage", e);
-                    }
-                }
-            }
-
             await setDoc(docRef, { ...dataToPush, synced: 1 });
-            // Update local record with synced flag and potential cloud URLs
-            await table.update(item.id, {
-                ...(dexieTablename === 'orders' ? {
-                    photos: (dataToPush as any).photos,
-                    customerSignature: (dataToPush as any).customerSignature
-                } : {}),
-                synced: 1
-            });
+            // Update local record with synced flag
+            await table.update(item.id, { synced: 1 });
         }
 
         // 2. Pull changes from Firebase (Incremental)

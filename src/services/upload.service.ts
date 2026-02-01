@@ -33,7 +33,7 @@ export const uploadImage = async (file: File | Blob | string, path: string = '')
 /**
  * Uploads a generic file (converted to Base64)
  */
-export const uploadFile = async (data: Blob | File, path: string): Promise<string> => {
+export const uploadFile = async (data: Blob | File | string, path: string): Promise<string> => {
     return uploadImage(data, path);
 };
 
@@ -89,7 +89,6 @@ export const compressImage = (file: File, maxDim = 1200, quality = 0.7): Promise
  * Lists files (Stub for compatibility)
  */
 export const listFiles = async (path: string) => {
-    // console.warn("listFiles is not implemented for generic HTTP server.");
     return [];
 };
 
@@ -103,10 +102,9 @@ export const getFileByUrl = async (url: string) => {
 };
 
 /**
- * Compatibility stub for Firebase getDownloadURL
+ * Compatibility stub for getDownloadURL
  */
 export const getDownloadURL = async (item: any): Promise<string> => {
-    // If item is string, return it. If object, return item.url or similar
     if (typeof item === 'string') return item;
     return item.url || item.path || '';
 };

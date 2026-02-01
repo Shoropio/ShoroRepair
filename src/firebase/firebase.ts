@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
 import { db } from '../offline/db';
 
@@ -8,23 +8,23 @@ const getFirebaseConfig = async () => {
     if (settings.length > 0 && settings[0]) {
       const s = settings[0];
       if (s.firebaseApiKey && s.firebaseProjectId) {
-        console.log("Using Firebase Config from DB Settings");
+        console.log("System: Using Firebase Config from DB Settings");
         return {
           apiKey: s.firebaseApiKey,
-          authDomain: `${s.firebaseProjectId}.firebaseapp.com`,
+          authDomain: s.firebaseAuthDomain || `${s.firebaseProjectId}.firebaseapp.com`,
           projectId: s.firebaseProjectId,
-          storageBucket: `${s.firebaseProjectId}.appspot.com` || `${s.firebaseProjectId}.firebasestorage.app`,
-          messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-          appId: import.meta.env.VITE_FIREBASE_APP_ID,
-          measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+          storageBucket: s.firebaseStorageBucket || `${s.firebaseProjectId}.firebasestorage.app`,
+          messagingSenderId: s.firebaseMessagingSenderId || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+          appId: s.firebaseAppId || import.meta.env.VITE_FIREBASE_APP_ID,
+          measurementId: s.firebaseMeasurementId || import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
         };
       }
     }
   } catch (e) {
-    console.warn("Failed to load settings from DB, falling back to env:", e);
+    console.warn("System: Failed to load settings from DB, falling back to env:", e);
   }
 
-  console.log("Using Firebase Config from Environment Variables");
+  console.log("System: Using Firebase Config from Environment Variables");
   return {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -36,26 +36,41 @@ const getFirebaseConfig = async () => {
   };
 };
 
-const firebaseConfig = await getFirebaseConfig();
-console.log('Initializing Firebase with Project ID:', firebaseConfig.projectId);
+// Initialize Firebase only if we have an API key
+let app: any = null;
+let analytics: any = null;
 
-let app: any;
-let analytics: any;
+const initFirebase = async () => {
+  const firebaseConfig = await getFirebaseConfig();
 
-try {
   if (!firebaseConfig.apiKey) {
-    console.warn("No Firebase API Key found. Firebase services will be disabled.");
-  } else {
-    app = initializeApp(firebaseConfig);
-    try {
-      analytics = getAnalytics(app);
-    } catch (e) {
-      console.warn("Firebase Analytics failed to initialize", e);
-    }
+    console.warn("System: No Firebase API Key found. Cloud services will remain disabled.");
+    return { app: null, analytics: null };
   }
-} catch (error) {
-  console.warn("Firebase initialization failed:", error);
-}
+
+  try {
+    // Prevent double initialization
+    const existingApp = getApps().length > 0 ? getApps()[0] : null;
+    const initializedApp = existingApp || initializeApp(firebaseConfig);
+
+    let initializedAnalytics = null;
+    try {
+      initializedAnalytics = getAnalytics(initializedApp);
+    } catch (e) {
+      // Analytics may fail in some environments
+    }
+
+    return { app: initializedApp, analytics: initializedAnalytics };
+  } catch (error) {
+    console.error("System: Firebase initialization failed:", error);
+    return { app: null, analytics: null };
+  }
+};
+
+// Start initialization
+const result = await initFirebase();
+app = result.app;
+analytics = result.analytics;
 
 export { app, analytics };
 export default app;

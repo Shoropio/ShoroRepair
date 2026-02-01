@@ -70,7 +70,8 @@ const ActivityPage: React.FC = () => {
             user: 'purple',
             inventory: 'amber',
             expense: 'red',
-            settings: 'slate'
+            settings: 'slate',
+            sync: 'blue'
         };
         return colors[entity] || 'slate';
     };
@@ -106,6 +107,7 @@ const ActivityPage: React.FC = () => {
             <div className="flex flex-wrap gap-3">
                 {[
                     { id: 'all', label: t('activity.filters.all_system'), icon: History },
+                    { id: 'sync', label: 'Sincronización Firebase', icon: RefreshCw },
                     { id: 'order', label: t('activity.filters.workshop_orders'), icon: Cpu },
                     { id: 'client', label: t('activity.filters.client_portfolio'), icon: User },
                     { id: 'user', label: t('activity.filters.staff_control'), icon: ShieldCheck },
