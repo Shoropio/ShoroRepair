@@ -25,8 +25,8 @@
 
 @layer base {
   html {
-    font-size: 14.5px;
-    /* De-zoom factor */
+    font-size: 13px;
+    /* Optimized base size for better density */
   }
 
   body {
