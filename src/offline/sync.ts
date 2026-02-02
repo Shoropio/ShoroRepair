@@ -65,15 +65,10 @@ export class SyncManager {
     public async startSync() {
         if (this.syncInterval) return;
 
-        // Initial sync
+        // Initial sync on login
         this.sync();
 
-        // Set up periodic sync every 5 minutes
-        this.syncInterval = setInterval(() => {
-            this.sync();
-        }, 5 * 60 * 1000);
-
-        // Also sync when coming back online
+        // Sync when coming back online
         window.addEventListener('online', () => this.sync());
     }
 
@@ -81,6 +76,14 @@ export class SyncManager {
         if (this.syncInterval) {
             clearInterval(this.syncInterval);
             this.syncInterval = null;
+        }
+    }
+
+    // New method to trigger sync on data changes
+    public async syncOnChange() {
+        // Debounce: only sync if not already syncing
+        if (this.status !== 'syncing') {
+            await this.sync();
         }
     }
 

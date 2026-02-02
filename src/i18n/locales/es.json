@@ -44,7 +44,8 @@
         "showing": "Mostrando",
         "of": "de",
         "results": "resultados",
-        "page": "Página"
+        "page": "Página",
+        "error": "Error"
     },
     "nav": {
         "dashboard": "Panel de control",

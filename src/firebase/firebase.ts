@@ -53,11 +53,15 @@ const initFirebase = async () => {
     const existingApp = getApps().length > 0 ? getApps()[0] : null;
     const initializedApp = existingApp || initializeApp(firebaseConfig);
 
+    // Initialize Analytics with error handling
     let initializedAnalytics = null;
-    try {
-      initializedAnalytics = getAnalytics(initializedApp);
-    } catch (e) {
-      // Analytics may fail in some environments
+    if (firebaseConfig.measurementId && typeof window !== 'undefined') {
+      try {
+        initializedAnalytics = getAnalytics(initializedApp);
+        console.log("System: Google Analytics initialized successfully");
+      } catch (e: any) {
+        console.warn("System: Analytics initialization failed (this is normal in development):", e.message);
+      }
     }
 
     return { app: initializedApp, analytics: initializedAnalytics };

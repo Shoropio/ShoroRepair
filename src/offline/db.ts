@@ -44,6 +44,13 @@ export class RepairDB extends Dexie {
         obj.updatedAt = obj.updatedAt || Date.now();
         if (obj.synced === undefined) obj.synced = 0;
         obj.deleted = obj.deleted === undefined ? 0 : obj.deleted;
+
+        // Trigger sync after creation
+        setTimeout(() => {
+          import('./sync').then(({ syncManager }) => {
+            syncManager.syncOnChange();
+          });
+        }, 1000);
       });
 
       table.hook('updating', (mods: any, primKey, obj, transaction) => {
@@ -59,7 +66,23 @@ export class RepairDB extends Dexie {
           updates.synced = 0;
         }
 
+        // Trigger sync after update
+        setTimeout(() => {
+          import('./sync').then(({ syncManager }) => {
+            syncManager.syncOnChange();
+          });
+        }, 1000);
+
         return { ...mods, ...updates };
+      });
+
+      table.hook('deleting', (primKey, obj) => {
+        // Trigger sync after deletion
+        setTimeout(() => {
+          import('./sync').then(({ syncManager }) => {
+            syncManager.syncOnChange();
+          });
+        }, 1000);
       });
     });
   }

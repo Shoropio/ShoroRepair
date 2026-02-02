@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl">
             <Badge variant="brand" className="bg-white/20 text-white border-none backdrop-blur-md px-4 py-1">
-              ShoroRepair OS v2.4
+              ShoroRepair v2.4
             </Badge>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
               {t('dashboard.welcome')}, <span className="text-blue-100">{user?.fullName.split(' ')[0]}!</span>
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
                 </Button>
               </Link>
               <Link to="/ai-diagnostic">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 backdrop-blur-md px-8 py-4 rounded-none font-bold" leftIcon={<Sparkles size={20} />}>
+                <Button variant="primary" className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 border-none px-10 py-5 rounded-none shadow-2xl shadow-purple-500/30 font-black uppercase tracking-widest text-[11px] transform transition-all hover:scale-105" leftIcon={<Sparkles size={20} />}>
                   {t('dashboard.ai_assist')}
                 </Button>
               </Link>
