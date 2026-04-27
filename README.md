@@ -54,7 +54,29 @@ cd shororepair
 npm install
 ```
 
-### 2. Desarrollo Web (Local)
+### 2. Configuración de entorno
+
+El archivo `.env` contiene credenciales locales y no debe subirse al repositorio. Usa `.env.example` como plantilla:
+
+```bash
+cp .env.example .env
+```
+
+Completa `.env` con la configuración de Firebase Web SDK de tu proyecto:
+
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
+```
+
+Después de cambiar `.env`, reinicia el servidor de desarrollo para que Vite cargue las variables.
+
+### 3. Desarrollo Web (Local)
 
 Para iniciar el servidor de desarrollo en el navegador:
 
@@ -64,7 +86,7 @@ npm run dev
 
 Accede a `http://localhost:3000`. El sistema detectará que es una instalación nueva y lanzará el **Setup Wizard**.
 
-### 3. Build para Producción (Web)
+### 4. Build para Producción (Web)
 
 Genera los archivos estáticos optimizados en la carpeta `dist/`:
 
