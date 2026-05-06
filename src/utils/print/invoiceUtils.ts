@@ -23,6 +23,21 @@ export const loadImage = async (src: string): Promise<string> => {
     }
 };
 
+const formatPdfAmount = (amount: number): string => {
+    const value = Number(amount) || 0;
+    return value.toLocaleString('es-CR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
+const drawCurrencyText = (doc: any, amount: number, rightX: number, y: number, color: number[] = [71, 85, 105]) => {
+    const amountText = formatPdfAmount(amount);
+    doc.setTextColor(color[0], color[1], color[2]);
+    doc.text(amountText, rightX, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+};
+
 export const generateEntryTicket = async (order: ServiceOrder) => {
     const client = await db.clients.get(order.clientId);
     const settingsArray = await db.settings.toArray();
@@ -151,6 +166,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
     doc.setFont('helvetica', 'normal');
     doc.text(`ID FISCAL: ${settings.taxId}`, margin + 5, 33);
     doc.text(settings.address.toUpperCase(), margin + 5, 38);
+    doc.text(`TEL: ${settings.phone}`, margin + 5, 43);
 
     // Invoice Info Box
     doc.setFillColor(248, 250, 252); // Slate 50
@@ -210,13 +226,14 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
 
     // Table of items
     y = 105;
+    const tableWidth = pageWidth - ((margin + 5) * 2);
     const tableData = [
-        ['SERVICIO TÉCNICO / MANO DE OBRA', '1', order.laborCost.toLocaleString(), order.laborCost.toLocaleString()],
+        ['SERVICIO TÉCNICO / MANO DE OBRA', '1', formatPdfAmount(order.laborCost), formatPdfAmount(order.laborCost)],
         ...(order.parts || []).map(p => [
             `REPUESTO: ${p.name}`,
             p.quantity.toString(),
-            p.price.toLocaleString(),
-            (p.price * p.quantity).toLocaleString()
+            formatPdfAmount(p.price),
+            formatPdfAmount(p.price * p.quantity)
         ])
     ];
 
@@ -224,21 +241,27 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
         startY: y,
         head: [['DESCRIPCIÓN', 'CANT', 'PRECIO UNIT.', 'TOTAL']],
         body: tableData,
-        margin: { left: margin + 5 },
+        margin: { left: margin + 5, right: margin + 5 },
+        tableWidth,
         styles: {
             fontSize: 8,
             cellPadding: 4,
-            font: 'helvetica'
+            font: 'helvetica',
+            valign: 'middle',
+            overflow: 'linebreak'
         },
         headStyles: {
             fillColor: [15, 23, 42],
             textColor: [255, 255, 255],
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            halign: 'center',
+            valign: 'middle'
         },
         columnStyles: {
-            1: { halign: 'center' },
-            2: { halign: 'right' },
-            3: { halign: 'right', fontStyle: 'bold' }
+            0: { cellWidth: tableWidth * 0.48, halign: 'left' },
+            1: { cellWidth: tableWidth * 0.12, halign: 'center' },
+            2: { cellWidth: tableWidth * 0.20, halign: 'right', cellPadding: { top: 4, right: 7, bottom: 4, left: 4 } },
+            3: { cellWidth: tableWidth * 0.20, halign: 'right', fontStyle: 'bold', cellPadding: { top: 4, right: 7, bottom: 4, left: 4 } }
         }
     });
 
@@ -253,10 +276,10 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
     doc.setFontSize(9);
     doc.setTextColor(71, 85, 105);
     doc.text("SUBTOTAL:", pageWidth - 80, finalY);
-    doc.text(subtotal.toLocaleString(), pageWidth - margin - 5, finalY, { align: 'right' });
+    drawCurrencyText(doc, subtotal, pageWidth - margin - 5, finalY);
 
     doc.text(`IMPUESTOS (${order.taxRate}%):`, pageWidth - 80, finalY + 6);
-    doc.text(tax.toLocaleString(), pageWidth - margin - 5, finalY + 6, { align: 'right' });
+    drawCurrencyText(doc, tax, pageWidth - margin - 5, finalY + 6);
 
     doc.setFillColor(accentColor);
     doc.rect(pageWidth - 85, finalY + 10, 65, 12, 'F');
@@ -264,7 +287,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text("TOTAL NETO:", pageWidth - 80, finalY + 18);
-    doc.text(total.toLocaleString(), pageWidth - margin - 10, finalY + 18, { align: 'right' });
+    drawCurrencyText(doc, total, pageWidth - margin - 10, finalY + 18, [255, 255, 255]);
 
     // Footer & Warranty
     doc.setTextColor(100, 116, 139);

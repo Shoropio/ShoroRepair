@@ -242,6 +242,8 @@ const Settings: React.FC = () => {
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 								<Input label={t('settings.business_name')} value={company.businessName} onChange={v => setCompany({ ...company, businessName: v.target.value })} />
 								<Input label={t('settings.tax_identity')} value={company.taxId} onChange={v => setCompany({ ...company, taxId: v.target.value })} />
+								<Input label={t('settings.address')} value={company.address} onChange={v => setCompany({ ...company, address: v.target.value })} />
+								<Input label={t('clients.fields.phone')} value={company.phone} onChange={v => setCompany({ ...company, phone: v.target.value })} />
 								<Select label={t('settings.system_language')} value={company.language || 'es'} onChange={e => setCompany({ ...company, language: e.target.value as 'es' | 'en' })}>
 									<option value="es">{t('settings.lang_es')}</option>
 									<option value="en">{t('settings.lang_en')}</option>
