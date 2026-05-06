@@ -148,6 +148,33 @@ const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => vo
   );
 };
 
+const deviceTypeOptions = [
+  DeviceType.PHONE,
+  DeviceType.APPLIANCE,
+  DeviceType.COMPUTER,
+  DeviceType.ELECTRONICS,
+  DeviceType.OTHER
+];
+
+const paymentMethodOptions = [
+  PaymentMethod.CASH,
+  PaymentMethod.TRANSFER,
+  PaymentMethod.CARD
+];
+
+const recalculateOrderTotal = (order: ServiceOrder): ServiceOrder => {
+  const laborCost = Number(order.laborCost) || 0;
+  const partsTotal = (order.parts || []).reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0);
+  const subtotal = laborCost + partsTotal;
+  const taxRate = Number(order.taxRate) || 0;
+
+  return {
+    ...order,
+    laborCost,
+    total: subtotal + (subtotal * (taxRate / 100))
+  };
+};
+
 const Orders: React.FC = () => {
   const { t } = useTranslation();
   const { hasPermission } = usePermissions();
@@ -221,7 +248,6 @@ const Orders: React.FC = () => {
   }, [orders, currentPage]);
 
   const [formData, setFormData] = useState<Partial<ServiceOrder>>({
-    deviceType: DeviceType.PHONE,
     priority: Priority.MEDIUM,
     status: OrderStatus.RECEIVED,
     laborCost: 0,
@@ -279,7 +305,7 @@ const Orders: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.clientId || !formData.brand || !formData.model) {
+    if (!formData.clientId || !formData.deviceType || !formData.brand || !formData.model) {
       toast.error(t('common.required_fields'));
       return;
     }
@@ -310,7 +336,6 @@ const Orders: React.FC = () => {
       await db.orders.add(newOrder);
       setShowModal(false);
       setFormData({
-        deviceType: DeviceType.PHONE,
         priority: Priority.MEDIUM,
         status: OrderStatus.RECEIVED,
         laborCost: 0,
@@ -436,14 +461,10 @@ const Orders: React.FC = () => {
         warrantyExpiration = Date.now() + (order.warrantyDays * 24 * 60 * 60 * 1000);
       }
 
-      const partsTotal = (order.parts || []).reduce((acc, p) => acc + (p.price * p.quantity), 0);
-      const subtotal = (order.laborCost || 0) + partsTotal;
-      const tax = subtotal * (order.taxRate / 100);
-      const total = subtotal + tax;
+      const recalculatedOrder = recalculateOrderTotal(order);
 
       const updatedLocal = {
-        ...order,
-        total,
+        ...recalculatedOrder,
         invoiceNumber,
         logs,
         warrantyExpiration,
@@ -469,12 +490,7 @@ const Orders: React.FC = () => {
     const newPart = { partId, name: invPart.name, quantity: 1, price: invPart.price };
     const updatedOrder = { ...order, parts: [...(order.parts || []), newPart] };
 
-    const partsTotal = updatedOrder.parts.reduce((acc, p) => acc + (p.price * p.quantity), 0);
-    const subtotal = (updatedOrder.laborCost || 0) + partsTotal;
-    const tax = subtotal * (updatedOrder.taxRate / 100);
-    updatedOrder.total = subtotal + tax;
-
-    setShowDetailModal(updatedOrder);
+    setShowDetailModal(recalculateOrderTotal(updatedOrder));
     toast.info(t('orders.linked_part'));
   };
 
@@ -692,6 +708,12 @@ const Orders: React.FC = () => {
               <Input label={t('orders.fields.brand')} value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} required />
               <Input label={t('orders.fields.model')} value={formData.model} onChange={e => setFormData({ ...formData, model: e.target.value })} required />
             </div>
+            <Select label={t('orders.fields.device_type')} value={formData.deviceType || ''} onChange={e => setFormData({ ...formData, deviceType: e.target.value as DeviceType })} required>
+              <option value="">{t('orders.fields.device_type')}</option>
+              {deviceTypeOptions.map(type => (
+                <option key={type} value={type}>{getDeviceTypeLabel(type)}</option>
+              ))}
+            </Select>
             <Input label={t('orders.fields.serial')} value={formData.serialNumber} onChange={e => setFormData({ ...formData, serialNumber: e.target.value })} />
             <Select label={t('common.priority')} value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value as Priority })}>
               <option value={Priority.LOW}>{t('common.low')}</option>
@@ -726,6 +748,7 @@ const Orders: React.FC = () => {
                     <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.device_info')}</h4>
                   </div>
                   <p className="text-sm font-black text-[#202124] dark:text-white uppercase truncate">{showDetailModal.brand} {showDetailModal.model}</p>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">{getDeviceTypeLabel(showDetailModal.deviceType)}</p>
                   <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">SN/IMEI: {showDetailModal.serialNumber || t('common.none')}</p>
                 </div>
 
@@ -789,6 +812,17 @@ const Orders: React.FC = () => {
                   </Select>
                 </div>
                 <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <Smartphone size={18} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.fields.device_type')}</h4>
+                  </div>
+                  <Select value={showDetailModal.deviceType} onChange={e => setShowDetailModal({ ...showDetailModal, deviceType: e.target.value as DeviceType })}>
+                    {deviceTypeOptions.map(type => (
+                      <option key={type} value={type}>{getDeviceTypeLabel(type)}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-4">
                   <div className="flex items-center gap-3 text-emerald-600">
                     <Package size={18} />
                     <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.parts_supplies')}</h4>
@@ -797,6 +831,39 @@ const Orders: React.FC = () => {
                     <option value="">{t('orders.add_component')}</option>
                     {inventory?.filter(p => !showDetailModal.parts?.some(op => op.partId === p.id)).map(p => <option key={p.id} value={p.id}>{p.name} (₡{p.price})</option>)}
                   </Select>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-emerald-600">
+                    <DollarSign size={18} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('orders.fields.labor_cost')}</h4>
+                  </div>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={showDetailModal.laborCost || ''}
+                    onChange={e => setShowDetailModal(recalculateOrderTotal({
+                      ...showDetailModal,
+                      laborCost: parseFloat(e.target.value) || 0
+                    }))}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-amber-600">
+                    <CheckCircle2 size={18} />
+                    <h4 className="font-black text-xs uppercase tracking-widest">{t('common.payment')}</h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Select value={showDetailModal.paymentMethod} onChange={e => setShowDetailModal({ ...showDetailModal, paymentMethod: e.target.value as PaymentMethod })}>
+                      {paymentMethodOptions.map(method => (
+                        <option key={method} value={method}>{method}</option>
+                      ))}
+                    </Select>
+                    <Select value={showDetailModal.paymentStatus} onChange={e => setShowDetailModal({ ...showDetailModal, paymentStatus: e.target.value as PaymentStatus })}>
+                      <option value={PaymentStatus.PENDING}>{t('common.pending')}</option>
+                      <option value={PaymentStatus.PAID}>{t('common.paid')}</option>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
@@ -821,7 +888,7 @@ const Orders: React.FC = () => {
                             <button onClick={() => {
                               const newParts = [...showDetailModal.parts!];
                               newParts.splice(i, 1);
-                              setShowDetailModal({ ...showDetailModal, parts: newParts });
+                              setShowDetailModal(recalculateOrderTotal({ ...showDetailModal, parts: newParts }));
                             }} className="p-1.5 text-red-500 hover:bg-red-50 rounded-none"><X size={14} /></button>
                           </td>
                         </tr>

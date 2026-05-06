@@ -1,5 +1,5 @@
 import { Dexie, type Table } from 'dexie';
-import { Client, ServiceOrder, Part, AppUser, CompanySettings, Expense, ActivityLog } from '../types';
+import { Client, ServiceOrder, Part, AppUser, CompanySettings, Expense, ActivityLog, DeviceType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class RepairDB extends Dexie {
@@ -32,6 +32,38 @@ export class RepairDB extends Dexie {
           if (item.deleted === undefined) item.deleted = 0;
         });
       }
+    });
+
+    this.version(9).stores({
+      clients: '++id, syncId, name, phone, email, updatedAt, synced, deleted',
+      orders: '++id, syncId, orderNumber, invoiceNumber, clientId, status, deviceType, createdAt, technicianId, paymentStatus, updatedAt, synced, deleted',
+      inventory: '++id, syncId, name, sku, updatedAt, synced, deleted',
+      users: '++id, syncId, username, role, updatedAt, synced, deleted',
+      settings: '++id, syncId, updatedAt, synced, deleted',
+      expenses: '++id, syncId, date, category, updatedAt, synced, deleted',
+      activity_logs: '++id, syncId, userId, entity, timestamp, updatedAt, synced, deleted'
+    }).upgrade(async tx => {
+      await tx.table('orders').toCollection().modify(order => {
+        const searchableDevice = `${order.brand || ''} ${order.model || ''} ${order.issueDescription || ''}`.toLowerCase();
+        const looksLikeRiceCooker = searchableDevice.includes('arrocera') || searchableDevice.includes('rice cooker');
+        const looksLikeBlackAndDecker = searchableDevice.includes('black+decker') || searchableDevice.includes('black & decker') || searchableDevice.includes('black decker');
+
+        if (order.deviceType === DeviceType.PHONE && looksLikeRiceCooker && looksLikeBlackAndDecker) {
+          order.deviceType = DeviceType.APPLIANCE;
+          order.synced = 0;
+          order.updatedAt = Date.now();
+        }
+
+        if (!Array.isArray(order.parts)) order.parts = [];
+        order.laborCost = Number(order.laborCost) || 0;
+
+        const partsTotal = order.parts.reduce((acc: number, part: any) => {
+          return acc + ((Number(part.price) || 0) * (Number(part.quantity) || 0));
+        }, 0);
+        const subtotal = order.laborCost + partsTotal;
+        const taxRate = Number(order.taxRate) || 0;
+        order.total = subtotal + (subtotal * (taxRate / 100));
+      });
     });
 
     const tableNames = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses', 'activity_logs'];
