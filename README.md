@@ -86,6 +86,13 @@ npm run dev
 
 Accede a `http://localhost:3000`. El sistema detectará que es una instalación nueva y lanzará el **Setup Wizard**.
 
+Credenciales de administrador por defecto para entorno local:
+
+```text
+Usuario: admin
+Contraseña: 123
+```
+
 ### 4. Build para Producción (Web)
 
 Genera los archivos estáticos optimizados en la carpeta `dist/`:
