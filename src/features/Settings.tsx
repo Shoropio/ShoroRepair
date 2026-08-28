@@ -152,7 +152,7 @@ const Settings: React.FC = () => {
 
 	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">{t('settings.loading')}</div>;
 
-	const navItems = [
+	const navItems: { id: 'profile' | 'company' | 'cloud' | 'advanced'; label: string; icon: typeof UserIcon; adminOnly?: boolean }[] = [
 		{ id: 'profile', label: t('settings.tabs.profile'), icon: UserIcon },
 		{ id: 'company', label: t('settings.tabs.organization'), icon: Shield, adminOnly: true },
 		{ id: 'cloud', label: t('settings.tabs.cloud_ai'), icon: Cloud, adminOnly: true },
@@ -179,8 +179,7 @@ const Settings: React.FC = () => {
 						return (
 							<button
 								key={item.id}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-								onClick={() => setActiveTab(item.id as any)}
+								onClick={() => setActiveTab(item.id)}
 								className={`px-4 lg:px-6 py-2 rounded-none text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
 							>
 								<Icon size={14} />

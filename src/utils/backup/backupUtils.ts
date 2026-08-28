@@ -1,5 +1,6 @@
 import { db } from '../../offline/db';
 import { toast } from 'sonner';
+import { Client, ServiceOrder, Part, CompanySettings, AppUser, Expense } from '../../types';
 
 export interface BackupData {
     version: string;
@@ -7,18 +8,12 @@ export interface BackupData {
     createdAt: string;
     appName: string;
     data: {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        clients: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        orders: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        inventory: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        settings: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        users: any[];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        expenses: any[];
+        clients: Client[];
+        orders: ServiceOrder[];
+        inventory: Part[];
+        settings: CompanySettings[];
+        users: AppUser[];
+        expenses: Expense[];
     };
     stats: {
         totalClients: number;
@@ -27,6 +22,16 @@ export interface BackupData {
         totalExpenses: number;
     };
 }
+
+type BackupRestoreInput = {
+    data?: BackupData['data'];
+    clients?: Client[];
+    orders?: ServiceOrder[];
+    inventory?: Part[];
+    settings?: CompanySettings[];
+    users?: AppUser[];
+    expenses?: Expense[];
+};
 
 const BACKUP_VERSION = '2.0';
 const APP_NAME = 'ShoroRepair';
@@ -63,8 +68,7 @@ export async function createBackup(): Promise<BackupData> {
     return backup;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function validateBackup(data: any): { valid: boolean; errors: string[] } {
+export function validateBackup(data: Record<string, unknown>): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!data) {
@@ -91,8 +95,7 @@ export function validateBackup(data: any): { valid: boolean; errors: string[] } 
 }
 
 export async function restoreBackup(
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    backupData: any,
+    backupData: BackupRestoreInput,
     options: {
         mergeMode?: boolean;
         skipUsers?: boolean;
@@ -164,8 +167,7 @@ export async function downloadBackup(): Promise<void> {
         const date = new Date().toISOString().split('T')[0];
         const filename = `${APP_NAME}_Backup_${date}.json`;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((window as any).__TAURI__) {
+        if (window.__TAURI__) {
             const { save } = await import('@tauri-apps/plugin-dialog');
             const { writeTextFile } = await import('@tauri-apps/plugin-fs');
 
@@ -203,8 +205,7 @@ export async function downloadBackup(): Promise<void> {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function readBackupFile(file: File): Promise<any> {
+export function readBackupFile(file: File): Promise<Record<string, unknown>> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
 
@@ -339,10 +340,10 @@ export async function uploadBackupToGoogleDrive(accessToken: string): Promise<bo
         console.log("Drive Upload Success:", resData);
         toast.success('Respaldo guardado en Google Drive');
         return true;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const err = error as { message?: string };
         console.error('Error uploading to Google Drive:', error);
-        toast.error(`Error Google Drive: ${error.message}`);
+        toast.error(`Error Google Drive: ${err.message}`);
         return false;
     }
 }

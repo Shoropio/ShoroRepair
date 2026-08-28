@@ -4,17 +4,15 @@ import { AuthContext } from './AuthContextValue';
 import { db } from '../offline/db';
 import { AppUser } from '../types';
 import { auth, googleProvider, createGoogleProvider, isFirebaseAuthAvailable } from '../firebase/auth';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, setPersistence, browserLocalPersistence, type User } from 'firebase/auth';
 import { syncManager } from '../offline/sync';
 import { toast } from 'sonner';
 import { verifyPassword, hashPassword, needsRehash, encryptSecret, decryptSecret } from '../lib/crypto';
 
 // Logging solo en desarrollo para evitar fuga de información de auth en producción.
 const DEBUG = import.meta.env.DEV;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dlog = (...args: any[]) => { if (DEBUG) console.log(...args); };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dwarn = (...args: any[]) => { if (DEBUG) console.warn(...args); };
+const dlog = (...args: unknown[]) => { if (DEBUG) console.log(...args); };
+const dwarn = (...args: unknown[]) => { if (DEBUG) console.warn(...args); };
 
 dlog("AuthContext.tsx file loaded");
 
@@ -48,8 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
     const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const completeGoogleLogin = React.useCallback(async (firebaseUser: any): Promise<boolean> => {
+    const completeGoogleLogin = React.useCallback(async (firebaseUser: User): Promise<boolean> => {
         const email = firebaseUser.email || '';
         let foundUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
 
@@ -94,8 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         dlog("AuthProvider: Initializing...");
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const restoreSession = async (firebaseUser?: any) => {
+        const restoreSession = async (firebaseUser?: User | null) => {
             try {
                 const storedToken = localStorage.getItem('google_drive_token');
                 if (storedToken) {
@@ -166,8 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // --- DYNAMIC INACTIVITY TIMEOUT ---
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let timeoutId: any;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
         const resetTimer = () => {
             if (timeoutId) clearTimeout(timeoutId);
@@ -304,9 +299,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return true;
             }
             return false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
-            console.error("AuthContext: Login error", e.code, e.message);
+        } catch (e: unknown) {
+            const err = e as { code?: string; message?: string };
+            console.error("AuthContext: Login error", err.code, err.message);
             return false;
         }
     }, []);
@@ -326,17 +321,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (success) return true;
             return false;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
-            if (e.code === 'auth/popup-blocked') {
+        } catch (e: unknown) {
+            const err = e as { code?: string; message?: string };
+            if (err.code === 'auth/popup-blocked') {
                 dwarn("AuthContext: Google popup blocked, falling back to redirect.");
                 await signInWithRedirect(auth, googleProvider);
                 return false;
             }
 
-            console.error("AuthContext: Google login error", e.code, e.message);
+            console.error("AuthContext: Google login error", err.code, err.message);
             // Handle popup closed by user or network error
-            toast.error("Error de inicio de sesión con Google: " + e.message);
+            toast.error("Error de inicio de sesión con Google: " + err.message);
             return false;
         }
     }, [completeGoogleLogin]);

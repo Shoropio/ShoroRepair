@@ -51,8 +51,7 @@ const Reports: React.FC = () => {
 		const partsCost = orders.flatMap(o => o.parts || []).reduce((acc, p) => acc + (p.price * p.quantity), 0);
 
 		// Chart data preparation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const dailyData = orders.reduce((acc: any, o) => {
+		const dailyData = orders.reduce((acc: Record<string, { date: string; revenue: number; orders: number }>, o) => {
 			const day = formatDate(o.createdAt).split(' ')[0];
 			if (!acc[day]) acc[day] = { date: day, revenue: 0, orders: 0 };
 			acc[day].revenue += o.total || 0;

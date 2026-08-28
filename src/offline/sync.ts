@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db, getTable } from './db';
 import { firestore } from '../firebase/firestore';
 import { auth } from '../firebase/auth';
 import { resolveRemoteChange } from './syncResolution';
@@ -50,8 +50,7 @@ export class SyncManager {
     private static instance: SyncManager;
     private status: SyncStatus = 'idle';
     private listeners: ((status: SyncStatus) => void)[] = [];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private syncInterval: any = null;
+    private syncInterval: ReturnType<typeof setInterval> | null = null;
 
     private constructor() {
         window.addEventListener('online', () => this.updateStatus(navigator.onLine ? 'idle' : 'offline'));
@@ -163,8 +162,8 @@ export class SyncManager {
             });
 
             this.updateStatus('idle');
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const err = error as { message?: string };
             console.error('Sync failed:', error);
 
             // Log sync error
@@ -172,7 +171,7 @@ export class SyncManager {
                 userName: auth.currentUser?.email || 'Sistema',
                 action: 'Error de Sincronización',
                 entity: 'sync',
-                details: `Error: ${error.message || 'Error desconocido'}`,
+                details: `Error: ${err.message || 'Error desconocido'}`,
                 timestamp: Date.now()
             });
 
@@ -191,21 +190,18 @@ export class SyncManager {
 
     private async hasPendingChanges(): Promise<boolean> {
         for (const tableInfo of TABLES_TO_SYNC) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const table = (db as any)[tableInfo.name];
+            const table = getTable(tableInfo.name);
             // Records flagged as a conflict are intentionally held back from the
             // push until a human reconciles them, so they must not count as pending
             // (otherwise sync would loop forever re-flagging the same conflict).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const count = await table.where('synced').equals(0).and((r: any) => r.conflict !== 1).count();
+            const count = await table.where('synced').equals(0).and((r) => r.conflict !== 1).count();
             if (count > 0) return true;
         }
         return false;
     }
 
     private async syncTable(dexieTablename: string, firestoreCollection: string, userId: string) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const table = (db as any)[dexieTablename];
+        const table = getTable(dexieTablename);
         const colRef = collection(firestore, 'users_data', userId, firestoreCollection);
 
         dlog(`Syncing table: ${dexieTablename}`);
@@ -233,7 +229,7 @@ export class SyncManager {
                 continue;
             }
 
-            const localItem = (await table.where('syncId').equals(remoteData.syncId).first()) as Record<string, unknown> | null;
+            const localItem = (await table.where('syncId').equals(remoteData.syncId as string).first()) as Record<string, unknown> | null;
 
             if ((remoteData.updatedAt as number) > maxUpdatedAt) {
                 maxUpdatedAt = remoteData.updatedAt as number;
@@ -257,7 +253,7 @@ export class SyncManager {
                     // preserved until reconciled) instead of being overwritten.
                     console.warn(`Sync conflict on ${dexieTablename}/${resolution.syncId}: keeping local, remote retained for review.`);
                     if (localItem) {
-                        await table.update(localItem.id, { conflict: 1, synced: 0 });
+                        await table.update(localItem.id as number, { conflict: 1, synced: 0 });
                     }
                     await db.activity_logs.add({
                         userName: auth.currentUser?.email || 'Sistema',
@@ -292,7 +288,7 @@ export class SyncManager {
             // let a human resolve it rather than blindly pushing over the remote.
             if (item.conflict === 1) continue;
 
-            const docRef = doc(colRef, item.syncId);
+            const docRef = doc(colRef, item.syncId as string);
 
             // Never upload local-only secrets (e.g. the PBKDF2 password hash) or
             // transient UI flags (conflict) to the cloud.
@@ -301,7 +297,7 @@ export class SyncManager {
             await withRetry(() => setDoc(docRef, { ...dataToPush, synced: 1 }));
             // Update local record with synced flag and clear unknown conflict marker.
             // Keep the version aligned with what was just pushed.
-            await table.update(item.id, { synced: 1, conflict: 0, version: item.version });
+            await table.update(item.id as number, { synced: 1, conflict: 0, version: item.version });
         }
 
         dlog(`${dexieTablename} sync complete`);

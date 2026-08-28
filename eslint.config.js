@@ -31,9 +31,10 @@ export default tseslint.config(
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }
 			],
-			// Kept as a warning (not error) so the first fix pass is tractable;
-			// the codebase uses `any` in many legacy spots. Promote to error later.
-			'@typescript-eslint/no-explicit-any': 'warn',
+			// Error-level: all legacy `any` usages have been replaced with real
+			// types. This keeps the source tree `any`-free going forward. Test
+			// files keep their own override (see below).
+			'@typescript-eslint/no-explicit-any': 'error',
 			'@typescript-eslint/no-empty-object-type': 'off'
 		}
 	},

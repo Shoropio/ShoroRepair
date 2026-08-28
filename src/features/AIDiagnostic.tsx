@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { GoogleGenAI } from '@google/genai';
 import { Button, Card} from '../components';
 import { decryptSecret } from '../lib/crypto';
+import { ServiceOrder } from '../types';
 
 const AI_MODELS = [
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Veloz)' },
@@ -46,8 +47,7 @@ const AIDiagnostic: React.FC = () => {
             .toArray()
         , [searchQuery]);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const runDiagnostic = async (order?: any) => {
+    const runDiagnostic = async (order?: ServiceOrder) => {
         const settings = (await db.settings.toArray())[0];
         const geminiApiKey = settings?.geminiApiKey ? await decryptSecret(settings.geminiApiKey) : null;
         if (!geminiApiKey) {
@@ -75,10 +75,10 @@ const AIDiagnostic: React.FC = () => {
                 setResult(content);
                 setProcessTime(elapsed);
                 toast.success(t('ai.diagnostic_completed'));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('AI Error:', err);
-                if (err.message?.includes('quota') || err.message?.includes('429')) {
+                const message = err instanceof Error ? err.message : String(err);
+                if (message?.includes('quota') || message?.includes('429')) {
                     toast.error(t('ai.quota_exceeded_error'));
                 } else {
                     toast.error(t('ai.generic_error'));

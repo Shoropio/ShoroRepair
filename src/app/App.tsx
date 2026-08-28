@@ -149,8 +149,7 @@ const AppContent: React.FC = () => {
 
   if (user && location.pathname === '/login') return <Navigate to="/" replace />;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const NavItem: React.FC<{ to: string, icon: any, label: string, roles?: string[] }> = ({ to, icon: Icon, label, roles }) => {
+  const NavItem: React.FC<{ to: string, icon: React.ComponentType<{ size?: number; className?: string }>, label: string, roles?: string[] }> = ({ to, icon: Icon, label, roles }) => {
     const isActive = location.pathname === to;
     if (roles && user && !roles.includes(user.role)) return null;
 

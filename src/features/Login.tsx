@@ -33,8 +33,7 @@ const Login: React.FC = () => {
 			} else {
 				setError(t('login.error'));
 			}
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (_err: any) {
+		} catch {
 			setError(t('login.critical_conn_error'));
 		} finally {
 			setIsLoading(false);

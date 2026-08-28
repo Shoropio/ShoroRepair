@@ -1,5 +1,5 @@
 import { Dexie, type Table } from 'dexie';
-import { Client, ServiceOrder, Part, AppUser, CompanySettings, Expense, ActivityLog, DeviceType } from '../types';
+import { Client, ServiceOrder, Part, AppUser, CompanySettings, Expense, ActivityLog, DeviceType, OrderPart } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { hashPassword, needsRehash } from '../lib/crypto';
 
@@ -64,8 +64,7 @@ export class RepairDB extends Dexie {
         if (!Array.isArray(order.parts)) order.parts = [];
         order.laborCost = Number(order.laborCost) || 0;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const partsTotal = order.parts.reduce((acc: number, part: any) => {
+        const partsTotal = order.parts.reduce((acc: number, part: OrderPart) => {
           return acc + ((Number(part.price) || 0) * (Number(part.quantity) || 0));
         }, 0);
         const subtotal = order.laborCost + partsTotal;
@@ -88,8 +87,7 @@ export class RepairDB extends Dexie {
     const tableNames = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses', 'activity_logs'];
 
     tableNames.forEach(tableName => {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const table = this.table(tableName as any);
+      const table = this.table(tableName);
 
       table.hook('creating', (primKey, obj) => {
         obj.syncId = obj.syncId || uuidv4();
@@ -106,14 +104,12 @@ export class RepairDB extends Dexie {
         }, 1000);
       });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      table.hook('updating', (mods: any, primKey, obj, _transaction) => {
+      table.hook('updating', (mods: Record<string, unknown>, primKey, obj, _transaction) => {
         if (Object.keys(mods).length === 1 && Object.prototype.hasOwnProperty.call(mods, 'synced')) {
           return undefined;
         }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updates: any = {};
+        const updates: Record<string, unknown> = {};
         if (!Object.prototype.hasOwnProperty.call(mods, 'updatedAt')) {
           updates.updatedAt = Date.now();
         }
@@ -149,6 +145,10 @@ export class RepairDB extends Dexie {
 }
 
 export const db = new RepairDB();
+
+export function getTable<T = Record<string, unknown>>(name: string): Table<T, number> {
+  return db.table(name) as unknown as Table<T, number>;
+}
 
 // Multi-tab / PWA safety. When another tab opens a newer DB version, IndexedDB
 // fires `versionchange` on the existing connections; if we don't close, the

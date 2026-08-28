@@ -1,4 +1,4 @@
-import { db } from './db';
+import { getTable } from './db';
 import { toast } from 'sonner';
 
 /**
@@ -13,16 +13,20 @@ export interface DuplicateReport {
     cleaned: number;
 }
 
+type SyncRecord = {
+    id?: number;
+    syncId?: string;
+    updatedAt?: number;
+};
+
 /**
  * Scans a table for duplicate syncIds and keeps only the most recent version
  */
 async function cleanTableDuplicates(tableName: string): Promise<DuplicateReport> {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const table = (db as any)[tableName];
+    const table = getTable<SyncRecord>(tableName);
     const allRecords = await table.toArray();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const syncIdMap = new Map<string, any[]>();
+    const syncIdMap = new Map<string, SyncRecord[]>();
     let duplicatesFound = 0;
     let recordsCleaned = 0;
 
@@ -109,21 +113,18 @@ export async function validateDataIntegrity(): Promise<boolean> {
     let allValid = true;
 
     for (const tableName of tables) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const table = (db as any)[tableName];
+        const table = getTable<SyncRecord>(tableName);
         const records = await table.toArray();
 
         // Check for missing syncIds
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const missingSync = records.filter((r: any) => !r.syncId);
+        const missingSync = records.filter((r: SyncRecord) => !r.syncId);
         if (missingSync.length > 0) {
             console.error(`${tableName}: ${missingSync.length} records missing syncId`);
             allValid = false;
         }
 
         // Check for duplicate syncIds
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const syncIds = records.map((r: any) => r.syncId).filter(Boolean);
+        const syncIds = records.map((r: SyncRecord) => r.syncId).filter(Boolean);
         const uniqueSyncIds = new Set(syncIds);
         if (syncIds.length !== uniqueSyncIds.size) {
             console.error(`${tableName}: Duplicate syncIds detected`);
@@ -141,21 +142,31 @@ export async function validateDataIntegrity(): Promise<boolean> {
 /**
  * Generates a summary report of the database
  */
-export async function generateIntegrityReport() {
+export interface IntegrityReportTable {
+    totalRecords: number;
+    withSyncId: number;
+    withoutSyncId: number;
+    uniqueSyncIds: number;
+    hasDuplicates: boolean;
+}
+
+export interface IntegrityReport {
+    timestamp: string;
+    tables: Record<string, IntegrityReportTable>;
+}
+
+export async function generateIntegrityReport(): Promise<IntegrityReport> {
     const tables = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses'];
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const report: any = {
+    const report: IntegrityReport = {
         timestamp: new Date().toISOString(),
         tables: {}
     };
 
     for (const tableName of tables) {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const table = (db as any)[tableName];
+        const table = getTable<SyncRecord>(tableName);
         const records = await table.toArray();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const syncIds = records.map((r: any) => r.syncId).filter(Boolean);
+        const syncIds = records.map((r: SyncRecord) => r.syncId).filter(Boolean);
         const uniqueSyncIds = new Set(syncIds);
 
         report.tables[tableName] = {

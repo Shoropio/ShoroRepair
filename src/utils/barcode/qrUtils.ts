@@ -1,14 +1,17 @@
 import * as QRCode from 'qrcode';
+import type { QRCodeToDataURLOptions } from 'qrcode';
+
+// Simple in-memory cache to avoid regenerating identical QRs repeatedly
+let qrCache: Map<string, string> | undefined;
 
 /**
  * Generates a QR code as a Base64 image string
  * @param text The text or URL to encode
  * @param options QRCode options (overrides defaults)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const generateQRCode = async (text: string, options: any = {}): Promise<string> => {
+export const generateQRCode = async (text: string, options: QRCodeToDataURLOptions = {}): Promise<string> => {
     try {
-        const defaults = {
+        const defaults: QRCodeToDataURLOptions = {
             margin: 1,
             // produce a large raster image so jsPDF scales down cleanly for printing
             width: 1024,
@@ -23,10 +26,8 @@ export const generateQRCode = async (text: string, options: any = {}): Promise<s
 
         // Simple in-memory cache to avoid regenerating identical QRs repeatedly
         const key = JSON.stringify([text, opts.width, opts.margin, opts.errorCorrectionLevel]);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (!(generateQRCode as any)._cache) (generateQRCode as any)._cache = new Map<string, string>();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cache: Map<string, string> = (generateQRCode as any)._cache;
+        if (!qrCache) qrCache = new Map<string, string>();
+        const cache = qrCache;
         if (cache.has(key)) return cache.get(key)!;
 
         // return data URL (PNG) suitable for <img src=> and jsPDF.addImage

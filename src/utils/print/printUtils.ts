@@ -2,9 +2,9 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { FileOpener } from '@capacitor-community/file-opener';
 import { toast } from 'sonner';
+import type { jsPDF } from 'jspdf';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const handlePrint = async (doc: any, fileName: string, options: { autoPrint?: boolean } = {}) => {
+export const handlePrint = async (doc: jsPDF, fileName: string, options: { autoPrint?: boolean } = {}) => {
     const platform = Capacitor.getPlatform();
     const autoPrint = options.autoPrint !== false; // default true
 
@@ -48,7 +48,7 @@ export const handlePrint = async (doc: any, fileName: string, options: { autoPri
         iframe.style.height = '0';
         iframe.style.border = 'none';
         iframe.style.visibility = 'hidden';
-        iframe.src = pdfBlob;
+        iframe.src = pdfBlob.toString();
 
         document.body.appendChild(iframe);
 

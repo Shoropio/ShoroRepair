@@ -5,8 +5,7 @@ import JsBarcode from 'jsbarcode';
  * @param value The value to encode (e.g., Order Number)
  * @param options JsBarcode options
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const generateBarcode = (value: string, options: any = {}): string => {
+export const generateBarcode = (value: string, options: JsBarcode.Options = {}): string => {
     const canvas = document.createElement('canvas');
     JsBarcode(canvas, value, {
         format: "CODE128",

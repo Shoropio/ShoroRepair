@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
+import { type LucideIcon,
 
     ShieldCheck,
     ShieldAlert,
@@ -80,8 +80,7 @@ const Roles: React.FC = () => {
         }
     };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const permissionList: { key: keyof RolePermissions; label: string; icon: any; category: string }[] = [
+    const permissionList: { key: keyof RolePermissions; label: string; icon: LucideIcon; category: string }[] = [
         { key: 'canViewReports', label: t('roles.intel_biz'), icon: Eye, category: t('roles.categories.data') },
         { key: 'canManageInventory', label: t('roles.asset_management'), icon: Package, category: t('roles.categories.operations') },
         { key: 'canManageUsers', label: t('roles.operator_control'), icon: UsersIcon, category: t('roles.categories.security') },

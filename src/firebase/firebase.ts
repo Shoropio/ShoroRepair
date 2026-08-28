@@ -61,9 +61,9 @@ const initFirebase = async () => {
       try {
         initializedAnalytics = getAnalytics(initializedApp);
         console.log("System: Google Analytics initialized successfully");
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        console.warn("System: Analytics initialization failed (this is normal in development):", e.message);
+      } catch (e: unknown) {
+        const err = e as { message?: string };
+        console.warn("System: Analytics initialization failed (this is normal in development):", err.message);
       }
     }
 

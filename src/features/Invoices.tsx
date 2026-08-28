@@ -76,8 +76,7 @@ const Invoices: React.FC = () => {
 		}), {
 			loading: t('invoices.hacienda_syncing'),
 			success: t('invoices.hacienda_success'),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			error: (err: any) => t('invoices.sync_failed', { error: err.message })
+			error: (err: unknown) => t('invoices.sync_failed', { error: err instanceof Error ? err.message : String(err) })
 		});
 	};
 

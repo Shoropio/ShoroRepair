@@ -370,10 +370,9 @@ const Orders: React.FC = () => {
       await updateOrderData(order.id!, updatedLocal);
       setShowDetailModal(null);
       toast.success(t('orders.os_sync_success'), { id: toastId });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error updating order", err);
-      toast.error(err.message || t('messages.error'), { id: toastId });
+      toast.error(err instanceof Error ? err.message : t('messages.error'), { id: toastId });
     }
   };
 

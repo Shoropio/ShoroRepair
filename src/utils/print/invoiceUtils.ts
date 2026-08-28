@@ -1,10 +1,16 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { ServiceOrder} from '../../types';
+import type { UserOptions } from 'jspdf-autotable';
+import { ServiceOrder } from '../../types';
 import { db } from '../../offline/db';
 import { handlePrint } from './printUtils';
 import { generateBarcode } from '../barcode/barcodeUtils';
 import { generateQRCode } from '../barcode/qrUtils';
+
+type InvoiceDoc = jsPDF & {
+    autoTable: (options: UserOptions) => void;
+    lastAutoTable?: { finalY: number };
+};
 
 // Helper to load image for PDF (handles URLs and Base64)
 export const loadImage = async (src: string): Promise<string> => {
@@ -31,8 +37,7 @@ const formatPdfAmount = (amount: number): string => {
     });
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const drawCurrencyText = (doc: any, amount: number, rightX: number, y: number, color: number[] = [71, 85, 105]) => {
+const drawCurrencyText = (doc: jsPDF, amount: number, rightX: number, y: number, color: number[] = [71, 85, 105]) => {
     const amountText = formatPdfAmount(amount);
     doc.setTextColor(color[0], color[1], color[2]);
     doc.text(amountText, rightX, y, { align: 'right' });
@@ -48,8 +53,7 @@ export const generateEntryTicket = async (order: ServiceOrder) => {
     const doc = new jsPDF({
         unit: 'mm',
         format: [80, 200] // Thermal roll width
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any;
+    }) as InvoiceDoc;
 
     const margin = 5;
     let y = 10;
@@ -78,8 +82,8 @@ export const generateEntryTicket = async (order: ServiceOrder) => {
 
         // Add small QR linking to the order
         try {
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const qrText = (settings as any).website ? `${(settings as any).website}/orders/${order.id || order.orderNumber}` : `OS:${order.orderNumber}`;
+            const website = (settings as { website?: string }).website;
+            const qrText = website ? `${website}/orders/${order.id || order.orderNumber}` : `OS:${order.orderNumber}`;
             const qrData = await generateQRCode(qrText, { width: 300, margin: 1 });
             const qrSize = 20; // mm
             const qrX = (80 - qrSize) / 2; // center on thermal width
@@ -125,8 +129,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
     const settings = settingsArray[0];
     if (!client || !settings) return;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const doc = new jsPDF() as any;
+    const doc = new jsPDF() as InvoiceDoc;
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
 
@@ -269,8 +272,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
         }
     });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const finalY = doc.lastAutoTable!.finalY + 10;
 
     // Totals Area
     const partsSum = (order.parts || []).reduce((a, b) => a + (b.price * b.quantity), 0);
