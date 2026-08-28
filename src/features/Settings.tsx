@@ -1,22 +1,22 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState} from 'react';
 import {
 	Database,
 	Download,
-	Upload,
-	Mail,
+
+
 	User as UserIcon,
-	HardDrive,
+
 	CheckCircle2,
 	AlertTriangle,
-	FileJson,
-	RefreshCw,
+
+
 	Cloud,
-	Trash2,
+
 	ImageIcon,
 	Sparkles,
 	Key,
 	Globe,
-	Activity,
+
 	Info,
 	ExternalLink,
 	AlertOctagon,
@@ -38,19 +38,19 @@ import { hashPassword, encryptSecret, decryptSecret } from '../lib/crypto';
 import {
 	getEstimatedBackupSize,
 	BackupData,
-	uploadBackupToCloud,
-	validateBackup,
-	listCloudBackups,
-	getBackupFromCloudUrl,
-	deleteCloudBackup,
+
+
+
+
+
 	downloadBackup,
-	readBackupFile,
-	restoreBackup,
+
+
 	formatBackupDate,
 	uploadBackupToGoogleDrive
 } from '../utils/backup/backupUtils';
 import { compressImage } from '../services/upload.service';
-import { cleanAllDuplicates } from '../offline/conflict';
+import '../offline/conflict';
 
 // Fields that must never be persisted in plaintext in IndexedDB. They are
 // encrypted with the device key (AES-GCM) at rest, mirroring geminiApiKey.
@@ -90,9 +90,9 @@ const Settings: React.FC = () => {
 	const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'cloud' | 'advanced'>('profile');
 
 	const [showBackupModal, setShowBackupModal] = useState(false);
-	const [backupPreview, setBackupPreview] = useState<BackupData | null>(null);
-	const [backupErrors, setBackupErrors] = useState<string[]>([]);
-	const [isRestoring, setIsRestoring] = useState(false);
+	const [backupPreview] = useState<BackupData | null>(null);
+	const [backupErrors] = useState<string[]>([]);
+
 	const [backupSize, setBackupSize] = useState<string>('');
 
 	useEffect(() => {
@@ -120,7 +120,7 @@ const Settings: React.FC = () => {
 			const url = await uploadImage(compressed, path);
 			setCompany({ ...company, logo: url });
 			toast.success(t('settings.logo_updated'));
-		} catch (err) {
+		} catch (_err) {
 			toast.error(t('settings.logo_error'));
 		}
 	};
@@ -179,6 +179,7 @@ const Settings: React.FC = () => {
 						return (
 							<button
 								key={item.id}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								onClick={() => setActiveTab(item.id as any)}
 								className={`px-4 lg:px-6 py-2 rounded-none text-[10px] lg:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === item.id ? 'bg-white dark:bg-[#1a1c1e] text-[#1a73e8] shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
 							>

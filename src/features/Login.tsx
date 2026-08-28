@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, ShieldCheck, ArrowRight, Smartphone, Cpu, Key, Globe, Sparkles } from 'lucide-react';
+import { Lock, User, ShieldCheck, ArrowRight, Key} from 'lucide-react';
 import { toast } from 'sonner';
 import { Input, Button, Card } from '../components';
 
@@ -33,7 +33,8 @@ const Login: React.FC = () => {
 			} else {
 				setError(t('login.error'));
 			}
-		} catch (err: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (_err: any) {
 			setError(t('login.critical_conn_error'));
 		} finally {
 			setIsLoading(false);
@@ -51,7 +52,7 @@ const Login: React.FC = () => {
 			} else {
 				setError(t('login.google_error'));
 			}
-		} catch (err) {
+		} catch (_err) {
 			setError(t('login.google_protocol_error'));
 		} finally {
 			setIsLoading(false);

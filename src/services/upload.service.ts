@@ -7,7 +7,7 @@
  * @param file The file, blob, or existing base64 string
  * @param path Unused in Base64 mode, kept for compatibility
  */
-export const uploadImage = async (file: File | Blob | string, path: string = ''): Promise<string> => {
+export const uploadImage = async (	file: File | Blob | string, _path: string = ''): Promise<string> => {
     // If it's already a Base64 string, just return it
     if (typeof file === 'string' && file.startsWith('data:')) {
         return file;
@@ -23,6 +23,7 @@ export const uploadImage = async (file: File | Blob | string, path: string = '')
         });
     };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (file instanceof Blob || (file as any) instanceof File) {
         return await toBase64(file as Blob);
     }
@@ -40,7 +41,7 @@ export const uploadFile = async (data: Blob | File | string, path: string): Prom
 /**
  * Deletes an image (No-op in Base64 mode as data is inside the record)
  */
-export const deleteImage = async (path: string) => {
+export const deleteImage = async (_path: string) => {
     // No action needed for Base64 strings stored in DB fields
     // They are deleted when the parent record array is updated
     return;
@@ -88,7 +89,7 @@ export const compressImage = (file: File, maxDim = 1200, quality = 0.7): Promise
 /**
  * Lists files (Stub for compatibility)
  */
-export const listFiles = async (path: string) => {
+export const listFiles = async (_path: string) => {
     return [];
 };
 
@@ -104,6 +105,7 @@ export const getFileByUrl = async (url: string) => {
 /**
  * Compatibility stub for getDownloadURL
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getDownloadURL = async (item: any): Promise<string> => {
     if (typeof item === 'string') return item;
     return item.url || item.path || '';

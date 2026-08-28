@@ -3,6 +3,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { FileOpener } from '@capacitor-community/file-opener';
 import { toast } from 'sonner';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const handlePrint = async (doc: any, fileName: string, options: { autoPrint?: boolean } = {}) => {
     const platform = Capacitor.getPlatform();
     const autoPrint = options.autoPrint !== false; // default true
@@ -36,7 +37,7 @@ export const handlePrint = async (doc: any, fileName: string, options: { autoPri
             try {
                 window.open(pdfBlob, '_blank');
                 return;
-            } catch (e) {}
+                } catch (_e) { /* noop */ }
         }
 
         const iframe = document.createElement('iframe');

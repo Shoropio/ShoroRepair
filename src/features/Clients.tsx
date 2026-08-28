@@ -14,20 +14,20 @@ import {
   Users,
   Phone,
   Mail,
-  MapPin,
+
   Trash2,
   Edit2,
-  Calendar,
+
   History,
   TrendingUp,
   LayoutGrid,
   List,
   ChevronRight,
   MessageSquare,
-  Hash
+
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button, Input, Card, Modal, Badge, TableSkeleton, Pagination } from '../components';
+import { Button, Input, Card, Modal, TableSkeleton, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 
 const Clients: React.FC = () => {
@@ -82,7 +82,7 @@ const Clients: React.FC = () => {
         toast.success(t('clients.create_success'));
       }
       closeModal();
-    } catch (error) {
+    } catch (_error) {
       toast.error(t('messages.error'));
     }
   };

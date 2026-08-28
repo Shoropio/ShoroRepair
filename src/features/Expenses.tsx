@@ -7,22 +7,22 @@ import {
     Plus,
     Trash2,
     Search,
-    DollarSign,
+
     Calendar,
     Tag,
-    CreditCard,
-    TrendingDown,
+
+
     LayoutGrid,
     List,
     Receipt,
     Wallet,
-    ArrowUpRight,
-    Filter,
-    MoreVertical
+
+
+
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
-import { Modal, Button, Input, Card, Badge, TableSkeleton, Select, Pagination } from '../components';
+import { Modal, Button, Input, Card, Badge, Select, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 

@@ -7,11 +7,17 @@ export interface BackupData {
     createdAt: string;
     appName: string;
     data: {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         clients: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         orders: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         inventory: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         settings: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         users: any[];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         expenses: any[];
     };
     stats: {
@@ -57,6 +63,7 @@ export async function createBackup(): Promise<BackupData> {
     return backup;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateBackup(data: any): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -84,6 +91,7 @@ export function validateBackup(data: any): { valid: boolean; errors: string[] } 
 }
 
 export async function restoreBackup(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     backupData: any,
     options: {
         mergeMode?: boolean;
@@ -156,6 +164,7 @@ export async function downloadBackup(): Promise<void> {
         const date = new Date().toISOString().split('T')[0];
         const filename = `${APP_NAME}_Backup_${date}.json`;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((window as any).__TAURI__) {
             const { save } = await import('@tauri-apps/plugin-dialog');
             const { writeTextFile } = await import('@tauri-apps/plugin-fs');
@@ -194,6 +203,7 @@ export async function downloadBackup(): Promise<void> {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function readBackupFile(file: File): Promise<any> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -202,7 +212,7 @@ export function readBackupFile(file: File): Promise<any> {
             try {
                 const data = JSON.parse(event.target?.result as string);
                 resolve(data);
-            } catch (error) {
+            } catch (_error) {
                 reject(new Error('El archivo no es un JSON válido'));
             }
         };
@@ -329,6 +339,7 @@ export async function uploadBackupToGoogleDrive(accessToken: string): Promise<bo
         console.log("Drive Upload Success:", resData);
         toast.success('Respaldo guardado en Google Drive');
         return true;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error uploading to Google Drive:', error);
         toast.error(`Error Google Drive: ${error.message}`);

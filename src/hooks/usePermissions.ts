@@ -11,7 +11,7 @@ export const usePermissions = () => {
             try {
                 const parsed = JSON.parse(customConfig);
                 return parsed[user?.role || 'Technician'] || ROLES_CONFIG[user?.role || 'Technician'];
-            } catch (e) {
+            } catch (_e) {
                 return ROLES_CONFIG[user?.role || 'Technician'];
             }
         }

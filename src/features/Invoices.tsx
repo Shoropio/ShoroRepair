@@ -4,28 +4,28 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
 import { ServiceOrder, PaymentStatus } from '../types';
 import {
-	FileText,
+
 	Search,
 	Printer,
 	Download,
-	ExternalLink,
-	Filter,
+
+
 	Calendar,
-	DollarSign,
+
 	User as UserIcon,
 	CloudUpload,
 	Receipt,
 	History,
-	ChevronRight,
-	SearchCode,
-	Activity,
+
+
+
 	CheckCircle2,
 	Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { generateInvoice } from '../utils/print/invoiceUtils';
-import { TableSkeleton, Button, Input, Card, Badge, Modal, Select, Pagination } from '../components';
+import { Card, Badge, Select, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate } from 'react-router-dom';
 
@@ -70,12 +70,13 @@ const Invoices: React.FC = () => {
 
 	const clients = useLiveQuery(() => db.clients.toArray());
 
-	const handleHaciendaSync = async (order: ServiceOrder) => {
+	const handleHaciendaSync = async (_order: ServiceOrder) => {
 		toast.promise(new Promise((resolve, reject) => {
 			setTimeout(() => reject(new Error(t('invoices.cert_not_configured'))), 2000);
 		}), {
 			loading: t('invoices.hacienda_syncing'),
 			success: t('invoices.hacienda_success'),
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			error: (err: any) => t('invoices.sync_failed', { error: err.message })
 		});
 	};

@@ -1,5 +1,6 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AuthContext } from './AuthContextValue';
 import { db } from '../offline/db';
 import { AppUser } from '../types';
 import { auth, googleProvider, createGoogleProvider, isFirebaseAuthAvailable } from '../firebase/auth';
@@ -10,24 +11,12 @@ import { verifyPassword, hashPassword, needsRehash, encryptSecret, decryptSecret
 
 // Logging solo en desarrollo para evitar fuga de información de auth en producción.
 const DEBUG = import.meta.env.DEV;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dlog = (...args: any[]) => { if (DEBUG) console.log(...args); };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dwarn = (...args: any[]) => { if (DEBUG) console.warn(...args); };
 
-interface AuthContextType {
-    user: AppUser | null;
-    login: (email: string, pass: string) => Promise<boolean>;
-    loginWithGoogle: () => Promise<boolean>;
-    logout: () => void;
-    isLoading: boolean;
-    updateUser: (updatedUser: AppUser) => void;
-    changePassword: (current: string, next: string) => Promise<boolean>;
-    linkGoogleDrive: () => Promise<string | null>;
-    unlinkGoogleDrive: () => Promise<void>;
-    googleAccessToken: string | null;
-}
-
 dlog("AuthContext.tsx file loaded");
-export const AuthContext = createContext<AuthContextType | null>(null);
 
 // --- Protección contra fuerza bruta en login local ---
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -59,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
     const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const completeGoogleLogin = React.useCallback(async (firebaseUser: any): Promise<boolean> => {
         const email = firebaseUser.email || '';
         let foundUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
@@ -104,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         dlog("AuthProvider: Initializing...");
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const restoreSession = async (firebaseUser?: any) => {
             try {
                 const storedToken = localStorage.getItem('google_drive_token');
@@ -175,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // --- DYNAMIC INACTIVITY TIMEOUT ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         let timeoutId: any;
 
         const resetTimer = () => {
@@ -202,6 +194,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (timeoutId) clearTimeout(timeoutId);
             events.forEach(name => document.removeEventListener(name, resetTimer));
         };
+        // `logout` is a stable useCallback defined later in this hook, so it is
+        // intentionally omitted from the dependency array.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [completeGoogleLogin]);
 
     const login = React.useCallback(async (usernameOrEmail: string, pass: string): Promise<boolean> => {
@@ -309,6 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return true;
             }
             return false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             console.error("AuthContext: Login error", e.code, e.message);
             return false;
@@ -330,6 +326,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (success) return true;
             return false;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             if (e.code === 'auth/popup-blocked') {
                 dwarn("AuthContext: Google popup blocked, falling back to redirect.");
@@ -344,7 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [completeGoogleLogin]);
 
-    const linkGoogleDrive = async (): Promise<string | null> => {
+    const linkGoogleDrive = React.useCallback(async (): Promise<string | null> => {
         try {
             if (!isFirebaseAuthAvailable()) {
                 toast.error("Firebase no está configurado. Agrega las credenciales en .env y reinicia la app.");
@@ -399,13 +396,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error("Error linking Google Drive", error);
             return null;
         }
-    };
+    }, [user, setUser, setGoogleAccessToken]);
 
-    const unlinkGoogleDrive = async () => {
+    const unlinkGoogleDrive = React.useCallback(async () => {
         setGoogleAccessToken(null);
         localStorage.removeItem('google_drive_token');
         toast.info("Cuenta de Google Desvinculada");
-    };
+    }, [setGoogleAccessToken]);
 
     const logout = React.useCallback(async () => {
         try {

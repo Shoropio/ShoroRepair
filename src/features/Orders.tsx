@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
@@ -9,8 +9,8 @@ import {
   DeviceType,
   PaymentMethod,
   PaymentStatus,
-  Client,
-  OrderPart,
+
+
   MessageLog
 } from '../types';
 import {
@@ -21,30 +21,30 @@ import {
   Printer,
   MessageSquare,
   Smartphone,
-  Download,
+
   X,
   Camera,
-  History as HistoryIcon,
+
   Package,
-  Save,
+
   FileText,
   Zap,
-  Trash2,
-  ShieldCheck,
-  ChevronDown,
+
+
+
   Edit2,
   LayoutGrid,
   List,
-  MoreVertical,
+
   Clock,
-  ExternalLink,
+
   CheckCircle2,
   AlertCircle,
   Calendar,
   DollarSign
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { handlePrint } from '../utils/print/printUtils';
+import '../utils/print/printUtils';
 import { generateEntryTicket, generateInvoice } from '../utils/print/invoiceUtils';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { useDebounce } from '../hooks/useDebounce';
@@ -60,101 +60,6 @@ import {
 	softDeleteOrder
 } from '../repositories/orders.repository';
 
-const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => void }> = ({ onSave, onClear }) => {
-  const { t } = useTranslation();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.strokeStyle = '#202124';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-  }, []);
-
-  const getPos = (e: any) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-    return {
-      x: (clientX - rect.left) * (canvas.width / rect.width),
-      y: (clientY - rect.top) * (canvas.height / rect.height)
-    };
-  };
-
-  const startDrawing = (e: any) => {
-    const { x, y } = getPos(e);
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    setIsDrawing(true);
-  };
-
-  const draw = (e: any) => {
-    if (!isDrawing) return;
-    e.preventDefault();
-    const { x, y } = getPos(e);
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const handleSave = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    onSave(canvas.toDataURL());
-    toast.success(t('orders.signature_captured'));
-  };
-
-  const handleClear = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    ctx?.clearRect(0, 0, canvas.width, canvas.height);
-    onClear();
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="relative border-2 border-dashed border-[#dadce0] dark:border-white/10 rounded-none bg-white dark:bg-[#1a1c1e] overflow-hidden group">
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={200}
-          className="w-full h-[200px] cursor-crosshair touch-none"
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseOut={stopDrawing}
-          onTouchStart={startDrawing}
-          onTouchMove={draw}
-          onTouchEnd={stopDrawing}
-        />
-        <div className="absolute top-4 right-4 flex gap-2">
-          <Button variant="outline" size="sm" className="rounded-none px-4 py-2 font-bold uppercase text-[10px]" onClick={handleClear}>{t('common.clear')}</Button>
-          <Button variant="primary" size="sm" className="rounded-none px-4 py-2 font-bold uppercase text-[10px]" onClick={handleSave}>{t('common.save')}</Button>
-        </div>
-        <div className="absolute bottom-4 left-4 flex items-center gap-2 pointer-events-none opacity-40">
-          <AlertCircle size={14} />
-          <p className="text-[10px] font-bold uppercase">{t('orders.client_sign_accept')}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const deviceTypeOptions = [
   DeviceType.PHONE,
@@ -207,15 +112,6 @@ const Orders: React.FC = () => {
     }
   };
 
-  const getPriorityLabel = (priority: string) => {
-    switch (priority) {
-      case Priority.LOW: return t('common.low');
-      case Priority.MEDIUM: return t('common.medium');
-      case Priority.HIGH: return t('common.high');
-      case Priority.URGENT: return t('common.critical');
-      default: return priority;
-    }
-  };
 
   const getDeviceTypeLabel = (type: string) => {
     switch (type) {
@@ -369,7 +265,7 @@ const Orders: React.FC = () => {
         await softDeleteOrder(order.id);
         toast.success(t('messages.deleted'));
         setShowDetailModal(null);
-      } catch (err) {
+      } catch (_err) {
         toast.error(t('messages.error'));
       }
     }
@@ -445,7 +341,7 @@ const Orders: React.FC = () => {
         }
       }
 
-      let logs = order.logs || [];
+      const logs = order.logs || [];
       if (oldOrder && oldOrder.status !== order.status) {
         logs.push({
           timestamp: Date.now(),
@@ -474,6 +370,7 @@ const Orders: React.FC = () => {
       await updateOrderData(order.id!, updatedLocal);
       setShowDetailModal(null);
       toast.success(t('orders.os_sync_success'), { id: toastId });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error("Error updating order", err);
       toast.error(err.message || t('messages.error'), { id: toastId });

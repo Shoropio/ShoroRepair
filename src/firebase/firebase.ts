@@ -1,4 +1,4 @@
-import { initializeApp, getApp, getApps } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
 import type { Analytics } from 'firebase/analytics';
@@ -61,6 +61,7 @@ const initFirebase = async () => {
       try {
         initializedAnalytics = getAnalytics(initializedApp);
         console.log("System: Google Analytics initialized successfully");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.warn("System: Analytics initialization failed (this is normal in development):", e.message);
       }

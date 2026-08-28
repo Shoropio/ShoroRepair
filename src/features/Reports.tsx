@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../offline/db';
@@ -11,11 +11,11 @@ import {
 	Briefcase,
 	Download,
 	Printer,
-	ChevronDown,
-	Zap,
-	AlertCircle,
+
+
+
 	ArrowUpRight,
-	ArrowDownRight
+
 } from 'lucide-react';
 import {
 	AreaChart,
@@ -25,11 +25,11 @@ import {
 	CartesianGrid,
 	Tooltip,
 	ResponsiveContainer,
-	PieChart,
-	Pie,
-	Cell,
-	BarChart,
-	Bar
+
+
+
+
+
 } from 'recharts';
 import { formatCurrency, formatDate } from '../utils/format/formatUtils';
 import { Button, Card, Badge } from '../components';
@@ -39,7 +39,7 @@ import { usePermissions } from '../hooks/usePermissions';
 const Reports: React.FC = () => {
 	const { t } = useTranslation();
 	const { hasPermission } = usePermissions();
-	const [timeRange, setTimeRange] = useState('30d');
+
 
 	const data = useLiveQuery(async () => {
 		const orders = await db.orders.where('deleted').equals(0).toArray();
@@ -51,6 +51,7 @@ const Reports: React.FC = () => {
 		const partsCost = orders.flatMap(o => o.parts || []).reduce((acc, p) => acc + (p.price * p.quantity), 0);
 
 		// Chart data preparation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const dailyData = orders.reduce((acc: any, o) => {
 			const day = formatDate(o.createdAt).split(' ')[0];
 			if (!acc[day]) acc[day] = { date: day, revenue: 0, orders: 0 };
@@ -93,7 +94,7 @@ const Reports: React.FC = () => {
 		}
 	};
 
-	const COLORS = ['#1a73e8', '#34a853', '#fbbc04', '#ea4335', '#a142f4'];
+
 
 	if (!data) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">{t('reports.compiling_stats')}</div>;
 

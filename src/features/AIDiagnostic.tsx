@@ -5,23 +5,23 @@ import { db } from '../offline/db';
 import {
     BrainCircuit,
     Zap,
-    Send,
+
     Sparkles,
     Cpu,
     Microscope,
     Clock,
-    CheckCircle2,
-    AlertCircle,
-    Smartphone,
+
+
+
     Search,
-    Wrench,
+
     Stars,
     Ghost,
     Lightbulb
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { GoogleGenAI } from '@google/genai';
-import { Button, Input, Card, Badge } from '../components';
+import { Button, Card} from '../components';
 import { decryptSecret } from '../lib/crypto';
 
 const AI_MODELS = [
@@ -46,6 +46,7 @@ const AIDiagnostic: React.FC = () => {
             .toArray()
         , [searchQuery]);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const runDiagnostic = async (order?: any) => {
         const settings = (await db.settings.toArray())[0];
         const geminiApiKey = settings?.geminiApiKey ? await decryptSecret(settings.geminiApiKey) : null;
@@ -74,6 +75,7 @@ const AIDiagnostic: React.FC = () => {
                 setResult(content);
                 setProcessTime(elapsed);
                 toast.success(t('ai.diagnostic_completed'));
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error('AI Error:', err);
                 if (err.message?.includes('quota') || err.message?.includes('429')) {

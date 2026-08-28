@@ -15,8 +15,8 @@ import {
     History,
     ShieldCheck,
     RefreshCw,
-    Search,
-    Filter
+
+
 } from 'lucide-react';
 import { Card, Badge, Button, Pagination } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
@@ -30,7 +30,7 @@ const ActivityPage: React.FC = () => {
     const itemsPerPage = 20;
 
     const activities = useLiveQuery(async () => {
-        let query = db.activity_logs.orderBy('timestamp').reverse();
+        const query = db.activity_logs.orderBy('timestamp').reverse();
 
         if (filter !== 'all') {
             return await query.filter(a => a.entity === filter).limit(500).toArray();
@@ -63,15 +63,15 @@ const ActivityPage: React.FC = () => {
         return 'bg-gray-50 text-gray-500 border-gray-100';
     };
 
-    const getEntityBadge = (entity: string) => {
-        const colors: Record<string, string> = {
+    const getEntityBadge = (entity: string): 'brand' | 'success' | 'warning' | 'error' | 'slate' => {
+        const colors: Record<string, 'brand' | 'success' | 'warning' | 'error' | 'slate'> = {
             order: 'brand',
-            client: 'emerald',
-            user: 'purple',
-            inventory: 'amber',
-            expense: 'red',
+            client: 'success',
+            user: 'warning',
+            inventory: 'warning',
+            expense: 'error',
             settings: 'slate',
-            sync: 'blue'
+            sync: 'brand'
         };
         return colors[entity] || 'slate';
     };
@@ -150,7 +150,7 @@ const ActivityPage: React.FC = () => {
                                                 {activity.action}
                                             </p>
                                             <div className="flex items-center gap-3">
-                                                <Badge variant={getEntityBadge(activity.entity) as any} size="xs" className="px-3 py-0.5 font-black uppercase tracking-widest shadow-sm">
+                                                <Badge variant={getEntityBadge(activity.entity)} size="xs" className="px-3 py-0.5 font-black uppercase tracking-widest shadow-sm">
                                                     {activity.entity}
                                                 </Badge>
                                                 {activity.details && (

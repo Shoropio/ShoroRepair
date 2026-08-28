@@ -17,9 +17,11 @@ export interface DuplicateReport {
  * Scans a table for duplicate syncIds and keeps only the most recent version
  */
 async function cleanTableDuplicates(tableName: string): Promise<DuplicateReport> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const table = (db as any)[tableName];
     const allRecords = await table.toArray();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const syncIdMap = new Map<string, any[]>();
     let duplicatesFound = 0;
     let recordsCleaned = 0;
@@ -47,7 +49,7 @@ async function cleanTableDuplicates(tableName: string): Promise<DuplicateReport>
             records.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
             // Keep the first (most recent), delete the rest
-            const toKeep = records[0];
+
             const toDelete = records.slice(1);
 
             for (const duplicate of toDelete) {
@@ -107,10 +109,12 @@ export async function validateDataIntegrity(): Promise<boolean> {
     let allValid = true;
 
     for (const tableName of tables) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const table = (db as any)[tableName];
         const records = await table.toArray();
 
         // Check for missing syncIds
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const missingSync = records.filter((r: any) => !r.syncId);
         if (missingSync.length > 0) {
             console.error(`${tableName}: ${missingSync.length} records missing syncId`);
@@ -118,6 +122,7 @@ export async function validateDataIntegrity(): Promise<boolean> {
         }
 
         // Check for duplicate syncIds
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const syncIds = records.map((r: any) => r.syncId).filter(Boolean);
         const uniqueSyncIds = new Set(syncIds);
         if (syncIds.length !== uniqueSyncIds.size) {
@@ -138,15 +143,18 @@ export async function validateDataIntegrity(): Promise<boolean> {
  */
 export async function generateIntegrityReport() {
     const tables = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses'];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const report: any = {
         timestamp: new Date().toISOString(),
         tables: {}
     };
 
     for (const tableName of tables) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const table = (db as any)[tableName];
         const records = await table.toArray();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const syncIds = records.map((r: any) => r.syncId).filter(Boolean);
         const uniqueSyncIds = new Set(syncIds);
 

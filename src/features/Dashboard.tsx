@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, {  } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { db } from '../offline/db';
@@ -7,7 +7,7 @@ import {
   ClipboardCheck,
   Clock,
   CheckCircle2,
-  Zap,
+
   Activity,
   ArrowRight,
   Plus,
@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 const Dashboard: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+	usePermissions();
 
   const data = useLiveQuery(async () => {
     const orders = await db.orders.where('deleted').equals(0).toArray();

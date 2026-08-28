@@ -4,17 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import {
 	Shield,
 	User,
-	Lock,
-	Mail,
+
+
 	Check,
 	ArrowRight,
 	Building,
 	Cloud,
 	Sparkles,
 	Zap,
-	History,
+
 	Key,
-	Smartphone,
+
 	Database,
 	Globe,
 	ShieldCheck
@@ -94,7 +94,7 @@ const Setup: React.FC = () => {
 
 			await login(formData.username, formData.password);
 			setStep(3);
-		} catch (error) {
+		} catch (_error) {
 			toast.error(t('setup.deploy_failed'));
 		} finally {
 			setIsLoading(false);
@@ -111,7 +111,7 @@ const Setup: React.FC = () => {
 				}
 				toast.success(t('setup.cloud_linked'));
 			}
-		} catch (e) {
+		} catch (_e) {
 			toast.error(t('setup.google_api_error'));
 		}
 	};
@@ -136,7 +136,7 @@ const Setup: React.FC = () => {
 					setStep(2);
 				}
 			}
-		} catch (error) {
+		} catch (_error) {
 			toast.error(t('setup.restore_failed'));
 		} finally {
 			setIsLoading(false);
@@ -152,7 +152,7 @@ const Setup: React.FC = () => {
 			toast.success(t('setup.system_ready'));
 			navigate('/');
 			setTimeout(() => window.location.reload(), 1500);
-		} catch (error) {
+		} catch (_error) {
 			navigate('/');
 			window.location.reload();
 		}

@@ -9,10 +9,10 @@ import {
     getDocs,
     query,
     where,
-    writeBatch,
-    Timestamp,
-    getDoc,
-    serverTimestamp
+
+
+
+
 } from 'firebase/firestore';
 
 const DEBUG = import.meta.env.DEV;
@@ -50,6 +50,7 @@ export class SyncManager {
     private static instance: SyncManager;
     private status: SyncStatus = 'idle';
     private listeners: ((status: SyncStatus) => void)[] = [];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     private syncInterval: any = null;
 
     private constructor() {
@@ -162,6 +163,7 @@ export class SyncManager {
             });
 
             this.updateStatus('idle');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Sync failed:', error);
 
@@ -189,10 +191,12 @@ export class SyncManager {
 
     private async hasPendingChanges(): Promise<boolean> {
         for (const tableInfo of TABLES_TO_SYNC) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const table = (db as any)[tableInfo.name];
             // Records flagged as a conflict are intentionally held back from the
             // push until a human reconciles them, so they must not count as pending
             // (otherwise sync would loop forever re-flagging the same conflict).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const count = await table.where('synced').equals(0).and((r: any) => r.conflict !== 1).count();
             if (count > 0) return true;
         }
@@ -200,6 +204,7 @@ export class SyncManager {
     }
 
     private async syncTable(dexieTablename: string, firestoreCollection: string, userId: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const table = (db as any)[dexieTablename];
         const colRef = collection(firestore, 'users_data', userId, firestoreCollection);
 
@@ -291,10 +296,10 @@ export class SyncManager {
 
             // Never upload local-only secrets (e.g. the PBKDF2 password hash) or
             // transient UI flags (conflict) to the cloud.
-            const { id, password, conflict, ...dataToPush } = item;
+            const { id: _id, password: _password, conflict: _conflict, ...dataToPush } = item;
 
             await withRetry(() => setDoc(docRef, { ...dataToPush, synced: 1 }));
-            // Update local record with synced flag and clear any conflict marker.
+            // Update local record with synced flag and clear unknown conflict marker.
             // Keep the version aligned with what was just pushed.
             await table.update(item.id, { synced: 1, conflict: 0, version: item.version });
         }

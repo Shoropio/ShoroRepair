@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import { ServiceOrder, Client, CompanySettings, MessageLog, OrderStatus } from '../../types';
+import { ServiceOrder} from '../../types';
 import { db } from '../../offline/db';
 import { handlePrint } from './printUtils';
 import { generateBarcode } from '../barcode/barcodeUtils';
@@ -31,6 +31,7 @@ const formatPdfAmount = (amount: number): string => {
     });
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const drawCurrencyText = (doc: any, amount: number, rightX: number, y: number, color: number[] = [71, 85, 105]) => {
     const amountText = formatPdfAmount(amount);
     doc.setTextColor(color[0], color[1], color[2]);
@@ -47,6 +48,7 @@ export const generateEntryTicket = async (order: ServiceOrder) => {
     const doc = new jsPDF({
         unit: 'mm',
         format: [80, 200] // Thermal roll width
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
 
     const margin = 5;
@@ -76,13 +78,14 @@ export const generateEntryTicket = async (order: ServiceOrder) => {
 
         // Add small QR linking to the order
         try {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
             const qrText = (settings as any).website ? `${(settings as any).website}/orders/${order.id || order.orderNumber}` : `OS:${order.orderNumber}`;
             const qrData = await generateQRCode(qrText, { width: 300, margin: 1 });
             const qrSize = 20; // mm
             const qrX = (80 - qrSize) / 2; // center on thermal width
             doc.addImage(qrData, 'PNG', qrX, y, qrSize, qrSize);
             y += qrSize + 4;
-        } catch (e) {
+        } catch (_e) {
             // non-fatal
         }
     } catch (e) {
@@ -122,6 +125,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
     const settings = settingsArray[0];
     if (!client || !settings) return;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doc = new jsPDF() as any;
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -149,7 +153,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
             } else {
                 throw new Error("Logo data empty");
             }
-        } catch (e) {
+        } catch (_e) {
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(24);
             doc.setFont('helvetica', 'bold');
@@ -265,6 +269,7 @@ export const generateInvoice = async (order: ServiceOrder, action: 'download' | 
         }
     });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalY = (doc as any).lastAutoTable.finalY + 10;
 
     // Totals Area

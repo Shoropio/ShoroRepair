@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-    Shield,
+
     ShieldCheck,
     ShieldAlert,
     Save,
@@ -16,14 +16,14 @@ import {
     Trash2,
     DollarSign,
     UserCheck,
-    Cpu,
-    Zap,
-    Key,
+
+
+
     Activity,
     LockKeyhole,
     Fingerprint
 } from 'lucide-react';
-import { Card, Button, Badge } from '../components';
+import { Card, Button} from '../components';
 import { ROLES_CONFIG, RolePermissions, UserRole } from '../types';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
@@ -41,7 +41,7 @@ const Roles: React.FC = () => {
         if (saved) {
             try {
                 setConfig(JSON.parse(saved));
-            } catch (e) {
+            } catch (_e) {
                 setConfig(ROLES_CONFIG);
             }
         }
@@ -80,6 +80,7 @@ const Roles: React.FC = () => {
         }
     };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const permissionList: { key: keyof RolePermissions; label: string; icon: any; category: string }[] = [
         { key: 'canViewReports', label: t('roles.intel_biz'), icon: Eye, category: t('roles.categories.data') },
         { key: 'canManageInventory', label: t('roles.asset_management'), icon: Package, category: t('roles.categories.operations') },

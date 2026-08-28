@@ -9,8 +9,7 @@ interface TableSkeletonProps {
 
 const TableSkeleton: React.FC<TableSkeletonProps> = ({
     columns = 4,
-    rows = 6,
-    title = 'Cargando datos...'
+    rows = 6
 }) => {
     return (
         <div className="space-y-8 animate-in">

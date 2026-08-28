@@ -21,7 +21,7 @@ const mem = new Map<string, string>();
 
 const { db } = await import('../offline/db');
 const { listOrders, createOrder, updateOrderData, softDeleteOrder } = await import('./orders.repository');
-const { ServiceOrder } = await import('../types') as any;
+import { ServiceOrder } from '../types';
 
 function makeOrder(): ServiceOrder {
 	return {

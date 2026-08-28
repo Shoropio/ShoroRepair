@@ -64,6 +64,7 @@ export class RepairDB extends Dexie {
         if (!Array.isArray(order.parts)) order.parts = [];
         order.laborCost = Number(order.laborCost) || 0;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const partsTotal = order.parts.reduce((acc: number, part: any) => {
           return acc + ((Number(part.price) || 0) * (Number(part.quantity) || 0));
         }, 0);
@@ -87,6 +88,7 @@ export class RepairDB extends Dexie {
     const tableNames = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses', 'activity_logs'];
 
     tableNames.forEach(tableName => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const table = this.table(tableName as any);
 
       table.hook('creating', (primKey, obj) => {
@@ -104,21 +106,23 @@ export class RepairDB extends Dexie {
         }, 1000);
       });
 
-      table.hook('updating', (mods: any, primKey, obj, transaction) => {
-        if (Object.keys(mods).length === 1 && mods.hasOwnProperty('synced')) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+      table.hook('updating', (mods: any, primKey, obj, _transaction) => {
+        if (Object.keys(mods).length === 1 && Object.prototype.hasOwnProperty.call(mods, 'synced')) {
           return undefined;
         }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updates: any = {};
-        if (!mods.hasOwnProperty('updatedAt')) {
+        if (!Object.prototype.hasOwnProperty.call(mods, 'updatedAt')) {
           updates.updatedAt = Date.now();
         }
-        if (!mods.hasOwnProperty('synced')) {
+        if (!Object.prototype.hasOwnProperty.call(mods, 'synced')) {
           updates.synced = 0;
         }
         // Increment the revision unless this update is itself carrying a version
         // (e.g. a pull that applies a remote record with its own version).
-        if (!mods.hasOwnProperty('version')) {
+        if (!Object.prototype.hasOwnProperty.call(mods, 'version')) {
           updates.version = (obj?.version || 0) + 1;
         }
 
@@ -132,7 +136,7 @@ export class RepairDB extends Dexie {
         return { ...mods, ...updates };
       });
 
-      table.hook('deleting', (primKey, obj) => {
+      table.hook('deleting', (_primKey, _obj) => {
         // Trigger sync after deletion
         setTimeout(() => {
           import('./sync').then(({ syncManager }) => {

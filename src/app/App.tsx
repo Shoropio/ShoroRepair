@@ -27,7 +27,7 @@ import {
   Shield,
   Bell,
   Sparkles,
-  Plus
+
 } from 'lucide-react';
 
 import Dashboard from '../features/Dashboard';
@@ -123,7 +123,7 @@ const AppContent: React.FC = () => {
       }
     };
     checkSetup();
-  }, [location.pathname]);
+    }, [location.pathname, navigate]);
 
   if (isLoading) {
     return (
@@ -149,6 +149,7 @@ const AppContent: React.FC = () => {
 
   if (user && location.pathname === '/login') return <Navigate to="/" replace />;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const NavItem: React.FC<{ to: string, icon: any, label: string, roles?: string[] }> = ({ to, icon: Icon, label, roles }) => {
     const isActive = location.pathname === to;
     if (roles && user && !roles.includes(user.role)) return null;

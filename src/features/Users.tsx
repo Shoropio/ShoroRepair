@@ -7,21 +7,21 @@ import {
 	Plus,
 	Trash2,
 	Edit2,
-	Shield,
-	User,
-	Hammer,
-	Check,
+
+
+
+
 	Lock,
 	Settings2,
 	Users as UsersIcon,
-	ShieldCheck,
-	Cpu,
-	Activity,
-	Smartphone,
+
+
+
+
 	Search,
 	List,
 	LayoutGrid,
-	MoreVertical,
+
 	ToggleLeft,
 	ToggleRight
 } from 'lucide-react';
@@ -93,7 +93,7 @@ const UsersPage: React.FC = () => {
 				toast.success(t('users.new_operator_success'));
 			}
 			closeModal();
-		} catch (error) {
+		} catch (_error) {
 			toast.error(t('common.sync_error'));
 		}
 	};

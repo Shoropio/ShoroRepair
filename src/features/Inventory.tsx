@@ -9,19 +9,19 @@ import {
   Package,
   Trash2,
   Edit2,
-  AlertCircle,
+
   Archive,
-  ArrowRight,
-  TrendingUp,
+
+
   LayoutGrid,
   List,
-  Printer,
-  Download,
+
+
   QrCode,
   Tag
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrency, formatDate } from '../utils/format/formatUtils';
+import { formatCurrency} from '../utils/format/formatUtils';
 import { handlePrint } from '../utils/print/printUtils';
 import { generateQRCode } from '../utils/barcode/qrUtils';
 import { generateBarcode } from '../utils/barcode/barcodeUtils';
@@ -109,7 +109,7 @@ const Inventory: React.FC = () => {
         toast.success(`${t('messages.created')} (SKU: ${finalSku})`);
       }
       closeModal();
-    } catch (error) {
+    } catch (_error) {
       toast.error(t('messages.error'));
     }
   };
@@ -186,7 +186,7 @@ const Inventory: React.FC = () => {
         const barcodeData = generateBarcode(part.sku || part.name, { height: 40, displayValue: false, margin: 0 });
         // Moved up to reduce gap with title, reduced height to 6mm
         doc.addImage(barcodeData, 'PNG', x + 5, y + 10.5, w - 10, 6);
-      } catch (e) {
+      } catch (_e) {
         doc.setFontSize(6);
         doc.text("BARCODE ERROR", centerX, y + 13, { align: 'center' });
       }
