@@ -72,7 +72,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
               if (id.includes('@google/genai')) return 'ai';
               if (id.includes('recharts') || id.includes('d3')) return 'charts';
-              if (id.includes('jspdf')) return 'pdf';
               if (id.includes('dexie')) return 'db';
               if (id.includes('lucide-react') || id.includes('sonner')) return 'ui';
               if (id.includes('qrcode') || id.includes('jsbarcode')) return 'barcode';

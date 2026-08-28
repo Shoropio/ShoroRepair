@@ -23,12 +23,26 @@ export default tseslint.config(
 		},
 		rules: {
 			...reactHooks.configs.recommended.rules,
-			'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-			// Warn (not error) so the gate surfaces issues without blocking CI on
-			// the large existing codebase; tighten later as debt is paid down.
-			'@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-			'@typescript-eslint/no-explicit-any': 'off',
+			'react-refresh/only-export-components': ['error', { allowConstantExport: true }],
+			// Error-level: unused vars are a real defect signal in this codebase.
+			// Catch-clause bindings are ignored via caughtErrorsIgnorePattern (so
+			// `catch (_err)` is fine); rename real catch vars with a `_` prefix.
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }
+			],
+			// Kept as a warning (not error) so the first fix pass is tractable;
+			// the codebase uses `any` in many legacy spots. Promote to error later.
+			'@typescript-eslint/no-explicit-any': 'warn',
 			'@typescript-eslint/no-empty-object-type': 'off'
+		}
+	},
+	// Test files legitimately lean on loose typing for mocks/fixtures; the
+	// `any` rule is lexical-only there (no runtime impact).
+	{
+		files: ['**/*.test.ts', '**/*.test.tsx'],
+		rules: {
+			'@typescript-eslint/no-explicit-any': 'off'
 		}
 	}
 );
