@@ -86,12 +86,14 @@ npm run dev
 
 Accede a `http://localhost:3000`. El sistema detectará que es una instalación nueva y lanzará el **Setup Wizard**.
 
-Credenciales de administrador por defecto para entorno local:
+Credenciales de administrador por defecto para entorno local (solo en instalación automática):
 
 ```text
 Usuario: admin
 Contraseña: 123
 ```
+
+> ⚠️ Por seguridad, la contraseña del administrador por defecto está **hasheada (PBKDF2)** y el sistema **obliga a cambiarla** en el primer inicio de sesión. Las contraseñas y los secretos (API keys, tokens) se almacenan cifrados en el dispositivo; nunca en texto plano.
 
 ### 4. Build para Producción (Web)
 
@@ -157,9 +159,11 @@ Desde Android Studio, puedes ejecutar la app en un emulador o dispositivo físic
 
 ## 🛡️ Seguridad y Datos
 
-* **Cifrado Local**: Los datos sensibles viven en el dispositivo del usuario.
+* **Cifrado en reposo (dispositivo)**: Las contraseñas se almacenan hasheadas con PBKDF2-SHA256 (salt aleatorio). Las API keys y los tokens (p. ej. Google Drive, Gemini) se cifran con AES-GCM usando una clave por dispositivo. La base de datos local (IndexedDB/Dexie) en sí no está cifrada de extremo a extremo; los datos "viven" en el dispositivo del usuario y no viajan a servidores de terceros salvo tu propio Google Drive o tu propio backend.
 * **Sin Servidor Central**: Tú eres dueño de tus datos. No dependen de servidores de terceros (salvo tu propio Google Drive).
-* **Roles y Permisos**: Sistema RBAC (Role-Based Access Control) para Administradores, Técnicos y Recepcionistas.
+* **Roles y Permisos (RBAC)**: Sistema de roles para Administradores, Técnicos y Recepcionistas. **Nota:** en modo local/offline el RBAC se aplica en el cliente; quien tenga acceso físico al dispositivo e IndexedDB puede modificar su rol. Para despliegues multiusuario en la nube, la autorización debe reforzarse en el servidor (Firestore Rules / backend).
+* **Protección de login**: bloqueo temporal por intentos fallidos (5 intentos → 5 min de bloqueo) para mitigar fuerza bruta local.
+* **API keys en cliente**: Las llamadas directas a APIs externas (p. ej. Gemini) exponen la key en el dispositivo. Para ocultarlas por completo, usa un proxy/backend que retenga la credencial. Restringe además la key en la consola del proveedor (por app/dominio).
 
 ---
 © 2026 Shoropio Corporation. Todos los derechos reservados.

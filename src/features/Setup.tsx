@@ -24,6 +24,7 @@ import { db } from '../offline/db';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { syncManager } from '../offline/sync';
+import { hashPassword } from '../lib/crypto';
 
 const Setup: React.FC = () => {
 	const { t } = useTranslation();
@@ -62,7 +63,7 @@ const Setup: React.FC = () => {
 			await db.users.add({
 				fullName: formData.fullName,
 				username: formData.username,
-				password: formData.password,
+				password: await hashPassword(formData.password),
 				role: 'Admin',
 				active: true,
 				createdAt: Date.now(),

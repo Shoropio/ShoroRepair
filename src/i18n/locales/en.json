@@ -385,7 +385,9 @@
         "logo_error": "Error processing logo",
         "global_sync": "Global configuration synchronized",
         "profile_updated": "Operator profile updated",
-        "advertencia": "Warning"
+        "advertencia": "Warning",
+        "change_required_title": "Password change required",
+        "change_required_subtitle": "You must set a secure password before continuing"
     },
     "activity": {
         "title": "Activity Log",
@@ -501,7 +503,7 @@
         "security_signature": "Security Signature",
         "access_system": "Access System",
         "social_mfa": "Social Multi-Factor",
-        "authorized_access": "Authorized Access Point ShoroRepair",
+        "authorized_access": "© 2026 Shoropio Corporation. All rights reserved.",
         "enterprise_system": "Enterprise Management System",
         "error": "Incorrect credentials or inactive user",
         "fill_fields": "Please complete all fields",

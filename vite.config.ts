@@ -57,10 +57,6 @@ export default defineConfig(({ mode }) => {
         }
       })
     ],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -71,12 +67,24 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router-dom'],
-            charts: ['recharts'],
-            pdf: ['jspdf', 'jspdf-autotable'],
-            db: ['dexie', 'dexie-react-hooks'],
-            ui: ['lucide-react', 'sonner']
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              if (id.includes('firebase') || id.includes('@firebase')) return 'firebase';
+              if (id.includes('@google/genai')) return 'ai';
+              if (id.includes('recharts') || id.includes('d3')) return 'charts';
+              if (id.includes('jspdf')) return 'pdf';
+              if (id.includes('dexie')) return 'db';
+              if (id.includes('lucide-react') || id.includes('sonner')) return 'ui';
+              if (id.includes('qrcode') || id.includes('jsbarcode')) return 'barcode';
+              if (id.includes('i18next')) return 'i18n';
+              if (
+                id.includes('react-router') ||
+                id.includes('react-dom') ||
+                id.includes('/react/') ||
+                id.includes('scheduler')
+              ) return 'vendor';
+              return 'vendor';
+            }
           }
         }
       }

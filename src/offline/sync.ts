@@ -1,7 +1,7 @@
 import { db } from './db';
-import { toast } from 'sonner';
 import { firestore } from '../firebase/firestore';
 import { auth } from '../firebase/auth';
+import { resolveRemoteChange } from './syncResolution';
 import {
     collection,
     doc,
@@ -14,6 +14,26 @@ import {
     getDoc,
     serverTimestamp
 } from 'firebase/firestore';
+
+const DEBUG = import.meta.env.DEV;
+const dlog = (...args: unknown[]) => { if (DEBUG) console.log(...args); };
+
+/** Bounded exponential backoff for transient Firebase/network errors. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 1000): Promise<T> {
+    let lastErr: unknown;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            return await fn();
+        } catch (e) {
+            lastErr = e;
+            if (i < attempts - 1) {
+                await new Promise(r => setTimeout(r, baseDelayMs * 2 ** i));
+            }
+        }
+    }
+    throw lastErr;
+}
+
 
 const TABLES_TO_SYNC = [
     { name: 'clients', firestore: 'clients' },
@@ -89,18 +109,27 @@ export class SyncManager {
 
     public async sync() {
         if (this.status === 'syncing') return;
+        await this.performSync();
+    }
+
+    private async performSync(depth = 0): Promise<void> {
         if (!navigator.onLine) {
             this.updateStatus('offline');
             return;
         }
-        if (!auth.currentUser) {
-            toast.info("Modo Local: Vincula tu cuenta de Google en Ajustes para sincronizar con la nube.");
+        if (!auth || !auth.currentUser) {
+            dlog('Modo Local: Vincula tu cuenta de Google en Ajustes para sincronizar con la nube.');
+            return;
+        }
+        if (!firestore) {
+            dlog('Firebase/Firestore no está configurado; omitiendo sincronización con la nube.');
+            this.updateStatus('idle');
             return;
         }
 
         this.updateStatus('syncing');
 
-        console.log('Starting sync...');
+        dlog('Starting sync...');
 
         const startTime = Date.now();
 
@@ -120,7 +149,7 @@ export class SyncManager {
                 await this.syncTable(tableInfo.name, tableInfo.firestore, userId);
             }
 
-            console.log('Sync completed successfully.');
+            dlog('Sync completed successfully.');
 
             // Log sync completion
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -146,18 +175,106 @@ export class SyncManager {
             });
 
             this.updateStatus('error');
+            return;
         }
+
+        // A change may have been written (or flagged as conflict) while this cycle
+        // was running. Without this re-check those changes would be silently
+        // skipped until the next edit/online event. Cap depth to avoid loops.
+        if (depth < 3 && (await this.hasPendingChanges())) {
+            dlog('Pending changes detected after sync, running another cycle.');
+            await this.performSync(depth + 1);
+        }
+    }
+
+    private async hasPendingChanges(): Promise<boolean> {
+        for (const tableInfo of TABLES_TO_SYNC) {
+            const table = (db as any)[tableInfo.name];
+            // Records flagged as a conflict are intentionally held back from the
+            // push until a human reconciles them, so they must not count as pending
+            // (otherwise sync would loop forever re-flagging the same conflict).
+            const count = await table.where('synced').equals(0).and((r: any) => r.conflict !== 1).count();
+            if (count > 0) return true;
+        }
+        return false;
     }
 
     private async syncTable(dexieTablename: string, firestoreCollection: string, userId: string) {
         const table = (db as any)[dexieTablename];
         const colRef = collection(firestore, 'users_data', userId, firestoreCollection);
 
-        console.log(`Syncing table: ${dexieTablename}`);
+        dlog(`Syncing table: ${dexieTablename}`);
 
-        // 1. Push local changes to Firebase
+        const lastSyncKey = `lastSync_${dexieTablename}`;
+        const lastSyncTimestamp = Number(localStorage.getItem(lastSyncKey) || 0);
+
+        // 1. Pull remote changes FIRST so that a local pending (unsynced) edit can
+        //    be detected as a conflict against a newer remote write. If we pushed
+        //    before pulling we would flip `synced` to 1 and the conflict branch in
+        //    resolveRemoteChange would become unreachable, silently overwriting the
+        //    user's local change (data loss).
+        const q = query(colRef, where('updatedAt', '>', lastSyncTimestamp));
+        const remoteDocs = await withRetry(() => getDocs(q));
+        dlog(`Pulling ${remoteDocs.docs.length} remote changes...`);
+
+        let maxUpdatedAt = lastSyncTimestamp;
+
+        for (const docSnap of remoteDocs.docs) {
+            const remoteData = docSnap.data() as Record<string, unknown>;
+
+            // Ensure remote data has syncId
+            if (!remoteData.syncId) {
+                console.error(`Remote document missing syncId: ${docSnap.id}`);
+                continue;
+            }
+
+            const localItem = (await table.where('syncId').equals(remoteData.syncId).first()) as Record<string, unknown> | null;
+
+            if ((remoteData.updatedAt as number) > maxUpdatedAt) {
+                maxUpdatedAt = remoteData.updatedAt as number;
+            }
+
+            const resolution = resolveRemoteChange(localItem, remoteData, dexieTablename);
+
+            switch (resolution.kind) {
+                case 'add':
+                    dlog(`Adding new item from cloud: ${remoteData.syncId}`);
+                    await table.add(resolution.data);
+                    break;
+                case 'apply':
+                    await table.put(resolution.data);
+                    break;
+                case 'conflict':
+                    // Keep local as source of truth, but flag the conflict and persist
+                    // the remote payload in the activity log so a human can reconcile.
+                    // We never silently discard the remote change, and the flagged
+                    // record is skipped by the push phase below (so the local edit is
+                    // preserved until reconciled) instead of being overwritten.
+                    console.warn(`Sync conflict on ${dexieTablename}/${resolution.syncId}: keeping local, remote retained for review.`);
+                    if (localItem) {
+                        await table.update(localItem.id, { conflict: 1, synced: 0 });
+                    }
+                    await db.activity_logs.add({
+                        userName: auth.currentUser?.email || 'Sistema',
+                        action: 'Conflicto de sincronización',
+                        entity: dexieTablename,
+                        entityId: resolution.syncId,
+                        details: `Cambio local sin sincronizar vs remoto más reciente. Copia remota conservada: ${JSON.stringify(resolution.remote).slice(0, 2000)}`,
+                        timestamp: Date.now()
+                    });
+                    break;
+                case 'keep':
+                    // Local is newer or equal -> no-op.
+                    break;
+            }
+        }
+
+        localStorage.setItem(lastSyncKey, maxUpdatedAt.toString());
+
+        // 2. Push local changes to Firebase (skip records already flagged as a
+        //    conflict so the local edit survives for human reconciliation).
         const unsyncedItems = await table.where('synced').equals(0).toArray();
-        console.log(`Pushing ${unsyncedItems.length} unsynced items...`);
+        dlog(`Pushing ${unsyncedItems.length} unsynced items...`);
 
         for (const item of unsyncedItems) {
             // Ensure syncId exists (should be auto-generated by hooks)
@@ -166,66 +283,23 @@ export class SyncManager {
                 continue;
             }
 
+            // A conflict was flagged during the pull above: keep the local edit and
+            // let a human resolve it rather than blindly pushing over the remote.
+            if (item.conflict === 1) continue;
+
             const docRef = doc(colRef, item.syncId);
 
-            // PUSH ALWAYS: Updload local version to Firebase as truth
-            const { id, ...dataToPush } = item;
+            // Never upload local-only secrets (e.g. the PBKDF2 password hash) or
+            // transient UI flags (conflict) to the cloud.
+            const { id, password, conflict, ...dataToPush } = item;
 
-            await setDoc(docRef, { ...dataToPush, synced: 1 });
-            // Update local record with synced flag
-            await table.update(item.id, { synced: 1 });
+            await withRetry(() => setDoc(docRef, { ...dataToPush, synced: 1 }));
+            // Update local record with synced flag and clear any conflict marker.
+            // Keep the version aligned with what was just pushed.
+            await table.update(item.id, { synced: 1, conflict: 0, version: item.version });
         }
 
-        // 2. Pull changes from Firebase (Incremental)
-        const lastSyncKey = `lastSync_${dexieTablename}`;
-        const lastSyncTimestamp = Number(localStorage.getItem(lastSyncKey) || 0);
-
-        const q = query(colRef, where('updatedAt', '>', lastSyncTimestamp));
-        const remoteDocs = await getDocs(q);
-        console.log(`Pulling ${remoteDocs.docs.length} remote changes...`);
-
-        let maxUpdatedAt = lastSyncTimestamp;
-
-        for (const docSnap of remoteDocs.docs) {
-            const remoteData = docSnap.data();
-
-            // Ensure remote data has syncId
-            if (!remoteData.syncId) {
-                console.error(`Remote document missing syncId: ${docSnap.id}`);
-                continue;
-            }
-
-            const localItem = await table.where('syncId').equals(remoteData.syncId).first();
-
-            if (remoteData.updatedAt > maxUpdatedAt) {
-                maxUpdatedAt = remoteData.updatedAt;
-            }
-
-            if (!localItem) {
-                // New item from cloud - add it
-                console.log(`Adding new item from cloud: ${remoteData.syncId}`);
-                await table.add({ ...remoteData, synced: 1 });
-            } else if (localItem.synced === 1 && remoteData.updatedAt > (localItem.updatedAt || 0)) {
-                // DONT OVERWRITE LOCAL if sync status is 0 (pending local changes)
-                const mergedData = {
-                    ...localItem,
-                    ...remoteData,
-                    id: localItem.id,
-                    synced: 1
-                };
-
-                if (dexieTablename === 'orders') {
-                    mergedData.photos = remoteData.photos || localItem.photos;
-                    mergedData.customerSignature = remoteData.customerSignature || localItem.customerSignature;
-                    mergedData.invoiceUrl = remoteData.invoiceUrl || localItem.invoiceUrl;
-                }
-
-                await table.put(mergedData);
-            }
-        }
-
-        localStorage.setItem(lastSyncKey, maxUpdatedAt.toString());
-        console.log(`${dexieTablename} sync complete`);
+        dlog(`${dexieTablename} sync complete`);
     }
 }
 

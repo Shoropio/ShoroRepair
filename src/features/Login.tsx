@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, ShieldCheck, ArrowRight, Smartphone, Cpu, Key, Globe, Sparkles } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { Input, Button, Card } from '../components';
 
 const Login: React.FC = () => {
@@ -32,7 +32,6 @@ const Login: React.FC = () => {
 				navigate('/');
 			} else {
 				setError(t('login.error'));
-				toast.error(t('login.error'));
 			}
 		} catch (err: any) {
 			setError(t('login.critical_conn_error'));
@@ -150,7 +149,6 @@ const Login: React.FC = () => {
 					</p>
 				</div>
 			</div>
-			<Toaster position="top-center" richColors />
 		</div>
 	);
 };

@@ -1,5 +1,7 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
+import type { FirebaseApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
+import type { Analytics } from 'firebase/analytics';
 import { db } from '../offline/db';
 
 const getFirebaseConfig = async () => {
@@ -37,8 +39,8 @@ const getFirebaseConfig = async () => {
 };
 
 // Initialize Firebase only if we have an API key
-let app: any = null;
-let analytics: any = null;
+let app: FirebaseApp | null = null;
+let analytics: Analytics | null = null;
 
 const initFirebase = async () => {
   const firebaseConfig = await getFirebaseConfig();

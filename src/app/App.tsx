@@ -44,6 +44,7 @@ import RolesPage from '../features/Roles';
 import AIDiagnostic from '../features/AIDiagnostic';
 import Login from '../features/Login';
 import SetupPage from '../features/Setup';
+import ForcePasswordChange from '../features/ForcePasswordChange';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { SyncStatusIndicator } from '../components';
@@ -140,6 +141,10 @@ const AppContent: React.FC = () => {
         <Route path="*" element={location.pathname === '/setup' ? null : <Navigate to="/login" replace />} />
       </Routes>
     );
+  }
+
+  if (user.mustChangePassword) {
+    return <ForcePasswordChange />;
   }
 
   if (user && location.pathname === '/login') return <Navigate to="/" replace />;

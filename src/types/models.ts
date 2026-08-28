@@ -6,6 +6,10 @@ export interface SyncEntity {
     updatedAt?: number;
     synced?: number;
     deleted?: number;
+    /** Monotonic revision used for deterministic conflict detection during sync. */
+    version?: number;
+    /** Flag set when a local pending change conflicts with a newer remote version. */
+    conflict?: number;
 }
 
 export interface Client extends SyncEntity {
@@ -91,6 +95,7 @@ export interface AppUser extends SyncEntity {
     fullName: string;
     email?: string;
     password?: string;
+    mustChangePassword?: boolean;
     role: UserRole;
     active: boolean;
 }

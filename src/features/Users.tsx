@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../offline/db';
-import { AppUser, ROLES_CONFIG, UserRole } from '../types';
+import { AppUser, UserRole } from '../types';
 import { toast } from 'sonner';
 import {
 	Plus,
@@ -29,6 +28,14 @@ import {
 import { Card, Button, Input, Modal, Badge, Select } from '../components';
 import { usePermissions } from '../hooks/usePermissions';
 import { Navigate, Link } from 'react-router-dom';
+import {
+	listActiveUsers,
+	findByUsername,
+	createUser,
+	updateUser,
+	setUserActive,
+	softDeleteUser
+} from '../repositories/users.repository';
 
 const UsersPage: React.FC = () => {
 	const { t } = useTranslation();
@@ -48,12 +55,7 @@ const UsersPage: React.FC = () => {
 		active: true
 	});
 
-	const users = useLiveQuery(async () => {
-		const all = await db.users.toArray();
-		if (!search) return all;
-		const q = search.toLowerCase();
-		return all.filter(u => u.fullName.toLowerCase().includes(q) || u.username.toLowerCase().includes(q));
-	}, [search]);
+  const users = useLiveQuery(() => listActiveUsers(search), [search]);
 
 	if (!hasPermission('canManageUsers')) return <Navigate to="/" replace />;
 
@@ -65,31 +67,29 @@ const UsersPage: React.FC = () => {
 		}
 
 		try {
-			const existingUser = await db.users.where('username').equals(formData.username!).first();
+			const existingUser = await findByUsername(formData.username!);
 			if (existingUser && (!editingUser || existingUser.id !== editingUser.id)) {
 				toast.error(t('users.user_exists'));
 				return;
 			}
 
 			if (editingUser) {
-				const updateData: any = {
-					username: formData.username,
-					fullName: formData.fullName,
-					role: formData.role,
-					active: formData.active,
-					updatedAt: Date.now(),
-					synced: 0
-				};
-				if (formData.password) updateData.password = formData.password;
-				await db.users.update(editingUser.id!, updateData);
+				await updateUser(editingUser.id!, {
+					username: formData.username!,
+					fullName: formData.fullName!,
+					role: formData.role!,
+					active: formData.active!,
+					password: formData.password || undefined
+				});
 				toast.success(t('users.credentials_updated'));
 			} else {
-				await db.users.add({
-					...formData,
-					createdAt: Date.now(),
-					updatedAt: Date.now(),
-					synced: 0
-				} as AppUser);
+				await createUser({
+					username: formData.username!,
+					fullName: formData.fullName!,
+					role: formData.role!,
+					active: formData.active!,
+					password: formData.password
+				});
 				toast.success(t('users.new_operator_success'));
 			}
 			closeModal();
@@ -112,14 +112,14 @@ const UsersPage: React.FC = () => {
 
 	const toggleStatus = async (user: AppUser) => {
 		if (user.role === 'Admin') return;
-		await db.users.update(user.id!, { active: !user.active, updatedAt: Date.now(), synced: 0 });
+		await setUserActive(user.id!, !user.active);
 		toast.success(t('users.status_updated', { status: !user.active ? t('users.status.active') : t('users.status.inactive') }));
 	};
 
-	const handleDelete = async (user: AppUser) => {
+ 	const handleDelete = async (user: AppUser) => {
 		if (user.role === 'Admin') return;
 		if (confirm(`${t('users.delete_confirm')} ${user.fullName}?`)) {
-			await db.users.delete(user.id!);
+			await softDeleteUser(user.id!);
 			toast.success(t('users.operator_removed'));
 		}
 	};

@@ -22,5 +22,9 @@ initializeData().then(() => {
   );
 }).catch(err => {
   console.error('Initialization failed:', err);
-  rootElement.innerHTML = `<div style="padding: 20px; color: red;">Error al iniciar: ${err.message}</div>`;
+  const div = document.createElement('div');
+  div.style.padding = '20px';
+  div.style.color = 'red';
+  div.textContent = `Error al iniciar: ${err?.message ?? err}`;
+  rootElement.appendChild(div);
 });

@@ -1,6 +1,12 @@
 import { Dexie, type Table } from 'dexie';
 import { Client, ServiceOrder, Part, AppUser, CompanySettings, Expense, ActivityLog, DeviceType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { hashPassword, needsRehash } from '../lib/crypto';
+
+export interface AppKeyRecord {
+  id: string;
+  key: Uint8Array;
+}
 
 export class RepairDB extends Dexie {
   clients!: Table<Client>;
@@ -10,6 +16,7 @@ export class RepairDB extends Dexie {
   settings!: Table<CompanySettings>;
   expenses!: Table<Expense>;
   activity_logs!: Table<ActivityLog>;
+  appkeys!: Table<AppKeyRecord>;
 
   constructor() {
     super('RepairMasterDB');
@@ -66,6 +73,17 @@ export class RepairDB extends Dexie {
       });
     });
 
+    this.version(10).stores({
+      clients: '++id, syncId, name, phone, email, updatedAt, synced, deleted',
+      orders: '++id, syncId, orderNumber, invoiceNumber, clientId, status, deviceType, createdAt, technicianId, paymentStatus, updatedAt, synced, deleted',
+      inventory: '++id, syncId, name, sku, updatedAt, synced, deleted',
+      users: '++id, syncId, username, role, updatedAt, synced, deleted',
+      settings: '++id, syncId, updatedAt, synced, deleted',
+      expenses: '++id, syncId, date, category, updatedAt, synced, deleted',
+      activity_logs: '++id, syncId, userId, entity, timestamp, updatedAt, synced, deleted',
+      appkeys: 'id'
+    });
+
     const tableNames = ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses', 'activity_logs'];
 
     tableNames.forEach(tableName => {
@@ -76,6 +94,7 @@ export class RepairDB extends Dexie {
         obj.updatedAt = obj.updatedAt || Date.now();
         if (obj.synced === undefined) obj.synced = 0;
         obj.deleted = obj.deleted === undefined ? 0 : obj.deleted;
+        if (obj.version === undefined) obj.version = 1;
 
         // Trigger sync after creation
         setTimeout(() => {
@@ -96,6 +115,11 @@ export class RepairDB extends Dexie {
         }
         if (!mods.hasOwnProperty('synced')) {
           updates.synced = 0;
+        }
+        // Increment the revision unless this update is itself carrying a version
+        // (e.g. a pull that applies a remote record with its own version).
+        if (!mods.hasOwnProperty('version')) {
+          updates.version = (obj?.version || 0) + 1;
         }
 
         // Trigger sync after update
@@ -122,16 +146,45 @@ export class RepairDB extends Dexie {
 
 export const db = new RepairDB();
 
+// Multi-tab / PWA safety. When another tab opens a newer DB version, IndexedDB
+// fires `versionchange` on the existing connections; if we don't close, the
+// upgrade is blocked and every other tab stalls. We release the handle and let
+// the UI show a "reload to continue" prompt via the dispatched events.
+db.on('versionchange', () => {
+    console.warn('db: schema upgrade in another tab detected; closing this connection.');
+    db.close();
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('db-versionchange'));
+    }
+});
+
+db.on('blocked', () => {
+    console.warn('db: upgrade blocked by another open tab; close other tabs or reload to continue.');
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('db-blocked'));
+    }
+});
+
 export async function initializeData() {
-  const adminExists = await db.users.where('role').equals('Admin').count();
-  if (adminExists === 0) {
+  // Garantizar que el usuario 'admin' exista y tenga un hash válido.
+  // Corrige hashes heredados (texto plano o formato bugeado) recreándolos.
+  const defaultAdmin = await db.users.where('username').equals('admin').first();
+  if (!defaultAdmin) {
     console.log('System: Creating default Admin user.');
     await db.users.add({
       username: 'admin',
       fullName: 'Administrador Local',
       role: 'Admin',
       active: true,
-      password: '123'
+      password: await hashPassword('123'),
+      mustChangePassword: true
+    });
+  } else if (needsRehash(defaultAdmin.password)) {
+    await db.users.update(defaultAdmin.id!, {
+      password: await hashPassword('123'),
+      mustChangePassword: true,
+      updatedAt: Date.now(),
+      synced: 0
     });
   }
 

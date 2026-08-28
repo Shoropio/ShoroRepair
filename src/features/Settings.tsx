@@ -34,6 +34,7 @@ import { CompanySettings, AppUser } from '../types';
 import { useAuth } from '../hooks/useAuth';
 import { toast } from 'sonner';
 import { Button, Input, Card, Modal, Badge, Select } from '../components';
+import { hashPassword, encryptSecret, decryptSecret } from '../lib/crypto';
 import {
 	getEstimatedBackupSize,
 	BackupData,
@@ -51,11 +52,40 @@ import {
 import { compressImage } from '../services/upload.service';
 import { cleanAllDuplicates } from '../offline/conflict';
 
+// Fields that must never be persisted in plaintext in IndexedDB. They are
+// encrypted with the device key (AES-GCM) at rest, mirroring geminiApiKey.
+const SENSITIVE_SETTINGS_KEYS = ['smtpPassword', 'haciendaPass', 'p12Pin', 'p12Cert'] as const;
+
+async function encryptSensitiveSettings<T>(obj: T): Promise<T> {
+	const out: Record<string, unknown> = { ...(obj as Record<string, unknown>) };
+	for (const key of SENSITIVE_SETTINGS_KEYS) {
+		const value = out[key];
+		if (typeof value === 'string' && value.length > 0) {
+			out[key] = await encryptSecret(value);
+		}
+	}
+	return out as T;
+}
+
+async function decryptSensitiveSettings<T>(obj: T | null | undefined): Promise<T | null> {
+	if (!obj) return null;
+	const out: Record<string, unknown> = { ...(obj as Record<string, unknown>) };
+	for (const key of SENSITIVE_SETTINGS_KEYS) {
+		const value = out[key];
+		if (typeof value === 'string' && value.length > 0) {
+			out[key] = await decryptSecret(value);
+		}
+	}
+	return out as T;
+}
+
+
 const Settings: React.FC = () => {
 	const { t } = useTranslation();
 	const { user, updateUser, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken } = useAuth();
 	const [company, setCompany] = useState<CompanySettings | null>(null);
 	const [profile, setProfile] = useState<Partial<AppUser>>({});
+	const [geminiKey, setGeminiKey] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<'profile' | 'company' | 'cloud' | 'advanced'>('profile');
 
@@ -68,9 +98,10 @@ const Settings: React.FC = () => {
 	useEffect(() => {
 		const loadData = async () => {
 			const settings = await db.settings.toArray();
-			setCompany(settings[0] || null);
+			setCompany(await decryptSensitiveSettings(settings[0]) || null);
+			setGeminiKey(await decryptSecret(settings[0]?.geminiApiKey) || '');
 			if (user) {
-				setProfile({ fullName: user.fullName, password: user.password });
+				setProfile({ fullName: user.fullName, password: '' });
 			}
 			setIsLoading(false);
 			const size = await getEstimatedBackupSize();
@@ -97,7 +128,9 @@ const Settings: React.FC = () => {
 	const saveCompanySettings = async (e?: React.FormEvent) => {
 		if (e) e.preventDefault();
 		if (!company || !company.id) return;
-		await db.settings.update(company.id, { ...company, updatedAt: Date.now(), synced: 0 });
+		const encKey = geminiKey ? await encryptSecret(geminiKey) : '';
+		const encrypted = await encryptSensitiveSettings({ ...company, geminiApiKey: encKey });
+		await db.settings.update(company.id, { ...encrypted, updatedAt: Date.now(), synced: 0 });
 		if (company.language) {
 			i18n.changeLanguage(company.language);
 		}
@@ -106,11 +139,15 @@ const Settings: React.FC = () => {
 
 	const updateMyProfile = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!user || !profile.fullName || !profile.password) return;
-		const updatedUser = { ...user, fullName: profile.fullName, password: profile.password };
-		await db.users.update(user.id!, { ...updatedUser, updatedAt: Date.now(), synced: 0 });
-		updateUser(updatedUser);
+		if (!user || !profile.fullName) return;
+		const updateData: Partial<AppUser> = { ...user, fullName: profile.fullName, updatedAt: Date.now(), synced: 0 };
+		if (profile.password) {
+			updateData.password = await hashPassword(profile.password);
+		}
+		await db.users.update(user.id!, updateData);
+		updateUser(updateData as AppUser);
 		toast.success(t('settings.profile_updated'));
+		if (profile.password) setProfile(p => ({ ...p, password: '' }));
 	};
 
 	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">{t('settings.loading')}</div>;
@@ -315,7 +352,7 @@ const Settings: React.FC = () => {
 								<p className="text-xs text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
 									{t('settings.ai_desc')}
 								</p>
-								<Input label="Google Gemini API Key" type="password" value={company.geminiApiKey} onChange={e => setCompany({ ...company, geminiApiKey: e.target.value })} placeholder={t('ai.write_symptoms')} leftIcon={<Key size={16} />} />
+								<Input label="Google Gemini API Key" type="password" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} placeholder={t('ai.write_symptoms')} leftIcon={<Key size={16} />} />
 								<a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black text-[#1a73e8] uppercase hover:underline">
 									{t('settings.get_api_key')} <ExternalLink size={12} />
 								</a>

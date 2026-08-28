@@ -385,7 +385,9 @@
         "logo_error": "Error al procesar logo",
         "global_sync": "Configuración global sincronizada",
         "profile_updated": "Perfil de operador actualizado",
-        "advertencia": "Advertencia"
+        "advertencia": "Advertencia",
+        "change_required_title": "Cambio de contraseña requerido",
+        "change_required_subtitle": "Debe definir una contraseña segura antes de continuar"
     },
     "activity": {
         "title": "Registro de actividad",
@@ -501,7 +503,7 @@
         "security_signature": "Contraseña",
         "access_system": "Iniciar Sesión",
         "social_mfa": "Social Login",
-        "authorized_access": "© 2026 Shoropio Corporation",
+        "authorized_access": "© 2026 Shoropio Corporation. Todos los derechos reservados.",
         "enterprise_system": "Shoropio Corp.",
         "error": "Credenciales incorrectas o usuario inactivo",
         "fill_fields": "Por favor completa todos los campos",

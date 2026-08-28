@@ -40,6 +40,8 @@
     "node_modules",
     "dist",
     "src-tauri",
-    "android"
+    "android",
+    "src/**/*.test.ts",
+    "vitest.config.ts"
   ]
 }

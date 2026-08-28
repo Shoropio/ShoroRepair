@@ -1,13 +1,20 @@
 rules_version = '2';
 
 service cloud.firestore {
+	// Colecciones permitidas bajo el nodo privado de cada usuario.
+	// Deben coincidir con TABLES_TO_SYNC en src/offline/sync.ts
+	function allowedCollections() {
+		return ['clients', 'orders', 'inventory', 'users', 'settings', 'expenses'];
+	}
+
 	match /databases/{database}/documents {
-		// Reglas para los datos de usuarios
+		// Reglas para los datos de usuarios (un usuario solo accede a su propio nodo)
 		match /users_data/{userId}/{collection}/{document=**} {
-			// Solo el usuario autenticado puede leer y escribir sus propios datos
-			allow read, write: if request.auth != null && request.auth.uid == userId;
+			allow read, write: if request.auth != null
+				&& request.auth.uid == userId
+				&& collection in allowedCollections();
 		}
-		
+
 		// Regla por defecto: denegar todo acceso no especificado
 		match /{document=**} {
 			allow read, write: if false;

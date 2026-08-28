@@ -51,6 +51,14 @@ import { useDebounce } from '../hooks/useDebounce';
 import { TableSkeleton, Button, Input, Badge, Card, Modal, Select, Pagination } from '../components';
 import { uploadImage, compressImage } from '../services/upload.service';
 import { usePermissions } from '../hooks/usePermissions';
+import { getInstallId } from '../lib/device';
+import {
+	listOrders,
+	getOrder,
+	createOrder,
+	updateOrderData,
+	softDeleteOrder
+} from '../repositories/orders.repository';
 
 const SignaturePad: React.FC<{ onSave: (data: string) => void, onClear: () => void }> = ({ onSave, onClear }) => {
   const { t } = useTranslation();
@@ -220,21 +228,10 @@ const Orders: React.FC = () => {
     }
   };
 
-  const orders = useLiveQuery(async () => {
-    const collection = db.orders.orderBy('createdAt').reverse();
-    const result = await collection.toArray();
-    return result.filter(order => {
-      if (order.deleted === 1) return false;
-      if (filterStatus !== 'all' && order.status !== filterStatus) return false;
-      if (!debouncedSearch) return true;
-      const q = debouncedSearch.toLowerCase();
-      return (
-        (order.orderNumber && order.orderNumber.toLowerCase().includes(q)) ||
-        (order.brand && order.brand.toLowerCase().includes(q)) ||
-        (order.model && order.model.toLowerCase().includes(q))
-      );
-    });
-  }, [filterStatus, debouncedSearch]);
+  const orders = useLiveQuery(
+    () => listOrders({ status: filterStatus, search: debouncedSearch }),
+    [filterStatus, debouncedSearch]
+  );
 
   const clients = useLiveQuery(() => db.clients.toArray());
   const technicians = useLiveQuery(() => db.users.where('role').equals('Technician').toArray());
@@ -269,7 +266,7 @@ const Orders: React.FC = () => {
       try {
         toast.promise(
           (async () => {
-            const compressed = await Promise.all(files.map(f => compressImage(f)));
+            const compressed = await Promise.all(files.map((f: File) => compressImage(f)));
             const uploadedUrls = await Promise.all(compressed.map((img, i) => {
               const path = `temp/photos/${Date.now()}_${i}.jpg`;
               return uploadImage(img, path);
@@ -333,7 +330,7 @@ const Orders: React.FC = () => {
         synced: 0
       };
 
-      await db.orders.add(newOrder);
+      await createOrder(newOrder);
       setShowModal(false);
       setFormData({
         priority: Priority.MEDIUM,
@@ -369,7 +366,7 @@ const Orders: React.FC = () => {
             }
           }
         }
-        await db.orders.update(order.id, { deleted: 1, synced: 0 });
+        await softDeleteOrder(order.id);
         toast.success(t('messages.deleted'));
         setShowDetailModal(null);
       } catch (err) {
@@ -396,7 +393,7 @@ const Orders: React.FC = () => {
     };
 
     const currentLogs = order.messageLogs || [];
-    await db.orders.update(order.id!, {
+    await updateOrderData(order.id!, {
       messageLogs: [...currentLogs, newLog],
       updatedAt: Date.now(),
       synced: 0
@@ -414,12 +411,14 @@ const Orders: React.FC = () => {
       if ((order.status === OrderStatus.READY || order.status === OrderStatus.DELIVERED) && !invoiceNumber) {
         const settings = (await db.settings.toArray())[0];
         if (settings) {
-          invoiceNumber = `${settings.invoicePrefix}-${settings.nextInvoiceNumber.toString().padStart(5, '0')}`;
+          // Device-scoped prefix avoids invoice-number collisions across devices
+          // that were offline and incremented the shared counter independently.
+          invoiceNumber = `${settings.invoicePrefix}-${getInstallId()}-${settings.nextInvoiceNumber.toString().padStart(5, '0')}`;
           await db.settings.update(settings.id!, { nextInvoiceNumber: settings.nextInvoiceNumber + 1 });
         }
       }
 
-      const oldOrder = await db.orders.get(order.id!);
+      const oldOrder = await getOrder(order.id!);
       const partDiff = new Map<number, number>();
 
       if (oldOrder && oldOrder.parts) {
@@ -472,7 +471,7 @@ const Orders: React.FC = () => {
         synced: 0
       };
 
-      await db.orders.update(order.id!, updatedLocal);
+      await updateOrderData(order.id!, updatedLocal);
       setShowDetailModal(null);
       toast.success(t('orders.os_sync_success'), { id: toastId });
     } catch (err: any) {

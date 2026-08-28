@@ -1,8 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../offline/db';
 import { Client } from '../types';
+import {
+	createClient,
+	updateClient,
+	softDeleteClient,
+	searchActiveClients
+} from '../repositories/clients.repository';
 import {
   UserPlus,
   Search,
@@ -43,12 +48,7 @@ const Clients: React.FC = () => {
     taxId: ''
   });
 
-  const clients = useLiveQuery(() =>
-    db.clients
-      .filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.email?.toLowerCase().includes(search.toLowerCase()) || c.phone?.includes(search))
-      .reverse()
-      .sortBy('updatedAt')
-    , [search]);
+  const clients = useLiveQuery(() => searchActiveClients(search), [search]);
 
   const stats = useMemo(() => {
     if (!clients) return { total: 0, recentlyAdded: 0, withOrders: 0 };
@@ -75,19 +75,10 @@ const Clients: React.FC = () => {
 
     try {
       if (editingClient) {
-        await db.clients.update(editingClient.id!, {
-          ...formData,
-          updatedAt: Date.now(),
-          synced: 0
-        });
+        await updateClient(editingClient.id!, formData);
         toast.success(t('clients.update_success'));
       } else {
-        await db.clients.add({
-          ...formData,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          synced: 0
-        } as Client);
+        await createClient(formData);
         toast.success(t('clients.create_success'));
       }
       closeModal();
@@ -116,7 +107,7 @@ const Clients: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (confirm(t('clients.delete_confirm'))) {
-      await db.clients.delete(id);
+      await softDeleteClient(id);
       toast.success(t('messages.deleted'));
     }
   };

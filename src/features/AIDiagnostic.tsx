@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import { GoogleGenAI } from '@google/genai';
 import { Button, Input, Card, Badge } from '../components';
+import { decryptSecret } from '../lib/crypto';
 
 const AI_MODELS = [
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Veloz)' },
@@ -35,6 +36,7 @@ const AIDiagnostic: React.FC = () => {
     const [customPrompt, setCustomPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<string | null>(null);
+    const [processTime, setProcessTime] = useState<number | null>(null);
 
     const orders = useLiveQuery(() =>
         db.orders
@@ -46,37 +48,42 @@ const AIDiagnostic: React.FC = () => {
 
     const runDiagnostic = async (order?: any) => {
         const settings = (await db.settings.toArray())[0];
-        if (!settings?.geminiApiKey) {
+        const geminiApiKey = settings?.geminiApiKey ? await decryptSecret(settings.geminiApiKey) : null;
+        if (!geminiApiKey) {
             toast.error(t('settings.api_key_missing') || "API Key missing");
             return;
         }
 
-        setIsLoading(true);
-        try {
-            const genAI = new GoogleGenAI({ apiKey: settings.geminiApiKey });
+            setIsLoading(true);
+            setProcessTime(null);
+            try {
+                const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
 
-            const prompt = order
-                ? `${t('orders.diagnosis_ai_instruction', { brand: order.brand, model: order.model, issue: order.issueDescription })}`
-                : customPrompt;
+                const prompt = order
+                    ? `${t('orders.diagnosis_ai_instruction', { brand: order.brand, model: order.model, issue: order.issueDescription })}`
+                    : customPrompt;
 
-            const result = await genAI.models.generateContent({
-                model: selectedModel,
-                contents: prompt
-            });
+                const start = Date.now();
+                const result = await genAI.models.generateContent({
+                    model: selectedModel,
+                    contents: prompt
+                });
+                const elapsed = (Date.now() - start) / 1000;
 
-            const content = result.text || "";
-            setResult(content);
-            toast.success(t('ai.diagnostic_completed'));
-        } catch (err: any) {
-            console.error('AI Error:', err);
-            if (err.message?.includes('quota') || err.message?.includes('429')) {
-                toast.error(t('ai.quota_exceeded_error'));
-            } else {
-                toast.error(t('ai.generic_error'));
+                const content = result.text || "";
+                setResult(content);
+                setProcessTime(elapsed);
+                toast.success(t('ai.diagnostic_completed'));
+            } catch (err: any) {
+                console.error('AI Error:', err);
+                if (err.message?.includes('quota') || err.message?.includes('429')) {
+                    toast.error(t('ai.quota_exceeded_error'));
+                } else {
+                    toast.error(t('ai.generic_error'));
+                }
+            } finally {
+                setIsLoading(false);
             }
-        } finally {
-            setIsLoading(false);
-        }
     };
 
     return (
@@ -214,7 +221,7 @@ const AIDiagnostic: React.FC = () => {
 
                                 <div className="mt-10 pt-6 border-t border-gray-100 dark:border-white/5 flex justify-between items-center">
                                     <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase">
-                                        <Clock size={12} /> {t('ai.processed_in', { time: 1.2 })}
+                                        <Clock size={12} /> {t('ai.processed_in', { time: processTime != null ? processTime.toFixed(1) : '—' })}
                                     </div>
                                     <Button variant="outline" className="rounded-none px-6 py-2 text-[10px] font-black uppercase" onClick={() => setResult(null)}>{t('ai.new_query')}</Button>
                                 </div>
