@@ -18,6 +18,29 @@ import {
 const DEBUG = import.meta.env.DEV;
 const dlog = (...args: unknown[]) => { if (DEBUG) console.log(...args); };
 
+/**
+ * Firestore rejects `undefined` values (and empty array slots) anywhere in
+ * document data, while optional fields on synced entities are routinely
+ * `undefined`. Deep-strip them before pushing so a single missing optional
+ * field can never break the whole sync cycle.
+ */
+export function sanitizeForFirestore<T>(value: T): T {
+    if (Array.isArray(value)) {
+        return value
+            .map(sanitizeForFirestore)
+            .filter((v) => v !== undefined) as unknown as T;
+    }
+    if (value !== null && typeof value === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+            const cleaned = sanitizeForFirestore(v);
+            if (cleaned !== undefined) out[key] = cleaned;
+        }
+        return out as T;
+    }
+    return value;
+}
+
 /** Bounded exponential backoff for transient Firebase/network errors. */
 async function withRetry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 1000): Promise<T> {
     let lastErr: unknown;
@@ -317,7 +340,7 @@ export class SyncManager {
             // transient UI flags (conflict) to the cloud.
             const { id: _id, password: _password, conflict: _conflict, ...dataToPush } = item;
 
-            await withRetry(() => setDoc(docRef, { ...dataToPush, synced: 1 }));
+            await withRetry(() => setDoc(docRef, { ...sanitizeForFirestore(dataToPush), synced: 1 }));
             // Update local record with synced flag and clear unknown conflict marker.
             // Keep the version aligned with what was just pushed.
             await table.update(item.id as number, { synced: 1, conflict: 0, version: item.version });

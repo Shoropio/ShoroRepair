@@ -71,7 +71,7 @@ vi.mock('../firebase/auth', () => ({
 
 // Import AFTER mocks + globals are registered.
 const { db } = await import('./db');
-const { syncManager } = await import('./sync');
+const { syncManager, sanitizeForFirestore } = await import('./sync');
 
 function seedRemote(collection: string, data: any) {
 	const path = h.pathOf('users_data', 'u1', collection);
@@ -148,5 +148,45 @@ describe('SyncManager (firebase mocked, indexeddb mocked)', () => {
 
 		const after = await db.clients.get(id);
 		expect(after?.deleted).toBe(1);
+	});
+
+	it('push strips undefined values so Firestore never rejects the document', async () => {
+		const id = await db.clients.add({
+			name: 'Demo', phone: '8888', email: undefined, taxId: undefined, touched: undefined, synced: 0
+		} as any);
+
+		await syncManager.sync();
+
+		const local = await db.clients.get(id);
+		const remote = h.store.get(h.pathOf('users_data', 'u1', 'clients'))?.get(local!.syncId);
+		expect(remote).toBeDefined();
+		expect(remote).not.toHaveProperty('taxId');
+		expect(remote).not.toHaveProperty('email');
+		expect(remote).not.toHaveProperty('touched');
+		expect(remote.name).toBe('Demo');
+		expect(remote.synced).toBe(1);
+	});
+});
+
+describe('sanitizeForFirestore', () => {
+	it('deep-strips undefined values from objects and arrays', () => {
+		const input = {
+			taxId: undefined,
+			name: 'Ana',
+			parts: [
+				{ price: 10, qty: undefined },
+				{ price: undefined, tag: 'x' }
+			],
+			logs: [{ status: 'OK', note: undefined, tech: 't1' }],
+			meta: { a: 1, b: undefined, arr: [1, undefined, 2] }
+		};
+		const out = sanitizeForFirestore(input) as any;
+
+		expect(out).not.toHaveProperty('taxId');
+		expect(out.name).toBe('Ana');
+		expect(out.parts[0]).toEqual({ price: 10 });
+		expect(out.parts[1]).toEqual({ tag: 'x' });
+		expect(out.logs[0]).toEqual({ status: 'OK', tech: 't1' });
+		expect(out.meta).toEqual({ a: 1, arr: [1, 2] });
 	});
 });
