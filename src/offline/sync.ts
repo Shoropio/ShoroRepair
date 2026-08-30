@@ -51,6 +51,7 @@ export class SyncManager {
     private status: SyncStatus = 'idle';
     private listeners: ((status: SyncStatus) => void)[] = [];
     private syncInterval: ReturnType<typeof setInterval> | null = null;
+    private syncCooldownUntil = 0;
 
     private constructor() {
         window.addEventListener('online', () => this.updateStatus(navigator.onLine ? 'idle' : 'offline'));
@@ -101,7 +102,9 @@ export class SyncManager {
 
     // New method to trigger sync on data changes
     public async syncOnChange() {
-        // Debounce: only sync if not already syncing
+        // Ignore changes produced by our own sync writes (see sync() cooldown)
+        // to avoid an endless re-sync loop.
+        if (Date.now() < this.syncCooldownUntil) return;
         if (this.status !== 'syncing') {
             await this.sync();
         }
@@ -109,7 +112,14 @@ export class SyncManager {
 
     public async sync() {
         if (this.status === 'syncing') return;
-        await this.performSync();
+        try {
+            await this.performSync();
+        } finally {
+            // The Dexie change-hooks in db.ts defer their syncOnChange() call by
+            // ~1s. Extend a cooldown past the cycle so those trailing calls
+            // (raised by our own writes) are swallowed instead of looping forever.
+            this.syncCooldownUntil = Date.now() + 2000;
+        }
     }
 
     private async performSync(depth = 0): Promise<void> {
@@ -239,6 +249,19 @@ export class SyncManager {
 
             switch (resolution.kind) {
                 case 'add':
+                    // Avoid creating a duplicate local record when a user with the same
+                    // username already exists (e.g. syncing against a stale/wrong project
+                    // that also seeded an `admin`). Keep the local record as source of truth.
+                    if (dexieTablename === 'users' && remoteData.username) {
+                        const existing = (await table
+                            .where('username')
+                            .equals(remoteData.username as string)
+                            .first()) as Record<string, unknown> | null;
+                        if (existing) {
+                            dlog(`Skipping remote user ${remoteData.username}: local user already exists`);
+                            break;
+                        }
+                    }
                     dlog(`Adding new item from cloud: ${remoteData.syncId}`);
                     await table.add(resolution.data);
                     break;

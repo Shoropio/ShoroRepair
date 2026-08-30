@@ -184,12 +184,20 @@ export async function initializeData() {
       mustChangePassword: true
     });
   } else if (needsRehash(defaultAdmin.password)) {
-    await db.users.update(defaultAdmin.id!, {
-      password: await hashPassword('123'),
-      mustChangePassword: true,
-      updatedAt: Date.now(),
-      synced: 0
-    });
+    // Upgrade legacy/buggy hash formats to PBKDF2 WITHOUT losing the password.
+    // We never reset to the default `123`: a recoverable plaintext hash
+    // (`plain$...`) is re-hashed with the same password; non-recoverable
+    // formats are left as-is and upgraded on next login (re-hash with typed pass).
+    const stored = defaultAdmin.password;
+    const legacyPlain =
+      typeof stored === 'string' && stored.startsWith('plain$') ? stored.slice('plain$'.length) : null;
+    if (legacyPlain !== null) {
+      await db.users.update(defaultAdmin.id!, {
+        password: await hashPassword(legacyPlain),
+        updatedAt: Date.now(),
+        synced: 0
+      });
+    }
   }
 
   const settingsCount = await db.settings.count();

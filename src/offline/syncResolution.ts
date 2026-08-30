@@ -27,7 +27,14 @@ export function resolveRemoteChange(
 	const localUpdatedAt = (localItem?.updatedAt as number) || 0;
 
 	if (!localItem) {
-		return { kind: 'add', data: { ...remoteData, synced: 1 } };
+		const data: Record<string, unknown> = { ...remoteData, synced: 1 };
+		if (dexieTablename === 'users') {
+			// Local authority: never trust a remote password or forced-change flag
+			// (a stale/wrong project could otherwise inject `123` locally).
+			delete data.password;
+			delete data.mustChangePassword;
+		}
+		return { kind: 'add', data };
 	}
 
 	if (localItem.synced === 1 && (remoteData.updatedAt as number) > localUpdatedAt) {
@@ -50,6 +57,7 @@ export function resolveRemoteChange(
 			merged.role = localItem.role;
 			merged.active = localItem.active;
 			merged.password = localItem.password;
+			merged.mustChangePassword = localItem.mustChangePassword;
 		}
 
 		return { kind: 'apply', data: merged };
