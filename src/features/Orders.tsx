@@ -250,25 +250,30 @@ const Orders: React.FC = () => {
     }
   };
 
-  const handleDeleteOrder = async (order: ServiceOrder) => {
+  const handleDeleteOrder = (order: ServiceOrder) => {
     if (!order.id) return;
-    if (confirm(`${t('messages.confirm_delete')} ${order.orderNumber}?`)) {
-      try {
-        if (order.parts && order.parts.length > 0) {
-          for (const part of order.parts) {
-            const invPart = await db.inventory.get(part.partId);
-            if (invPart) {
-              await db.inventory.update(part.partId, { quantity: invPart.quantity + part.quantity });
+    toast.warning(`${t('messages.confirm_delete')} ${order.orderNumber}?`, {
+      action: {
+        label: t('common.delete'),
+        onClick: async () => {
+          try {
+            if (order.parts && order.parts.length > 0) {
+              for (const part of order.parts) {
+                const invPart = await db.inventory.get(part.partId);
+                if (invPart) {
+                  await db.inventory.update(part.partId, { quantity: invPart.quantity + part.quantity });
+                }
+              }
             }
+            await softDeleteOrder(order.id);
+            toast.success(t('messages.deleted'));
+            setShowDetailModal(null);
+          } catch (_err) {
+            toast.error(t('messages.error'));
           }
         }
-        await softDeleteOrder(order.id);
-        toast.success(t('messages.deleted'));
-        setShowDetailModal(null);
-      } catch (_err) {
-        toast.error(t('messages.error'));
       }
-    }
+    });
   };
 
   const notifyWhatsApp = async (order: ServiceOrder) => {

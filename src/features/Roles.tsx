@@ -71,13 +71,18 @@ const Roles: React.FC = () => {
     };
 
     const handleReset = () => {
-        if (confirm(t('roles.confirm_reset'))) {
-            localStorage.removeItem('custom_roles_config');
-            setConfig(ROLES_CONFIG);
-            setIsDirty(false);
-            toast.success(t('roles.config_reset'));
-            setTimeout(() => window.location.reload(), 800);
-        }
+        toast.warning(t('roles.confirm_reset'), {
+            action: {
+                label: t('common.delete'),
+                onClick: () => {
+                    localStorage.removeItem('custom_roles_config');
+                    setConfig(ROLES_CONFIG);
+                    setIsDirty(false);
+                    toast.success(t('roles.config_reset'));
+                    setTimeout(() => window.location.reload(), 800);
+                }
+            }
+        });
     };
 
     const permissionList: { key: keyof RolePermissions; label: string; icon: LucideIcon; category: string }[] = [

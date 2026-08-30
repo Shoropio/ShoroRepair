@@ -132,11 +132,16 @@ const Inventory: React.FC = () => {
     setShowAddModal(true);
   };
 
-  const deletePart = async (id: number) => {
-    if (confirm(t('inventory.delete_confirm'))) {
-      await db.inventory.update(id, { deleted: 1, synced: 0 });
-      toast.success(t('messages.deleted'));
-    }
+  const deletePart = (id: number) => {
+    toast.warning(t('inventory.delete_confirm'), {
+      action: {
+        label: t('common.delete'),
+        onClick: async () => {
+          await db.inventory.update(id, { deleted: 1, synced: 0 });
+          toast.success(t('messages.deleted'));
+        }
+      }
+    });
   };
 
   const generateTag = async (part: Part, action: 'print' | 'download', mode: 'tag' | 'qr' = 'tag') => {

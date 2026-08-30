@@ -105,11 +105,16 @@ const Clients: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm(t('clients.delete_confirm'))) {
-      await softDeleteClient(id);
-      toast.success(t('messages.deleted'));
-    }
+  const handleDelete = (id: number) => {
+    toast.warning(t('clients.delete_confirm'), {
+      action: {
+        label: t('common.delete'),
+        onClick: async () => {
+          await softDeleteClient(id);
+          toast.success(t('messages.deleted'));
+        }
+      }
+    });
   };
 
   if (!clients) return <TableSkeleton columns={4} rows={6} title={t('clients.title')} />;

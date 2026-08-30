@@ -115,11 +115,16 @@ const Expenses: React.FC = () => {
         toast.success(t('messages.saved'));
     };
 
-    const deleteExpense = async (id: number) => {
-        if (confirm(t('expenses.delete_confirm'))) {
-            await db.expenses.update(id, { deleted: 1, synced: 0 });
-            toast.success(t('messages.deleted'));
-        }
+    const deleteExpense = (id: number) => {
+        toast.warning(t('expenses.delete_confirm'), {
+            action: {
+                label: t('common.delete'),
+                onClick: async () => {
+                    await db.expenses.update(id, { deleted: 1, synced: 0 });
+                    toast.success(t('messages.deleted'));
+                }
+            }
+        });
     };
 
     if (!expenses) return <div className="p-10 animate-pulse text-center text-xs font-black text-gray-400 uppercase tracking-widest">{t('messages.loading')}</div>;

@@ -116,12 +116,17 @@ const UsersPage: React.FC = () => {
 		toast.success(t('users.status_updated', { status: !user.active ? t('users.status.active') : t('users.status.inactive') }));
 	};
 
- 	const handleDelete = async (user: AppUser) => {
+ 	const handleDelete = (user: AppUser) => {
 		if (user.role === 'Admin') return;
-		if (confirm(`${t('users.delete_confirm')} ${user.fullName}?`)) {
-			await softDeleteUser(user.id!);
-			toast.success(t('users.operator_removed'));
-		}
+		toast.warning(`${t('users.delete_confirm')} ${user.fullName}?`, {
+			action: {
+				label: t('common.delete'),
+				onClick: async () => {
+					await softDeleteUser(user.id!);
+					toast.success(t('users.operator_removed'));
+				}
+			}
+		});
 	};
 
 	if (!users) return <div className="p-20 text-center animate-pulse text-xs font-black text-gray-400 uppercase tracking-widest">{t('users.validating_registry')}</div>;
