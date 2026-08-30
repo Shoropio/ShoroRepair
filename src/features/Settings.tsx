@@ -44,13 +44,11 @@ import {
 
 
 	downloadBackup,
-
-
-	formatBackupDate,
-	uploadBackupToGoogleDrive
+	formatBackupDate
 } from '../utils/backup/backupUtils';
 import { compressImage } from '../services/upload.service';
 import '../offline/conflict';
+import { seedDemoData } from '../offline/seedDemo';
 
 // Fields that must never be persisted in plaintext in IndexedDB. They are
 // encrypted with the device key (AES-GCM) at rest, mirroring geminiApiKey.
@@ -82,7 +80,7 @@ async function decryptSensitiveSettings<T>(obj: T | null | undefined): Promise<T
 
 const Settings: React.FC = () => {
 	const { t } = useTranslation();
-	const { user, updateUser, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken } = useAuth();
+	const { user, updateUser, loginWithGoogle, unlinkGoogle, firebaseUser } = useAuth();
 	const [company, setCompany] = useState<CompanySettings | null>(null);
 	const [profile, setProfile] = useState<Partial<AppUser>>({});
 	const [geminiKey, setGeminiKey] = useState('');
@@ -203,35 +201,35 @@ const Settings: React.FC = () => {
 
 								<div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5 w-full space-y-4">
 									<div className="flex items-center gap-2 mb-2">
-										<Cloud className={googleAccessToken ? "text-green-500" : "text-gray-400"} size={16} />
+										<Cloud className={firebaseUser ? "text-green-500" : "text-gray-400"} size={16} />
 										<span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-											{googleAccessToken ? "Google Drive Vinculado" : "Google Drive"}
+											{firebaseUser ? `Google: ${firebaseUser.email}` : "Cuenta de Google"}
 										</span>
 									</div>
 
-									{googleAccessToken ? (
+									{firebaseUser ? (
 										<Button
-											variant="outline"
+											variant="danger"
 											size="sm"
-											className="w-full rounded-none border-red-200 text-red-600 hover:bg-red-50 text-[10px] font-bold uppercase py-2"
-											onClick={() => unlinkGoogleDrive()}
+											className="w-full rounded-none text-[10px] font-bold uppercase py-2"
+											onClick={() => unlinkGoogle()}
 										>
 											Desvincular Cuenta
 										</Button>
 									) : (
 										<Button
-											variant="primary"
+											variant="outline"
 											size="sm"
-											className="w-full rounded-none bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-[10px] font-bold uppercase py-2 shadow-sm flex items-center justify-center gap-2"
-											onClick={() => linkGoogleDrive()}
+											className="w-full rounded-none text-[10px] font-bold uppercase py-2 flex items-center justify-center gap-2"
+											onClick={() => loginWithGoogle()}
 										>
-											<svg className="w-4 h-4" viewBox="0 0 24 24">
+											<svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
 												<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
 												<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1.01.69-2.3 1.05-3.71 1.05-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
 												<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
 												<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
 											</svg>
-											Vincular Google
+											Iniciar sesión con Google
 										</Button>
 									)}
 								</div>
@@ -401,32 +399,27 @@ const Settings: React.FC = () => {
 									</div>
 									<div className="flex flex-col sm:flex-row gap-2">
 										<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px]" onClick={() => downloadBackup()} leftIcon={<Download size={14} />}>{t('settings.export_sqlite')}</Button>
-										{googleAccessToken ? (
-											<Button
-												variant="primary"
-												className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] bg-green-600 hover:bg-green-700 border-green-600 shadow-green-500/10"
-												onClick={() => uploadBackupToGoogleDrive(googleAccessToken)}
-												leftIcon={<Cloud size={14} />}
-											>
-												Respaldar en Google Drive
-											</Button>
-										) : (
-											<Button
-												variant="outline"
-												className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] bg-blue-50/50 border-blue-200 text-blue-600"
-												onClick={() => {
-													setActiveTab('profile');
-													toast.info("Vincule su cuenta de Google en la pestaña de Perfil para habilitar respaldos en la nube.");
-												}}
-												leftIcon={<Cloud size={14} />}
-											>
-												Configurar Respaldo Cloud
-											</Button>
-										)}
 									</div>
 								</div>
 
-								<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-none border border-red-100 dark:border-red-900/20">
+								{import.meta.env.DEV && (
+	<div className="flex items-center justify-between p-4 lg:p-6 bg-blue-50/50 dark:bg-blue-900/5 rounded-none border border-blue-200 dark:border-blue-800/30">
+		<div className="space-y-1">
+			<p className="font-bold text-sm uppercase text-gray-700 dark:text-white">Datos de demostración</p>
+			<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Clientes, técnicos, inventario, órdenes y gastos de ejemplo</p>
+		</div>
+		<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-blue-200 text-blue-600 bg-blue-50/50" onClick={async () => {
+			try {
+				const msg = await seedDemoData();
+				toast.success(msg);
+									} catch (_e) {
+				toast.error('Error al cargar datos de demostración');
+			}
+		}}>Cargar datos demo</Button>
+	</div>
+)}
+
+<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-none border border-red-100 dark:border-red-900/20">
 									<div className="space-y-1">
 										<p className="font-bold text-sm uppercase text-red-600">{t('settings.factory_reset_title')}</p>
 										<p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">{t('settings.factory_reset_subtitle')}</p>
