@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import { AppUser } from '../types';
+import { User } from 'firebase/auth';
 
 export interface AuthContextType {
 	user: AppUser | null;
@@ -9,9 +10,8 @@ export interface AuthContextType {
 	isLoading: boolean;
 	updateUser: (updatedUser: AppUser) => void;
 	changePassword: (current: string, next: string) => Promise<boolean>;
-	linkGoogleDrive: () => Promise<string | null>;
-	unlinkGoogleDrive: () => Promise<void>;
-	googleAccessToken: string | null;
+	firebaseUser: User | null;
+	unlinkGoogle: () => Promise<void>;
 }
 
 // Kept in its own module so AuthContext.tsx only exports components/hooks and

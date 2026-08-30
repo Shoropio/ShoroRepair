@@ -29,10 +29,11 @@ import { hashPassword } from '../lib/crypto';
 const Setup: React.FC = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { login, linkGoogleDrive, googleAccessToken, loginWithGoogle } = useAuth();
+	const { login, loginWithGoogle } = useAuth();
 
 	const [step, setStep] = useState(1);
 	const [isLoading, setIsLoading] = useState(false);
+	const [cloudLinked, setCloudLinked] = useState(false);
 
 	const [formData, setFormData] = useState({
 		fullName: '',
@@ -85,7 +86,7 @@ const Setup: React.FC = () => {
 					invoicePrefix: 'FAC',
 					nextInvoiceNumber: 1,
 					inactivityTimeout: 5,
-					cloudSetupCompleted: !!googleAccessToken,
+					cloudSetupCompleted: false,
 					createdAt: Date.now(),
 					updatedAt: Date.now(),
 					synced: 0
@@ -103,12 +104,13 @@ const Setup: React.FC = () => {
 
 	const handleCloudLink = async () => {
 		try {
-			const token = await linkGoogleDrive();
-			if (token) {
+			const success = await loginWithGoogle();
+			if (success) {
 				const settings = await db.settings.toArray();
 				if (settings.length > 0 && settings[0].id) {
 					await db.settings.update(settings[0].id, { cloudSetupCompleted: true });
 				}
+				setCloudLinked(true);
 				toast.success(t('setup.cloud_linked'));
 			}
 		} catch (_e) {
@@ -264,7 +266,7 @@ const Setup: React.FC = () => {
 							</div>
 
 							<div className="flex flex-col items-center gap-6">
-								{googleAccessToken ? (
+								{cloudLinked ? (
 									<div className="w-full bg-emerald-50 dark:bg-emerald-900/10 p-6 rounded-none border-2 border-emerald-100 flex items-center justify-center gap-4 text-emerald-600 font-black uppercase text-xs tracking-widest animate-pulse">
 										<ShieldCheck size={24} /> {t('setup.active_secure')}
 									</div>
@@ -275,7 +277,7 @@ const Setup: React.FC = () => {
 
 							<div className="pt-10 border-t border-gray-100 dark:border-white/5 flex gap-6">
 								<Button variant="ghost" className="flex-1 h-14 rounded-none font-black uppercase tracking-widest text-[10px]" onClick={finishSetup}>{t('setup.skip_cloud')}</Button>
-								<Button variant="primary" className="flex-1 h-14 rounded-none font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" onClick={finishSetup} disabled={!googleAccessToken}>{t('setup.complete_deploy')}</Button>
+								<Button variant="primary" className="flex-1 h-14 rounded-none font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-500/10" 							onClick={finishSetup} disabled={!cloudLinked}>{t('setup.complete_deploy')}</Button>
 							</div>
 						</div>
 					)}

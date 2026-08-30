@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { AuthContext } from './AuthContextValue';
 import { db } from '../offline/db';
 import { AppUser } from '../types';
-import { auth, googleProvider, createGoogleProvider, isFirebaseAuthAvailable } from '../firebase/auth';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, setPersistence, browserLocalPersistence, type User } from 'firebase/auth';
+import { auth, googleProvider, isFirebaseAuthAvailable } from '../firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, setPersistence, browserLocalPersistence, type User } from 'firebase/auth';
 import { syncManager } from '../offline/sync';
 import { toast } from 'sonner';
-import { verifyPassword, hashPassword, needsRehash, encryptSecret, decryptSecret } from '../lib/crypto';
+import { verifyPassword, hashPassword, needsRehash } from '../lib/crypto';
 
 // Logging solo en desarrollo para evitar fuga de información de auth en producción.
 const DEBUG = import.meta.env.DEV;
@@ -44,7 +44,7 @@ const recordLoginFailure = (key: string): { locked: boolean; remaining: number }
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AppUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
+    const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
 
     const completeGoogleLogin = React.useCallback(async (firebaseUser: User): Promise<boolean> => {
         const email = firebaseUser.email || '';
@@ -93,11 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const restoreSession = async (firebaseUser?: User | null) => {
             try {
-                const storedToken = localStorage.getItem('google_drive_token');
-                if (storedToken) {
-                    decryptSecret(storedToken).then(t => setGoogleAccessToken(t));
-                }
-
                 const storedUserId = localStorage.getItem('shoro_user_id');
                 let foundUser = null;
 
@@ -135,21 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Check if auth is a real Firebase Auth instance (has 'app' property) or similar
             // If it's our mock { currentUser: null }, onAuthStateChanged might throw or fail
             if (auth) {
-                getRedirectResult(auth).then(async result => {
-                    if (result?.user) {
-                        const success = await completeGoogleLogin(result.user);
-                        if (success) {
-                            toast.success("Inicio de sesión con Google exitoso.");
-                            syncManager.startSync();
-                        }
-                    }
-                }).catch(error => {
-                    console.error("AuthProvider: Google redirect login error", error.code, error.message);
-                    toast.error("Error de inicio de sesión con Google: " + error.message);
-                });
-
                 unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                     dlog("AuthProvider: Firebase State", firebaseUser ? `Connected: ${firebaseUser.email}` : "Disconnected");
+                    setFirebaseUser(firebaseUser);
                     await restoreSession(firebaseUser);
                 });
             } else {
@@ -308,7 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const loginWithGoogle = React.useCallback(async (): Promise<boolean> => {
         try {
-            dlog("AuthContext: Attempting Google Sign In...");
+            dlog("AuthContext: Attempting Google Sign In (popup)...");
 
             if (!isFirebaseAuthAvailable()) {
                 toast.error("Firebase no está configurado. Agrega las credenciales en .env y reinicia la app.");
@@ -316,88 +299,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             if (!auth) return false;
 
+            await setPersistence(auth, browserLocalPersistence);
             const result = await signInWithPopup(auth, googleProvider);
             const success = await completeGoogleLogin(result.user);
-            if (success) return true;
-            return false;
-
+            if (success) {
+                toast.success("Inicio de sesión con Google exitoso.");
+                // Import local data into Firebase so the cloud stays in sync.
+                syncManager.startSync();
+            }
+            return success;
         } catch (e: unknown) {
             const err = e as { code?: string; message?: string };
-            if (err.code === 'auth/popup-blocked') {
-                dwarn("AuthContext: Google popup blocked, falling back to redirect.");
-                await signInWithRedirect(auth, googleProvider);
-                return false;
-            }
-
             console.error("AuthContext: Google login error", err.code, err.message);
-            // Handle popup closed by user or network error
             toast.error("Error de inicio de sesión con Google: " + err.message);
             return false;
         }
     }, [completeGoogleLogin]);
 
-    const linkGoogleDrive = React.useCallback(async (): Promise<string | null> => {
+
+
+    const unlinkGoogle = React.useCallback(async () => {
         try {
-            if (!isFirebaseAuthAvailable()) {
-                toast.error("Firebase no está configurado. Agrega las credenciales en .env y reinicia la app.");
-                return null;
-            }
-            if (!auth) return null;
-
-            const provider = createGoogleProvider(['https://www.googleapis.com/auth/drive.file']);
-            await setPersistence(auth, browserLocalPersistence); // Ensure persistence
-            const result = await signInWithPopup(auth, provider);
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            const token = credential?.accessToken || null;
-            const firebaseUser = result.user;
-
-            // Update user email to match Google account for sync consistency
-            // This is critical for converting the local "admin" user to a real Google Cloud user
-            if (user && firebaseUser.email) {
-                // Check if ANOTHER user already has this google account linked
-                const conflictUser = await db.users.where('syncId').equals(firebaseUser.uid).first();
-                if (conflictUser && conflictUser.id !== user.id) {
-                    toast.error("Esta cuenta de Google ya está vinculada a otro usuario.");
-                    await signOut(auth); // Sign out of the conflicting google account immediately
-                    return null;
-                }
-
-                dlog("AuthContext: Link Google Account to current user");
-
-                const updatedUser = { ...user };
-                updatedUser.syncId = firebaseUser.uid;
-                updatedUser.fullName = firebaseUser.displayName || user.fullName; // Adopt Google Name if available
-
-                // CRITICAL: If the user is 'admin' (local default), KEEP 'admin' as username so local login persists.
-                // Otherwise (for normal users), update username to email.
-                if (user.username !== 'admin') {
-                    updatedUser.username = firebaseUser.email;
-                }
-
-                // Always update the 'email' field to allow alternate login
-                updatedUser.email = firebaseUser.email;
-
-                await db.users.update(user.id!, updatedUser);
-                setUser(updatedUser);
-                toast.success(`Cuenta vinculada exitosamente: ${firebaseUser.email}`);
-            }
-
-            if (token) {
-                setGoogleAccessToken(token);
-                localStorage.setItem('google_drive_token', await encryptSecret(token));
-            }
-            return token;
-        } catch (error) {
-            console.error("Error linking Google Drive", error);
-            return null;
+            if (auth) await signOut(auth);
+        } catch (e) {
+            dwarn("Google unlink error", e);
         }
-    }, [user, setUser, setGoogleAccessToken]);
-
-    const unlinkGoogleDrive = React.useCallback(async () => {
-        setGoogleAccessToken(null);
-        localStorage.removeItem('google_drive_token');
-        toast.info("Cuenta de Google Desvinculada");
-    }, [setGoogleAccessToken]);
+    }, []);
 
     const logout = React.useCallback(async () => {
         try {
@@ -408,9 +335,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             dwarn("Logout error (likely offline):", e);
         }
         setUser(null);
-        setGoogleAccessToken(null);
         localStorage.removeItem('shoro_user_id');
-        localStorage.removeItem('google_drive_token');
     }, []);
 
     const updateUser = React.useCallback((updatedUser: AppUser) => {
@@ -428,8 +353,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user]);
 
     const value = React.useMemo(() => ({
-        user, login, loginWithGoogle, logout, isLoading, updateUser, changePassword, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken
-    }), [user, login, loginWithGoogle, logout, isLoading, updateUser, changePassword, linkGoogleDrive, unlinkGoogleDrive, googleAccessToken]);
+        user, login, loginWithGoogle, logout, isLoading, updateUser, changePassword, firebaseUser, unlinkGoogle
+    }), [user, login, loginWithGoogle, logout, isLoading, updateUser, changePassword, firebaseUser, unlinkGoogle]);
 
     return (
         <AuthContext.Provider value={value}>
