@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { toast } from 'sonner';
 import { db } from '../offline/db';
+import { purgeActivityLogs } from '../utils/activity/activityUtils';
 import {
     Activity as ActivityIcon,
     User,
@@ -98,6 +100,19 @@ const ActivityPage: React.FC = () => {
                             <p className="text-2xl font-black text-[#1a73e8]">{activities.length}</p>
                         </div>
                     </div>
+                    <Button variant="outline" className="rounded-none px-6 py-4 font-black uppercase text-[10px] tracking-widest border-red-200 text-red-600" leftIcon={<Trash2 size={18} />} onClick={() => {
+                        toast.warning(t('activity.confirm_clear'), {
+                            action: {
+                                label: t('common.delete'),
+                                onClick: async () => {
+                                    const deleted = await purgeActivityLogs(0);
+                                    toast.success(t('activity.cleaned_title'), {
+                                        description: t('activity.cleaned_desc', { count: deleted })
+                                    });
+                                }
+                            }
+                        });
+                    }}>{t('activity.purify')}</Button>
                     <Button variant="outline" className="rounded-none px-6 py-4 font-black uppercase text-[10px] tracking-widest border-gray-200" leftIcon={<RefreshCw size={18} />} onClick={() => window.location.reload()}>{t('activity.real_frequency')}</Button>
                 </div>
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-blue-50 dark:bg-blue-900/10 rounded-none blur-3xl opacity-30"></div>

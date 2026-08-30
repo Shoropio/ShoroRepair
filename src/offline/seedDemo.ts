@@ -8,6 +8,11 @@ interface SeedOptions {
     counts?: { clients?: number; parts?: number; orders?: number; expenses?: number };
 }
 
+export interface DemoSeedResult {
+    loaded: boolean;
+    summary: string;
+}
+
 const DEFAULT_COUNTS = { clients: 300, parts: 150, orders: 800, expenses: 250 };
 
 const FIRST_NAMES = ['María', 'Carlos', 'Lucía', 'Jorge', 'Ana', 'Pedro', 'Sofía', 'Diego', 'Juan', 'Laura', 'Andrés', 'Paula', 'Miguel', 'Camila', 'Luis', 'Valentina', 'José', 'Daniela', 'Fernando', 'Gabriela', 'Ricardo', 'Mariana', 'Tomás', 'Isabella', 'Sebastián', 'Antonella', 'Mateo', 'Emma', 'Nicolás', 'Olivia'];
@@ -61,12 +66,15 @@ function pick<T>(arr: T[]): T {
  * whole UI can be exercised for bugs. Idempotent via a localStorage flag;
  * pass { force: true } to wipe the demo tables and regenerate.
  */
-export async function seedDemoData(opts: SeedOptions = {}): Promise<string> {
+export async function seedDemoData(opts: SeedOptions = {}): Promise<DemoSeedResult> {
     const FLAG = 'shororepair_demo_loaded';
     const counts = { ...DEFAULT_COUNTS, ...(opts.counts ?? {}) };
 
     if (!opts.force && localStorage.getItem(FLAG)) {
-        return 'Los datos de demostración ya fueron cargados. Usa seedDemoData({ force: true }) para regenerar.';
+        return {
+            loaded: false,
+            summary: 'Los datos de demostración ya existen en la base local. Para regenerarlos usa seedDemoData({ force: true }) desde la consola.'
+        };
     }
 
     if (opts.force) {
@@ -204,7 +212,10 @@ export async function seedDemoData(opts: SeedOptions = {}): Promise<string> {
     }
 
     localStorage.setItem(FLAG, '1');
-    return `Datos de demostración cargados: ${counts.clients} clientes, ${counts.orders} órdenes, ${counts.parts} repuestos, ${counts.expenses} gastos.`;
+    return {
+        loaded: true,
+        summary: `Clientes: ${counts.clients} · Órdenes: ${counts.orders} · Repuestos: ${counts.parts} · Gastos: ${counts.expenses}`
+    };
 }
 
 if (import.meta.env.DEV) {

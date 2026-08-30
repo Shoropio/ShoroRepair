@@ -49,6 +49,7 @@ import {
 import { compressImage } from '../services/upload.service';
 import '../offline/conflict';
 import { seedDemoData } from '../offline/seedDemo';
+import { purgeActivityLogs } from '../utils/activity/activityUtils';
 
 // Fields that must never be persisted in plaintext in IndexedDB. They are
 // encrypted with the device key (AES-GCM) at rest, mirroring geminiApiKey.
@@ -92,6 +93,7 @@ const Settings: React.FC = () => {
 	const [backupErrors] = useState<string[]>([]);
 
 	const [backupSize, setBackupSize] = useState<string>('');
+	const [retentionDays, setRetentionDays] = useState<number>(30);
 
 	useEffect(() => {
 		const loadData = async () => {
@@ -104,6 +106,7 @@ const Settings: React.FC = () => {
 			setIsLoading(false);
 			const size = await getEstimatedBackupSize();
 			setBackupSize(size);
+			setRetentionDays(Number(settings[0]?.activityRetentionDays ?? 30));
 		};
 		loadData();
 	}, [user]);
@@ -146,6 +149,38 @@ const Settings: React.FC = () => {
 		updateUser(updateData as AppUser);
 		toast.success(t('settings.profile_updated'));
 		if (profile.password) setProfile(p => ({ ...p, password: '' }));
+	};
+
+	const saveRetention = async () => {
+		if (!company || !company.id) return;
+		const days = Math.max(0, Math.floor(retentionDays || 0));
+		await db.settings.update(company.id, { activityRetentionDays: days, updatedAt: Date.now(), synced: 0 });
+		setCompany({ ...company, activityRetentionDays: days });
+		toast.success(t('settings.retention_saved_title'), {
+			description: t('settings.retention_saved_desc', { days })
+		});
+	};
+
+	const cleanupActivity = async () => {
+		const days = Math.max(0, Math.floor(retentionDays || 0));
+		const deleted = await purgeActivityLogs(days);
+		toast.success(t('settings.activity_cleaned_title'), {
+			description: t('settings.activity_cleaned_desc', { count: deleted, days })
+		});
+	};
+
+	const clearAllActivity = () => {
+		toast.warning(t('settings.confirm_clear_activity'), {
+			action: {
+				label: t('common.delete'),
+				onClick: async () => {
+					const deleted = await purgeActivityLogs(0);
+					toast.success(t('settings.activity_cleared_title'), {
+						description: t('settings.activity_cleared_desc', { count: deleted })
+					});
+				}
+			}
+		});
 	};
 
 	if (isLoading) return <div className="p-20 text-center animate-pulse text-gray-400 font-bold uppercase tracking-widest text-xs">{t('settings.loading')}</div>;
@@ -408,30 +443,59 @@ const Settings: React.FC = () => {
 			<p className="font-bold text-sm uppercase text-gray-700 dark:text-white">Datos de demostración</p>
 			<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Clientes, técnicos, inventario, órdenes y gastos de ejemplo</p>
 		</div>
-		<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-blue-200 text-blue-600 bg-blue-50/50" onClick={async () => {
-			try {
-				const msg = await seedDemoData();
-				toast.success(msg);
-									} catch (_e) {
-				toast.error('Error al cargar datos de demostración');
-			}
-		}}>Cargar datos demo</Button>
+<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-blue-200 text-blue-600 bg-blue-50/50" onClick={async () => {
+										try {
+											const result = await seedDemoData();
+											toast.success(result.loaded ? t('settings.demo_loaded_title') : t('settings.demo_exists_title'), {
+												description: result.summary
+											});
+										} catch (_e) {
+											toast.error(t('settings.demo_error_title'), {
+												description: t('settings.demo_error_desc')
+											});
+										}
+									}}>Cargar datos demo</Button>
 	</div>
 )}
 
-<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-none border border-red-100 dark:border-red-900/20">
+<div className="flex items-center justify-between p-4 lg:p-6 bg-amber-50/50 dark:bg-amber-900/5 rounded-none border border-amber-200 dark:border-amber-800/30">
+								<div className="space-y-1">
+									<p className="font-bold text-sm uppercase text-amber-700">{t('settings.activity_retention_title')}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{t('settings.activity_retention_subtitle')}</p>
+								</div>
+								<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+									<div className="w-24">
+										<Input type="number" min={0} value={retentionDays} onChange={(e) => setRetentionDays(Number(e.target.value))} placeholder={t('settings.retention_days')} />
+									</div>
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px]" onClick={saveRetention} disabled={!company || !company.id}>{t('common.save')}</Button>
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-amber-300 text-amber-700" onClick={cleanupActivity}>{t('settings.cleanup_now')}</Button>
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={clearAllActivity}>{t('settings.clear_all_activity')}</Button>
+								</div>
+							</div>
+
+							<div className="flex items-center justify-between p-4 lg:p-6 bg-red-50/50 dark:bg-red-900/5 rounded-none border border-red-100 dark:border-red-900/20">
 									<div className="space-y-1">
 										<p className="font-bold text-sm uppercase text-red-600">{t('settings.factory_reset_title')}</p>
 										<p className="text-[10px] font-bold text-red-400 uppercase tracking-tighter">{t('settings.factory_reset_subtitle')}</p>
 									</div>
-									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={async () => {
-										if (window.confirm(t('settings.confirm_factory_1'))) {
-											if (window.confirm(t('settings.confirm_factory_2'))) {
-												await db.delete();
-												localStorage.clear();
-												window.location.href = '/';
+									<Button variant="outline" className="rounded-none px-4 lg:px-6 py-2 font-bold uppercase text-[10px] border-red-200 text-red-600 hover:bg-red-50" onClick={() => {
+										toast.warning(t('settings.confirm_factory_1'), {
+											action: {
+												label: t('common.continue'),
+												onClick: () => {
+													toast.warning(t('settings.confirm_factory_2'), {
+														action: {
+															label: t('common.delete'),
+															onClick: async () => {
+																await db.delete();
+																localStorage.clear();
+																window.location.href = '/';
+															}
+														}
+													});
+												}
 											}
-										}
+										});
 									}}>{t('settings.factory_reset')}</Button>
 								</div>
 							</div>
