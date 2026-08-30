@@ -86,6 +86,7 @@ const Setup: React.FC = () => {
 					invoicePrefix: 'FAC',
 					nextInvoiceNumber: 1,
 					inactivityTimeout: 5,
+					activityRetentionDays: 30,
 					cloudSetupCompleted: false,
 					createdAt: Date.now(),
 					updatedAt: Date.now(),

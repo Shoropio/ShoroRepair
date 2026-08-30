@@ -136,6 +136,7 @@ export interface CompanySettings extends SyncEntity {
     isHaciendaProduction?: boolean;
     cloudSetupCompleted?: boolean;
     notificationsEnabled?: boolean;
+    activityRetentionDays?: number;
     geminiApiKey?: string;
 }
 

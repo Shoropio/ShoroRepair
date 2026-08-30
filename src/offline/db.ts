@@ -214,6 +214,7 @@ export async function initializeData() {
       nextInvoiceNumber: 1,
       inactivityTimeout: 5,
       notificationsEnabled: true,
+      activityRetentionDays: 30,
       cloudSetupCompleted: false
     });
   }

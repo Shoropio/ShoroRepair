@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './app/App';
 import { initializeData } from './offline/db';
+import { runScheduledActivityCleanup } from './utils/activity/activityUtils';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from 'sonner';
 import './styles/index.css';
@@ -11,6 +12,8 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Could not find root element to mount to');
 
 initializeData().then(() => {
+  runScheduledActivityCleanup().catch(() => {});
+  setInterval(() => { runScheduledActivityCleanup().catch(() => {}); }, 86400000);
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
