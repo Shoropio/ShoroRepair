@@ -167,24 +167,6 @@ export async function downloadBackup(): Promise<void> {
         const date = new Date().toISOString().split('T')[0];
         const filename = `${APP_NAME}_Backup_${date}.json`;
 
-        if (window.__TAURI__) {
-            const { save } = await import('@tauri-apps/plugin-dialog');
-            const { writeTextFile } = await import('@tauri-apps/plugin-fs');
-
-            const filePath = await save({
-                defaultPath: filename,
-                filters: [{ name: 'JSON', extensions: ['json'] }]
-            });
-
-            if (filePath) {
-                await writeTextFile(filePath, json);
-                toast.success('Respaldo guardado correctamente', {
-                    description: `${backup.stats.totalClients} clientes, ${backup.stats.totalOrders} órdenes, ${backup.stats.totalInventory} productos`
-                });
-            }
-            return;
-        }
-
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

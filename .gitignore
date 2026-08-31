@@ -31,7 +31,6 @@ typings/
 
 # Output directory
 /dist
-/dist-tauri
 /out
 
 # Local env files
@@ -52,19 +51,11 @@ typings/
 *.sln
 *.sw?
 
-# Tauri
-src-tauri/target/
-src-tauri/binaries/
-src-tauri/gen/
-
 # OS Files
 .DS_Store
 Thumbs.db
 
-# Android
-android/
-android/keystore.properties
-android/app/*.keystore
+# Secrets / config
 shororepair-release.keystore
 google-services.json
 firebaseConfig.txt
