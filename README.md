@@ -27,11 +27,12 @@ ShoroRepair es una solución integral todo-en-uno diseñada para laboratorios t�
 * **Alertas de Stock**: Indicadores visuales y notificaciones para reabastecimiento.
 * **Gestión de SKU**: Soporte para códigos de barras y categorización.
 
-### ☁️ Sincronización Híbrida (Hybrid Cloud)
+### ☁️ Sincronización en la Nube (Cloud Sync)
 
 * **Modo Offline**: Funciona 100% sin internet usando base de datos local (IndexedDB/Dexie).
-* **Google Drive Sync**: Respaldo y sincronización automática de bases de datos entre dispositivos.
-* **Firebase Integration**: (Opcional) Para características avanzadas de tiempo real.
+* **Google Login**: Inicio de sesión seguro con tu cuenta de Google para sincronizar entre dispositivos.
+* **Firebase/Firestore**: Sincronización automática de tus datos (clientes, órdenes, inventario, gastos) entre dispositivos, con cada usuario aislado en su propio espacio (`users_data/{userId}`).
+* **Instalable (PWA)**: Se instala como una app desde el navegador, sin tiendas ni instaladores.
 
 ---
 
@@ -41,8 +42,6 @@ ShoroRepair es una solución integral todo-en-uno diseñada para laboratorios t�
 
 * Node.js v18+
 * NPM o Yarn
-* Rust (Solo si vas a compilar para Windows/Mac con Tauri)
-* Android Studio (Solo si vas a compilar para Android con Capacitor)
 
 ### 1. Instalación
 
@@ -105,63 +104,21 @@ npm run build
 
 ---
 
-## 🖥️ Implementación de Escritorio (Tauri 2.0)
+## 📲 Instalación como App (PWA)
 
-ShoroRepair utiliza Tauri para ofrecer una experiencia nativa en Windows, macOS y Linux con un rendimiento superior y un tamaño de ejecutable mínimo (<10MB).
+ShoroRepair es una **Progressive Web App (PWA)**: se instala como una app nativa directamente desde el navegador, sin pasar por tiendas ni instalar paquetes.
 
-### Modo Desarrollo
-
-```bash
-npm run tauri dev
-```
-
-### Generar Instalador (.msi / .dmg / .deb)
-
-Asegúrate de haber editado `src-tauri/tauri.conf.json` con tu identificador único.
-
-```bash
-npm run tauri build
-```
-
-Los instaladores se generarán en `src-tauri/target/release/bundle/`.
-
----
-
-## 📱 Implementación Móvil (Capacitor)
-
-La arquitectura responsive permite convertir la app web en una app nativa de Android/iOS.
-
-### Preparación
-
-1. Asegúrate de haber hecho el build web primero:
-
-   ```bash
-   npm run build
-   ```
-
-2. Sincroniza los cambios con el proyecto nativo:
-
-   ```bash
-   npx cap sync
-   ```
-
-### Ejecutar en Android
-
-Requiere Android Studio instalado y configurado.
-
-```bash
-npx cap open android
-```
-
-Desde Android Studio, puedes ejecutar la app en un emulador o dispositivo físico, o generar el APK firmado ("Build > Generate Signed Bundle / APK").
+1. Abre la app en Chrome o Edge.
+2. Haz clic en el ícono de **instalar** de la barra de direcciones (o menú → "Instalar ShoroRepair").
+3. La app se añade a tu escritorio/menú de inicio y funciona con su propio acceso directo, incluso **sin conexión**.
 
 ---
 
 ## 🛡️ Seguridad y Datos
 
-* **Cifrado en reposo (dispositivo)**: Las contraseñas se almacenan hasheadas con PBKDF2-SHA256 (salt aleatorio). Las API keys y los tokens (p. ej. Google Drive, Gemini) se cifran con AES-GCM usando una clave por dispositivo. La base de datos local (IndexedDB/Dexie) en sí no está cifrada de extremo a extremo; los datos "viven" en el dispositivo del usuario y no viajan a servidores de terceros salvo tu propio Google Drive o tu propio backend.
-* **Sin Servidor Central**: Tú eres dueño de tus datos. No dependen de servidores de terceros (salvo tu propio Google Drive).
-* **Roles y Permisos (RBAC)**: Sistema de roles para Administradores, Técnicos y Recepcionistas. **Nota:** en modo local/offline el RBAC se aplica en el cliente; quien tenga acceso físico al dispositivo e IndexedDB puede modificar su rol. Para despliegues multiusuario en la nube, la autorización debe reforzarse en el servidor (Firestore Rules / backend).
+* **Cifrado en reposo (dispositivo)**: Las contraseñas se almacenan hasheadas con PBKDF2-SHA256 (salt aleatorio). Las API keys y los tokens (p. ej. Gemini) se cifran con AES-GCM usando una clave por dispositivo. La base de datos local (IndexedDB/Dexie) en sí no está cifrada de extremo a extremo; los datos "viven" en el dispositivo del usuario y solo viajan a tu propio backend de Firebase.
+* **Datos por Usuario (Firestore)**: Cada cuenta de Google tiene su propio espacio aislado (`users_data/{userId}`). Las reglas de seguridad de Firestore garantizan que cada usuario solo pueda leer y escribir sus propios datos (autenticado obligatoriamente).
+* **RBAC y despliegues multiusuario**: En modo local/offline el RBAC se aplica en el cliente; en despliegues multiusuario en la nube, la autorización se refuerza en el servidor (Firestore Rules).
 * **Protección de login**: bloqueo temporal por intentos fallidos (5 intentos → 5 min de bloqueo) para mitigar fuerza bruta local.
 * **API keys en cliente**: Las llamadas directas a APIs externas (p. ej. Gemini) exponen la key en el dispositivo. Para ocultarlas por completo, usa un proxy/backend que retenga la credencial. Restringe además la key en la consola del proveedor (por app/dominio).
 
